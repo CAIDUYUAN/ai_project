@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>빨간집 마라탕 대시보드</title>
+<!-- 외부 라이브러리 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- 스타일 -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+
+<!-- =============================================
+     헤더
+============================================= -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌶️</div>
+    <div>
+      <h1>빨간집 마라탕</h1>
+      <p>배민 · 쿠팡이츠 매출 대시보드</p>
+    </div>
+  </div>
+  <div class="header-info">
+    <div id="hd-period" style="font-weight:700;color:var(--tx);font-size:13px">파일을 업로드해주세요</div>
+    <div>배민 <strong id="hd-bm-del">3,100원</strong> / 쿠팡 <strong id="hd-cp-del">3,400원</strong></div>
+  </div>
+</header>
+
+<!-- =============================================
+     탭 네비게이션
+============================================= -->
+<div class="tabs">
+  <button class="tab active" data-tab="upload">📁 데이터 입력</button>
+  <button class="tab" data-tab="overview">📊 종합현황</button>
+  <button class="tab" data-tab="compare">⚖️ 플랫폼비교</button>
+  <button class="tab" data-tab="calendar">📅 달력</button>
+  <button class="tab" data-tab="settings">⚙️ 설정</button>
+</div>
+
+<!-- =============================================
+     패널 1: 데이터 입력
+============================================= -->
+<div id="panel-upload" class="panel active">
+
+  <!-- ── 방법 A: 구글 드라이브 (아코디언) ── -->
+  <div style="margin-bottom:12px">
+    <div class="accordion-header" id="hdr-a" onclick="toggleAccordion('a')">
+      <div class="accordion-header-left">
+        <span style="font-size:22px">☁️</span>
+        <div>
+          <div class="accordion-title">방법 A · 구글 드라이브 자동 연동</div>
+          <div class="accordion-subtitle">매월 파일 올리면 자동으로 불러옴 · 초기 설정 1회 필요</div>
+        </div>
+      </div>
+      <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-body" id="body-a">
+
+      <!-- 사용 설명 -->
+      <div class="step-list">
+
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Apps Script 코드 등록</strong><br>
+            <a href="https://script.google.com" target="_blank" style="color:#60a5fa">script.google.com</a> 접속 →
+            <strong>새 프로젝트</strong> 생성 → 기본 코드 전체 삭제 후 아래 코드 붙여넣기 → 저장(Ctrl+S)<br>
+            <span style="color:var(--muted);font-size:11px">※ 코드는 이 대시보드 제작자에게 받으세요</span>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Drive API v2 추가</strong><br>
+            왼쪽 메뉴 <strong>서비스(+)</strong> 클릭 → <strong>Google Drive API</strong> 선택 →
+            버전 <strong>v2</strong> 선택 → 추가
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>권한 승인 (최초 1회)</strong><br>
+            상단 함수 선택창에서 <code>authorizeAll</code> 선택 → <strong>▶ 실행</strong> →
+            팝업에서 Google 계정 로그인 및 권한 허용
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <strong>웹앱으로 배포</strong><br>
+            우측 상단 <strong>배포</strong> → <strong>새 배포</strong> → 유형: <strong>웹앱</strong> →
+            실행 계정: <strong>나</strong> · 액세스 권한: <strong>모든 사용자</strong> →
+            <strong>배포</strong> → 생성된 <strong>웹앱 URL 복사</strong>
+          </div>
+        </div>
+
+        <div class="step-item done">
+          <div class="step-num" style="border-color:var(--grn);color:var(--grn);background:rgba(26,158,107,0.15)">5</div>
+          <div class="step-text">
+            <strong>URL 입력</strong><br>
+            복사한 URL을 아래 <strong>Apps Script 배포 URL</strong> 칸에 붙여넣기
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">6</div>
+          <div class="step-text">
+            <strong>구글 드라이브 폴더 준비</strong><br>
+            드라이브에 <strong>전용 폴더</strong> 하나 생성 → 폴더 URL 아래 칸에 붙여넣기<br>
+            <span style="color:var(--muted);font-size:11px">※ 폴더는 본인 계정 소유이면 됩니다 (공유 불필요)</span>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">7</div>
+          <div class="step-text">
+            <strong>매출 파일 올리기 · 구글 시트로 변환</strong><br>
+            플랫폼에서 다운받은 <strong>.xlsx 파일</strong>을 폴더에 업로드 →
+            파일 <strong>우클릭 → 연결 앱 → Google 스프레드시트</strong>로 열기 →
+            <strong>파일 → Google 스프레드시트로 저장</strong><br>
+            <span style="color:#fbbf24;font-size:11px">⚡ 꿀팁: 여러 파일 한번에 변환하려면 Apps Script에서
+            <code>convertAllExcelToSheets</code> 함수 실행! (새 파일 추가할 때마다 1회 실행)</span>
+          </div>
+        </div>
+
+        <div class="step-item warn">
+          <div class="step-num" style="border-color:var(--or);color:var(--or);background:rgba(196,127,0,0.15)">!</div>
+          <div class="step-text">
+            <strong>파일명 규칙 (변환 후 구글 시트 이름)</strong><br>
+            · 배민: <code>매출상세내역_YYYY년MM월...</code><br>
+            · 쿠팡: <code>coupang_eats_YYYY-MM</code><br>
+            · 땡겨요: <code>YYMMDD_YYMMDD_빨간집_매출내역</code><br>
+            <span style="color:var(--muted);font-size:11px">파일명이 규칙과 다르면 플랫폼 자동 인식이 안 됩니다</span>
+          </div>
+        </div>
+
+        <!-- 선택사항: 중복 파일 삭제 -->
+        <div style="margin-top:8px;padding:10px 12px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.12);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px">
+            ✦ 선택사항 · 중복 파일 정리
+          </div>
+          <div class="step-item" style="margin-bottom:0;background:transparent;border-left-color:rgba(255,255,255,0.15)">
+            <div class="step-num" style="border-color:rgba(255,255,255,0.2);color:var(--muted);background:rgba(255,255,255,0.05)">+</div>
+            <div class="step-text">
+              <strong style="color:#e2e8f0">중복 파일 자동 삭제</strong>
+              <span style="font-size:10px;color:var(--muted);margin-left:6px">(파일명이 같은 파일 — 구글시트·xlsx 동일 취급)</span><br>
+              Apps Script 편집기에서 함수 선택창 → <code>removeDuplicates</code> 선택 → <strong>▶ 실행</strong><br>
+              <span style="color:#fbbf24;font-size:11px">⚡ 완전 삭제가 아닌 휴지통으로 이동 — 실수해도 복구 가능</span><br>
+              <span style="color:var(--muted);font-size:11px">구글 시트를 우선 남기고, 같은 형식이면 먼저 만들어진 파일 유지<br>
+              실행 후 로그(Ctrl+Enter)에서 삭제된 파일 목록 확인 가능</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /step-list -->
+
+      <hr class="step-divider">
+
+      <!-- 실제 입력 폼 -->
+      <div class="drive-section" style="margin-bottom:0">
+        <label>Apps Script 배포 URL</label>
+        <input class="drive-input" id="dr-script"
+          placeholder="https://script.google.com/macros/s/.../exec"
+          oninput="drCheckReady()">
+        <label>구글 드라이브 폴더 URL</label>
+        <input class="drive-input" id="dr-folder"
+          placeholder="https://drive.google.com/drive/folders/..."
+          oninput="drFolderChange()">
+        <div class="drive-folder-ok" id="dr-folder-ok"></div>
+        <button class="btn-primary" id="dr-btn" onclick="loadFromDrive()" disabled>
+          📂 드라이브에서 불러오기
+        </button>
+        <div class="drive-status"   id="dr-status"></div>
+        <div class="drive-progress" id="dr-prog"><div class="drive-progress-fill"></div></div>
+      </div>
+
+    </div><!-- /body-a -->
+  </div>
+
+  <!-- ── 방법 B: 로컬 엑셀 업로드 (아코디언) ── -->
+  <div style="margin-bottom:12px">
+    <div class="accordion-header" id="hdr-b" onclick="toggleAccordion('b')">
+      <div class="accordion-header-left">
+        <span style="font-size:22px">📁</span>
+        <div>
+          <div class="accordion-title">방법 B · 엑셀 파일 직접 업로드</div>
+          <div class="accordion-subtitle">설정 없이 바로 사용 · 매번 파일 선택 필요</div>
+        </div>
+      </div>
+      <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-body" id="body-b">
+
+      <div class="step-list">
+
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>배달의민족 파일 다운로드</strong><br>
+            배민 사장님사이트(<a href="https://self.baemin.com" target="_blank" style="color:#60a5fa">self.baemin.com</a>) →
+            <strong>정산 → 매출 상세내역</strong> → 월 선택 → <strong>엑셀 다운로드</strong><br>
+            파일명 예시: <code>매출상세내역_2026년03월_...</code>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>쿠팡이츠 파일 다운로드</strong><br>
+            쿠팡이츠 사장님사이트 →
+            <strong>정산 → 매출 내역</strong> → 월 선택 → <strong>엑셀 다운로드</strong><br>
+            파일명 예시: <code>coupang_eats_2026-03.xlsx</code>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>땡겨요 파일 다운로드</strong><br>
+            땡겨요 사장님사이트 →
+            <strong>정산 → 매출 내역</strong> → 기간 선택 → <strong>엑셀 다운로드</strong><br>
+            파일명 예시: <code>250201_250228_빨간집마라탕_매출내역.xlsx</code>
+          </div>
+        </div>
+
+        <div class="step-item done">
+          <div class="step-num" style="border-color:var(--grn);color:var(--grn);background:rgba(26,158,107,0.15)">4</div>
+          <div class="step-text">
+            <strong>아래 박스에 파일 드래그 or 클릭</strong><br>
+            배민 → 왼쪽 / 쿠팡 → 가운데 / 땡겨요 → 오른쪽 박스<br>
+            <strong>여러 달 파일을 한번에</strong> 선택해도 됩니다
+          </div>
+        </div>
+
+        <div class="step-item warn">
+          <div class="step-num" style="border-color:var(--or);color:var(--or);background:rgba(196,127,0,0.15)">!</div>
+          <div class="step-text">
+            <strong>주의</strong>: 파일명이 플랫폼 표준 형식이어야 자동 인식됩니다.<br>
+            이름을 임의로 변경하면 파싱 오류가 날 수 있어요.
+          </div>
+        </div>
+
+      </div><!-- /step-list -->
+
+      <hr class="step-divider">
+
+      <div class="upload-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="upload-box" id="box-bm"
+          ondragover="onDrag(event,'box-bm')" ondragleave="offDrag('box-bm')"
+          ondrop="onDrop(event,'bm')">
+          <input type="file" accept=".xlsx" multiple onchange="loadXlsx(this,'bm')">
+          <div style="font-size:26px;margin-bottom:8px">🛵</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">배달의민족</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.5">
+            매출상세내역_YYYY년MM월...<br>여러 달 한번에 선택 가능
+          </div>
+          <div id="tags-bm" class="upload-tags"></div>
+        </div>
+        <div class="upload-box" id="box-cp"
+          ondragover="onDrag(event,'box-cp')" ondragleave="offDrag('box-cp')"
+          ondrop="onDrop(event,'cp')">
+          <input type="file" accept=".xlsx" multiple onchange="loadXlsx(this,'cp')">
+          <div style="font-size:26px;margin-bottom:8px">🧡</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">쿠팡이츠</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.5">
+            coupang_eats_YYYY-MM.xlsx<br>여러 달 한번에 선택 가능
+          </div>
+          <div id="tags-cp" class="upload-tags"></div>
+        </div>
+        <div class="upload-box" id="box-tg"
+          ondragover="onDrag(event,'box-tg')" ondragleave="offDrag('box-tg')"
+          ondrop="onDrop(event,'tg')">
+          <input type="file" accept=".xlsx" multiple onchange="loadXlsx(this,'tg')">
+          <div style="font-size:26px;margin-bottom:8px">🟢</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#06D6A0">땡겨요</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.5">
+            YYMMDD_YYMMDD_빨간집_매출내역<br>여러 달 한번에 선택 가능
+          </div>
+          <div id="tags-tg" class="upload-tags"></div>
+        </div>
+      </div>
+
+    </div><!-- /body-b -->
+  </div>
+
+  <!-- 로드된 파일 목록 -->
+  <div class="card" id="file-list-card" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="card-title" style="margin-bottom:0">
+        로드된 파일 <span id="file-count" style="color:var(--muted);font-size:11px;font-weight:400"></span>
+      </div>
+      <button class="btn-sm" onclick="clearAll()">전체 삭제</button>
+    </div>
+    <div class="file-grid" id="file-grid"></div>
+    <button class="btn-primary" onclick="goTab('overview')">📊 종합현황 보기 →</button>
+  </div>
+</div>
+
+<!-- =============================================
+     패널 2: 종합현황
+============================================= -->
+<div id="panel-overview" class="panel">
+  <div class="card"><div class="month-btns" id="ov-months"></div></div>
+
+  <!-- KPI 1행 -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">총 매출</div>
+      <div class="kpi-value" id="k-rev">₩0</div>
+      <div class="kpi-sub"   id="k-orders">주문 0건</div>
+    </div>
+    <div class="kpi green" style="border:1.5px solid var(--grn)">
+      <div class="kpi-label" style="color:#4ade80;font-weight:700">💰 입금예정금액</div>
+      <div class="kpi-value pos" id="k-deposit">₩0</div>
+      <div class="kpi-sub"       id="k-deposit-sub"></div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">수수료+배달비+쿠폰</div>
+      <div class="kpi-value" id="k-deduct">₩0</div>
+      <div class="kpi-sub"   id="k-deduct-sub"></div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">일평균 매출</div>
+      <div class="kpi-value" id="k-avg">₩0</div>
+      <div class="kpi-sub"   id="k-days">0일 영업</div>
+    </div>
+  </div>
+
+  <!-- KPI 2행 -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">플랫폼 수수료</div>
+      <div class="kpi-value" id="k-fee">₩0</div>
+      <div class="kpi-sub"   id="k-fee-rate">0%</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">배달비</div>
+      <div class="kpi-value" id="k-del">₩0</div>
+      <div class="kpi-sub"   id="k-del-sub"></div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">순수익 (재료비 후)</div>
+      <div class="kpi-value" id="k-net">₩0</div>
+      <div class="kpi-sub"   id="k-net-sub"></div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">건당 평균 매출</div>
+      <div class="kpi-value" id="k-per-order">₩0</div>
+      <div class="kpi-sub">건당</div>
+    </div>
+  </div>
+
+  <!-- BEP 달성률 -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span class="card-title" style="margin-bottom:0">🎯 손익분기점 달성률</span>
+      <span id="bep-badge" style="font-size:12px;font-weight:700"></span>
+    </div>
+    <div class="bep-bar-bg"><div class="bep-bar-fill" id="bep-fill" style="width:0%"></div></div>
+    <div class="bep-labels">
+      <span>₩0</span>
+      <span id="bep-mid">BEP -</span>
+      <span id="bep-right">매출 ₩0</span>
+    </div>
+  </div>
+
+  <!-- 비용 게이지 -->
+  <div class="card">
+    <div class="card-title">💸 비용 구성 (매출 대비)</div>
+    <div class="gauge-row">
+      <div class="gauge-label">플랫폼수수료</div>
+      <div class="gauge-bg"><div class="gauge-fill" id="g-fee" style="width:0%;background:var(--red)"></div></div>
+      <div class="gauge-pct" id="gp-fee">0%</div>
+    </div>
+    <div class="gauge-row">
+      <div class="gauge-label">배달비</div>
+      <div class="gauge-bg"><div class="gauge-fill" id="g-del" style="width:0%;background:var(--or)"></div></div>
+      <div class="gauge-pct" id="gp-del">0%</div>
+    </div>
+    <div class="gauge-row">
+      <div class="gauge-label">쿠폰(상점부담)</div>
+      <div class="gauge-bg"><div class="gauge-fill" id="g-cpn" style="width:0%;background:#f87171"></div></div>
+      <div class="gauge-pct" id="gp-cpn">0%</div>
+    </div>
+    <div class="gauge-row">
+      <div class="gauge-label">고정비</div>
+      <div class="gauge-bg"><div class="gauge-fill" id="g-fix" style="width:0%;background:#60a5fa"></div></div>
+      <div class="gauge-pct" id="gp-fix">0%</div>
+    </div>
+  </div>
+
+  <!-- 일별 막대 차트 -->
+  <div class="card">
+    <div class="card-title">📈 일별 매출</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--grn)"></div>배민</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>쿠팡</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#06D6A0"></div>땡겨요</div>
+    </div>
+    <div class="bar-chart" id="bar-chart"></div>
+  </div>
+
+  <!-- 월별 요약 테이블 -->
+  <div class="card">
+    <div class="card-title">📅 월별 요약</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="text-align:left">월</th>
+          <th style="color:#4ade80">배민</th>
+          <th style="color:#f87171">쿠팡</th>
+          <th style="color:#06D6A0">땡겨요</th>
+          <th>합계</th><th>주문</th>
+          <th>차감합계</th><th>입금예정</th><th>순수익</th>
+        </tr></thead>
+        <tbody id="monthly-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+     패널 3: 플랫폼 비교
+============================================= -->
+<div id="panel-compare" class="panel">
+  <div class="card"><div class="month-btns" id="cmp-months"></div></div>
+  <div class="platform-grid" id="pcard-container"></div>
+  <div class="card" style="margin-top:12px">
+    <div class="card-title">⚖️ 플랫폼 비교표</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="text-align:left">항목</th>
+          <th style="color:#4ade80">배달의민족</th>
+          <th style="color:#f87171">쿠팡이츠</th>
+          <th style="color:#06D6A0">땡겨요</th>
+          <th>합계</th>
+        </tr></thead>
+        <tbody id="cmp-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+     패널 4: 달력
+============================================= -->
+<div id="panel-calendar" class="panel">
+  <div class="card">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="moveMonth(-1)">← 이전</button>
+        <button class="cal-nav-btn" onclick="moveMonth(1)">다음 →</button>
+      </div>
+      <div style="font-size:14px;font-weight:700" id="cal-title"></div>
+    </div>
+    <div style="position:relative">
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="tooltip"  id="cal-tooltip"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="cal-month-title">월 요약</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="text-align:left">플랫폼</th>
+          <th>주문</th><th>총매출</th><th>수수료</th><th>배달비</th><th>쿠폰</th><th>건당</th>
+        </tr></thead>
+        <tbody id="cal-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+     패널 5: 설정
+============================================= -->
+<div id="panel-settings" class="panel">
+  <!-- 고정비 -->
+  <div class="card">
+    <div class="card-title">🏠 고정비 (월)</div>
+    <div class="settings-grid">
+      <div class="field"><label>임대료</label>    <input id="s-rent"   type="number" value="800000"></div>
+      <div class="field"><label>관리비</label>    <input id="s-mgmt"   type="number" value="100000"></div>
+      <div class="field"><label>공과금</label>    <input id="s-util"   type="number" value="150000"></div>
+      <div class="field"><label>포장재</label>    <input id="s-pack"   type="number" value="100000"></div>
+      <div class="field"><label>기타고정</label>  <input id="s-etc"    type="number" value="50000"></div>
+      <div class="field"><label>생활비목표</label><input id="s-living" type="number" value="2000000"></div>
+    </div>
+  </div>
+
+  <!-- 원가율 -->
+  <div class="card">
+    <div class="card-title">📊 수익 설정</div>
+    <div class="settings-grid">
+      <div class="field"><label>원가율 (%)</label><input id="s-cogs" type="number" value="35"></div>
+    </div>
+  </div>
+
+  <!-- 수수료 설정 -->
+  <div class="fee-cards">
+    <div class="fee-card bm">
+      <div style="font-weight:700;margin-bottom:10px;color:#4ade80">🛵 배달의민족</div>
+      <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-bm-comm"  type="number" step="0.1"  value="6.8"  oninput="updateFeeTotal('bm')"></div>
+      <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-bm-pg"    type="number" step="0.1"  value="1.3"  oninput="updateFeeTotal('bm')"></div>
+      <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-bm-vat"   type="number" step="0.01" value="0.68" oninput="updateFeeTotal('bm')"></div>
+      <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-bm-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('bm')"></div>
+      <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-bm-del"   type="number" value="3100"></div>
+      <div class="fee-total bm">
+        <span style="font-size:12px;color:#4ade80">총 수수료율</span>
+        <span id="bm-fee-total" style="font-weight:700;color:#4ade80">8.78%</span>
+      </div>
+    </div>
+    <div class="fee-card cp">
+      <div style="font-weight:700;margin-bottom:10px;color:#f87171">🧡 쿠팡이츠</div>
+      <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-cp-comm"  type="number" step="0.1"  value="7.8"  oninput="updateFeeTotal('cp')"></div>
+      <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-cp-pg"    type="number" step="0.1"  value="2.8"  oninput="updateFeeTotal('cp')"></div>
+      <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-cp-vat"   type="number" step="0.01" value="2.5"  oninput="updateFeeTotal('cp')"></div>
+      <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-cp-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('cp')"></div>
+      <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-cp-del"   type="number" value="3400"></div>
+      <div class="fee-total cp">
+        <span style="font-size:12px;color:#f87171">총 수수료율</span>
+        <span id="cp-fee-total" style="font-weight:700;color:#f87171">13.10%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 쿠폰 구간 -->
+  <div class="card">
+    <div class="card-title">🎟️ 쿠팡 쿠폰 구간 (상점부담)</div>
+    <div class="coupon-preview" id="coupon-preview"></div>
+    <div class="settings-grid">
+      <div class="field"><label>구간1 최소주문 (원)</label><input id="s-cp1-min" type="number" value="14900" oninput="updateCouponPreview()"></div>
+      <div class="field"><label>구간1 할인액 (원)</label>  <input id="s-cp1-amt" type="number" value="1000"  oninput="updateCouponPreview()"></div>
+    </div>
+    <div class="settings-grid">
+      <div class="field"><label>구간2 최소주문 (원)</label><input id="s-cp2-min" type="number" value="25000" oninput="updateCouponPreview()"></div>
+      <div class="field"><label>구간2 할인액 (원)</label>  <input id="s-cp2-amt" type="number" value="2000"  oninput="updateCouponPreview()"></div>
+    </div>
+    <div class="settings-grid">
+      <div class="field"><label>구간3 최소주문 (원)</label><input id="s-cp3-min" type="number" value="35000" oninput="updateCouponPreview()"></div>
+      <div class="field"><label>구간3 할인액 (원)</label>  <input id="s-cp3-amt" type="number" value="3000"  oninput="updateCouponPreview()"></div>
+    </div>
+  </div>
+
+  <!-- BEP 요약 -->
+  <div class="kpi-grid" style="margin-top:6px">
+    <div class="kpi">
+      <div class="kpi-label">월 고정비 합계</div>
+      <div class="kpi-value" id="s-fixed-total">₩0</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">손익분기점</div>
+      <div class="kpi-value" id="s-bep">₩0</div>
+      <div class="kpi-sub">원가·수수료 반영</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">일 목표 매출</div>
+      <div class="kpi-value" id="s-daily-bep">₩0</div>
+      <div class="kpi-sub">월 26일 기준</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">생활비 포함 BEP</div>
+      <div class="kpi-value" id="s-bep2">₩0</div>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="saveSettings()">💾 설정 저장</button>
+</div>
+
+<div id="toast"></div>
+</div><!-- /wrap -->
+
+<!-- =============================================
+     JavaScript
+============================================= -->
+<script src="js/settings.js"></script>
+<script src="js/parsers.js"></script>
+<script src="js/drive.js"></script>
+<script src="js/render.js"></script>
+</html>
