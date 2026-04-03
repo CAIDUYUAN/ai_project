@@ -136,7 +136,7 @@ function selectMonth(mo) {
     calY = y; calM = m - 1;
   }
   // 모든 탭 렌더
-  renderOverview(); renderCompare(); renderCalendar();
+  renderOverview(); renderCompare(); renderCalendar(); renderDiagnosis();
 }
 function renderMonthBtns(containerId) {
   const el = document.getElementById(containerId); if(!el) return;
