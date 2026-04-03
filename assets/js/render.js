@@ -32,6 +32,7 @@ function updateFileList() {
 function removeFile(pf, key) {
   delete DB[pf][key];
   FILES[pf] = FILES[pf].filter(f => f.key !== key);
+  deleteFromSupabase(pf, key).catch(e => console.warn(e));
   updateUploadUI(pf); updateFileList(); renderAll();
 }
 function clearAll() {
@@ -43,6 +44,7 @@ function clearAll() {
       if(el){ if(pre==='tags-') el.innerHTML=''; else el.classList.remove('loaded'); }
     });
   });
+  clearAllSupabase().catch(e => console.warn(e));
   updateFileList();
 }
 function updateHeaderPeriod() {

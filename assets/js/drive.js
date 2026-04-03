@@ -10,6 +10,8 @@ function storeData(pf, data, filename) {
     FILES[pf] = FILES[pf].filter(f => f.key !== fnKey);
     FILES[pf].push({key:fnKey, period:data.period+' 매입', filename});
     FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
+    // Supabase에 병합된 데이터 저장
+    if (DB.tg[key]) saveToSupabase('tg', key, DB.tg[key], filename).catch(e => console.warn(e));
     updateUploadUI(pf);
     updateFileList();
     renderAll();
@@ -31,6 +33,8 @@ function storeData(pf, data, filename) {
     FILES[pf] = FILES[pf].filter(f => f.key !== key);
     FILES[pf].push({key, period:d.period, filename});
     FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
+    // Supabase에 비동기 저장
+    saveToSupabase(pf, key, d, filename).catch(e => console.warn(e));
   });
   updateUploadUI(pf);
   updateFileList();
@@ -172,6 +176,8 @@ window.addEventListener('load', () => {
   if (sc) document.getElementById('dr-script').value = sc;
   if (fo) document.getElementById('dr-folder').value = fo;
   if (sc || fo) drFolderChange();
+  // Supabase에서 저장된 데이터 복원
+  loadFromSupabase();
 });
 document.addEventListener('input', () => {
   const sc = document.getElementById('dr-script')?.value;
