@@ -274,16 +274,48 @@
   <div id="diag-coupon" class="diag-panel active">
     <div class="card">
       <div class="card-title">🎟️ 쿠폰 역이용 계산기</div>
-      <div class="settings-grid" style="grid-template-columns:1fr 1fr 1fr">
-        <div class="field"><label>메뉴 원가 (원)</label><input id="dc-cost" type="number" value="5250" oninput="calcCoupon()"></div>
-        <div class="field"><label>현재 판매가 (원)</label><input id="dc-price" type="number" value="15000" oninput="calcCoupon()"></div>
-        <div class="field"><label>목표 마진율 (%)</label><input id="dc-margin" type="number" value="20" oninput="calcCoupon()"></div>
+      <!-- 플랫폼 탭 -->
+      <div style="display:flex;gap:4px;margin-bottom:14px">
+        <button class="mbtn active" data-cpf="bm" onclick="setCouponPlatform('bm')">🛵 배민</button>
+        <button class="mbtn" data-cpf="cp" onclick="setCouponPlatform('cp')">🧡 쿠팡</button>
+        <button class="mbtn" data-cpf="tg" onclick="setCouponPlatform('tg')">🟢 땡겨요</button>
+        <button class="mbtn" data-cpf="yg" onclick="setCouponPlatform('yg')">🟠 요기요</button>
       </div>
-      <div class="settings-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
-        <div class="field"><label>쿠폰 할인액 (원)</label><input id="dc-discount" type="number" value="3000" oninput="calcCoupon()"></div>
-        <div class="field"><label>플랫폼</label><select id="dc-platform" style="background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;color:var(--tx);font-family:inherit;font-size:13px;width:100%" onchange="calcCoupon()"><option value="bm">배달의민족</option><option value="cp">쿠팡이츠</option><option value="tg">땡겨요</option><option value="yg">요기요</option></select></div>
+      <!-- 슬라이더 + 숫자 입력 -->
+      <div style="display:grid;gap:14px">
+        <div>
+          <label style="font-size:13px;color:var(--tx2);display:block;margin-bottom:6px">메뉴 원가 (원)</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input type="range" id="dc-cost-slider" min="0" max="20000" step="100" value="5250" oninput="syncCoupon('cost')" style="flex:1">
+            <input type="number" id="dc-cost" value="5250" oninput="syncCoupon('cost-num')" style="width:90px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--mono);font-size:13px;text-align:right">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:13px;color:var(--tx2);display:block;margin-bottom:6px">현재 판매가 (원)</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input type="range" id="dc-price-slider" min="5000" max="50000" step="500" value="15000" oninput="syncCoupon('price')" style="flex:1">
+            <input type="number" id="dc-price" value="15000" oninput="syncCoupon('price-num')" style="width:90px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--mono);font-size:13px;text-align:right">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:13px;color:var(--tx2);display:block;margin-bottom:6px">쿠폰 할인액 (원)</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input type="range" id="dc-discount-slider" min="0" max="10000" step="500" value="3000" oninput="syncCoupon('discount')" style="flex:1">
+            <input type="number" id="dc-discount" value="3000" oninput="syncCoupon('discount-num')" style="width:90px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--mono);font-size:13px;text-align:right">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:13px;color:var(--tx2);display:block;margin-bottom:6px">건당 배달비 (원)</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input type="range" id="dc-del-slider" min="0" max="5000" step="100" value="3100" oninput="syncCoupon('del')" style="flex:1">
+            <input type="number" id="dc-del" value="3100" oninput="syncCoupon('del-num')" style="width:90px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--mono);font-size:13px;text-align:right">
+          </div>
+        </div>
       </div>
+      <input type="hidden" id="dc-margin" value="15">
+      <input type="hidden" id="dc-platform" value="bm">
     </div>
+    <!-- 판정 배지 + 결과 -->
     <div class="card" id="dc-result"></div>
     <div class="card" id="dc-reverse"></div>
   </div>

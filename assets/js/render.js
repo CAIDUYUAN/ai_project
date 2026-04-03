@@ -429,31 +429,96 @@ function renderDiagnosis() {
   if (id === 'adcalc') calcAd();
 }
 
+// 플랫폼별 기본 설정
+const COUPON_PF_DEFAULTS = {
+  bm: { fee:8.78, del:3100 },
+  cp: { fee:13.10, del:3400 },
+  tg: { fee:12.30, del:0 },
+  yg: { fee:12.50, del:0 },
+};
+
+function setCouponPlatform(pf) {
+  document.getElementById('dc-platform').value = pf;
+  document.querySelectorAll('[data-cpf]').forEach(b => b.classList.toggle('active', b.dataset.cpf === pf));
+  // 배달비 기본값 세팅
+  const def = COUPON_PF_DEFAULTS[pf];
+  document.getElementById('dc-del').value = def.del;
+  document.getElementById('dc-del-slider').value = def.del;
+  calcCoupon();
+}
+
+function syncCoupon(src) {
+  // 슬라이더 ↔ 숫자 입력 동기화
+  if (src === 'cost')       document.getElementById('dc-cost').value = document.getElementById('dc-cost-slider').value;
+  if (src === 'cost-num')   document.getElementById('dc-cost-slider').value = document.getElementById('dc-cost').value;
+  if (src === 'price')      document.getElementById('dc-price').value = document.getElementById('dc-price-slider').value;
+  if (src === 'price-num')  document.getElementById('dc-price-slider').value = document.getElementById('dc-price').value;
+  if (src === 'discount')   document.getElementById('dc-discount').value = document.getElementById('dc-discount-slider').value;
+  if (src === 'discount-num') document.getElementById('dc-discount-slider').value = document.getElementById('dc-discount').value;
+  if (src === 'del')        document.getElementById('dc-del').value = document.getElementById('dc-del-slider').value;
+  if (src === 'del-num')    document.getElementById('dc-del-slider').value = document.getElementById('dc-del').value;
+  calcCoupon();
+}
+
 function calcCoupon() {
   const cost = parseFloat(document.getElementById('dc-cost')?.value) || 0;
   const price = parseFloat(document.getElementById('dc-price')?.value) || 0;
-  const targetMargin = parseFloat(document.getElementById('dc-margin')?.value) || 0;
   const discount = parseFloat(document.getElementById('dc-discount')?.value) || 0;
+  const delivery = parseFloat(document.getElementById('dc-del')?.value) || 0;
   const pf = document.getElementById('dc-platform')?.value || 'bm';
+
+  // 수수료율: 설정값에서 가져오기
   let feeRate;
   if (pf === 'bm') feeRate = (S.bmComm + S.bmPg + S.bmVat + S.bmExtra) / 100;
   else if (pf === 'cp') feeRate = (S.cpComm + S.cpPg + S.cpVat + S.cpExtra) / 100;
   else if (pf === 'tg') feeRate = (S.tgComm + S.tgPg + S.tgVat + S.tgExtra) / 100;
   else feeRate = (S.ygComm + S.ygPg + S.ygVat + S.ygExtra) / 100;
-  const delivery = pf === 'bm' ? S.bmDel : pf === 'cp' ? S.cpDel : pf === 'tg' ? S.tgDel : S.ygDel;
+
   const actualPrice = price - discount;
   const fee = price * feeRate;
   const profit = actualPrice - fee - delivery - cost;
   const profitRate = price > 0 ? (profit / price * 100) : 0;
-  let statusColor, statusText;
-  if (profitRate >= 20) { statusColor = 'var(--grn)'; statusText = '🟢 안전'; }
-  else if (profitRate >= 10) { statusColor = 'var(--or)'; statusText = '🟡 위험'; }
-  else { statusColor = 'var(--red)'; statusText = '🔴 손해'; }
+
+  // 판정: 15% 이상 안전, 8~15% 위험, 8% 미만 손해
+  let badgeBg, badgeColor, statusText;
+  if (profitRate >= 15) { badgeBg='#ECFDF5'; badgeColor='#065F46'; statusText='🟢 안전 구간'; }
+  else if (profitRate >= 8) { badgeBg='#FEF9EC'; badgeColor='#92400E'; statusText='🟡 위험 근접'; }
+  else { badgeBg='#FEE2E2'; badgeColor='#991B1B'; statusText='🔴 손실 구간'; }
+
+  const row = (label, val, color) => '<div style="display:flex;justify-content:space-between;padding:6px 0' + (color ? ';color:'+color : '') + '"><span>' + label + '</span><span>' + val + '</span></div>';
+
   const el = document.getElementById('dc-result');
-  if (el) el.innerHTML = '<div style="text-align:center;margin-bottom:12px"><div style="font-size:28px;font-weight:900;color:' + statusColor + '">' + statusText + '</div><div style="font-size:13px;color:var(--muted);margin-top:4px">순수익률 ' + profitRate.toFixed(1) + '%</div></div><div style="font-family:var(--mono);font-size:13px;line-height:2.2"><div style="display:flex;justify-content:space-between"><span>현재 판매가</span><span>' + W(price) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>쿠폰 할인</span><span>-' + W(discount) + '</span></div><div style="display:flex;justify-content:space-between"><span>실제 수령가</span><span>' + W(actualPrice) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>수수료 (' + (feeRate*100).toFixed(1) + '%)</span><span>-' + W(fee) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>배달비</span><span>-' + W(delivery) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>원가</span><span>-' + W(cost) + '</span></div><hr style="border:none;border-top:1px solid var(--bd);margin:4px 0"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;color:' + statusColor + '"><span>실제 순수익</span><span>' + W(profit) + ' (' + profitRate.toFixed(1) + '%)</span></div></div>';
-  const minPrice = (cost + delivery) / (1 - feeRate - targetMargin/100);
+  if (el) el.innerHTML =
+    '<div style="text-align:center;margin-bottom:14px">' +
+      '<span style="display:inline-block;background:' + badgeBg + ';color:' + badgeColor + ';border-radius:20px;padding:4px 16px;font-size:14px;font-weight:600">' + statusText + '</span>' +
+      '<div style="font-size:32px;font-weight:700;margin-top:10px;color:' + (profitRate >= 8 ? 'var(--tx)' : 'var(--danger)') + '">' + W(profit) + '</div>' +
+      '<div style="font-size:13px;color:var(--muted)">건당 순수익 · 마진율 ' + profitRate.toFixed(1) + '%</div>' +
+    '</div>' +
+    '<div style="font-family:var(--mono);font-size:13px;border-top:1px solid var(--bd2);padding-top:10px">' +
+      row('정가', W(price), '') +
+      row('쿠폰 할인', '-' + W(discount), 'var(--danger)') +
+      row('실제 수령가', W(actualPrice), '') +
+      row('수수료 (' + (feeRate*100).toFixed(1) + '%)', '-' + W(fee), 'var(--danger)') +
+      row('배달비', '-' + W(delivery), 'var(--danger)') +
+      row('원가', '-' + W(cost), 'var(--danger)') +
+      '<div style="border-top:1px solid var(--bd);margin:6px 0"></div>' +
+      '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;padding:6px 0;color:' + (profitRate >= 8 ? 'var(--grn)' : 'var(--danger)') + '"><span>건당 순수익</span><span>' + W(profit) + ' (' + profitRate.toFixed(1) + '%)</span></div>' +
+    '</div>';
+
+  // 역산: 마진 15% 유지를 위한 가격
+  const targetMargin = 15;
+  const minPrice15 = (cost + delivery) / (1 - feeRate - targetMargin/100);
+  const lossPrice = (cost + delivery) / (1 - feeRate);
   const reverseEl = document.getElementById('dc-reverse');
-  if (reverseEl) reverseEl.innerHTML = '<div class="card-title">🔄 목표 마진 ' + targetMargin + '% 유지하려면?</div><div style="font-size:14px;line-height:2"><div>최소 판매가: <strong style="color:var(--or)">' + W(Math.ceil(minPrice/100)*100) + '</strong></div><div>쿠폰 ' + W(discount) + ' 할인 시 정가: <strong style="color:var(--or)">' + W(Math.ceil((minPrice+discount)/100)*100) + '</strong></div><div style="margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(229,48,42,0.06);border:1px solid rgba(229,48,42,0.15);font-size:12px;color:var(--danger)">🔴 마지노선: ' + W(Math.ceil(((cost+delivery)/(1-feeRate))/100)*100) + ' 이하로 팔면 무조건 손해</div></div>';
+  if (reverseEl) reverseEl.innerHTML =
+    '<div class="card-title">🔄 마진 15% 유지하려면?</div>' +
+    '<div style="font-size:13px;line-height:2.2">' +
+      '<div>쿠폰 없이 최소 판매가: <strong style="color:var(--grn)">' + W(Math.ceil(minPrice15/100)*100) + '</strong></div>' +
+      '<div>쿠폰 ' + W(discount) + ' 적용 시 정가: <strong style="color:var(--or)">' + W(Math.ceil((minPrice15+discount)/100)*100) + '</strong></div>' +
+      '<div style="margin-top:8px;padding:10px 14px;border-radius:10px;background:#FEE2E2;border-left:3px solid var(--danger);font-size:12px;color:#991B1B">' +
+        '🔴 마지노선: <strong>' + W(Math.ceil(lossPrice/100)*100) + '</strong> 이하로 팔면 무조건 손해' +
+      '</div>' +
+    '</div>';
 }
 
 function renderDiag1() {
