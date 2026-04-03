@@ -390,7 +390,10 @@
     </div>
   </div>
 
-  <button class="btn-primary" onclick="saveSettings()">💾 설정 저장</button>
+  <div style="display:flex;gap:8px">
+    <button class="btn-primary" onclick="saveSettings()" style="flex:1">💾 설정 저장</button>
+    <button class="btn-sm" onclick="resetSettings()" style="padding:12px 16px;font-size:12px">초기화</button>
+  </div>
 </div>
 
 <div id="toast"></div>

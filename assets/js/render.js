@@ -128,17 +128,27 @@ function aggregate(sel) {
 // ==============================================
 // [N] 월 선택 버튼
 // ==============================================
-function renderMonthBtns(containerId, callback) {
+function selectMonth(mo) {
+  SEL = mo;
+  // 달력도 선택된 월로 동기화
+  if (mo !== 'all') {
+    const [y, m] = mo.split('-').map(Number);
+    calY = y; calM = m - 1;
+  }
+  // 모든 탭 렌더
+  renderOverview(); renderCompare(); renderCalendar();
+}
+function renderMonthBtns(containerId) {
   const el = document.getElementById(containerId); if(!el) return;
   el.innerHTML = '';
   const allBtn = document.createElement('button');
   allBtn.className = 'mbtn' + (SEL==='all'?' active':''); allBtn.textContent = '전체';
-  allBtn.onclick = () => { SEL='all'; callback(); }; el.appendChild(allBtn);
+  allBtn.onclick = () => selectMonth('all'); el.appendChild(allBtn);
   allMonths().forEach(mo => {
     const btn = document.createElement('button');
     btn.className = 'mbtn' + (SEL===mo?' active':'');
     btn.textContent = mo.replace('-','년 ')+'월';
-    btn.onclick = () => { SEL=mo; callback(); }; el.appendChild(btn);
+    btn.onclick = () => selectMonth(mo); el.appendChild(btn);
   });
 }
 
@@ -157,7 +167,7 @@ function renderAll() {
 // [P] 종합현황 렌더
 // ==============================================
 function renderOverview() {
-  renderMonthBtns('ov-months', renderOverview);
+  renderMonthBtns('ov-months');
   const ag = aggregate(SEL);
 
   // KPI
@@ -241,7 +251,7 @@ function renderOverview() {
 // [Q] 플랫폼 비교 렌더
 // ==============================================
 function renderCompare() {
-  renderMonthBtns('cmp-months', renderCompare);
+  renderMonthBtns('cmp-months');
   const ag = aggregate(SEL);
   const container = document.getElementById('pcard-container'); container.innerHTML = '';
 
@@ -333,7 +343,8 @@ function renderCalendar() {
 function moveMonth(dir) {
   calM += dir;
   if (calM < 0) { calM=11; calY--; } if (calM > 11) { calM=0; calY++; }
-  renderCalendar();
+  SEL = calY + '-' + String(calM+1).padStart(2,'0');
+  renderOverview(); renderCompare(); renderCalendar();
 }
 function showTooltip(cell, ds, bR, cR, bO, cO, bmMo, cpMo, gR, gO, yR, yO) {
   gR=gR||0; gO=gO||0; yR=yR||0; yO=yO||0;

@@ -72,6 +72,15 @@ async function loadFromSupabase() {
     rows.forEach(row => {
       const pf = row.platform;
       const key = row.ym_key;
+
+      // 설정 데이터 복원
+      if (pf === 'settings' && key === 'config') {
+        Object.assign(S, row.data);
+        localStorage.setItem('bbalgan_v2', JSON.stringify(S));
+        applySettingsToUI();
+        return;
+      }
+
       if (!DB[pf]) return;
 
       DB[pf][key] = row.data;

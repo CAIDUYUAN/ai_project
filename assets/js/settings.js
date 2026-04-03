@@ -15,6 +15,13 @@ const S = {
 function loadSettings() {
   try { Object.assign(S, JSON.parse(localStorage.getItem('bbalgan_v2') || '{}')); } catch(e) {}
 }
+async function loadSettingsFromSupabase() {
+  const sb = getSb(); if (!sb) return;
+  try {
+    const { data: rows } = await sb.from('sales_data').select('data').eq('platform','settings').eq('ym_key','config');
+    if (rows && rows.length) { Object.assign(S, rows[0].data); localStorage.setItem('bbalgan_v2', JSON.stringify(S)); }
+  } catch(e) {}
+}
 function saveSettings() {
   const g = id => parseFloat(document.getElementById(id)?.value) || 0;
   Object.assign(S, {
@@ -26,6 +33,8 @@ function saveSettings() {
     cp3Min:g('s-cp3-min'), cp3Amt:g('s-cp3-amt'),
   });
   localStorage.setItem('bbalgan_v2', JSON.stringify(S));
+  // Supabase에 설정 저장
+  saveToSupabase('settings', 'config', S, 'settings').catch(e => console.warn(e));
   Object.values(DB.bm).forEach(d => recalcBM(d));
   document.getElementById('hd-bm-del').textContent = S.bmDel.toLocaleString() + '원';
   document.getElementById('hd-cp-del').textContent = S.cpDel.toLocaleString() + '원';
@@ -33,6 +42,20 @@ function saveSettings() {
   renderAll();
   calcBEPSummary();
   toast('⚙️ 설정 저장됐어요!');
+}
+function resetSettings() {
+  if (!confirm('설정을 초기값으로 되돌리시겠습니까?')) return;
+  const defaults = {
+    rent:800000, mgmt:100000, util:150000, pack:100000, etc:50000, living:2000000, cogs:35,
+    bmComm:6.8, bmPg:1.3, bmVat:0.68, bmExtra:0, bmDel:3100,
+    cpComm:7.8, cpPg:2.8, cpVat:2.5, cpExtra:0, cpDel:3400,
+    tgFee:9.0, tgDel:0, ygFee:0, ygDel:0,
+    cp1Min:14900, cp1Amt:1000, cp2Min:25000, cp2Amt:2000, cp3Min:35000, cp3Amt:3000,
+  };
+  Object.assign(S, defaults);
+  applySettingsToUI();
+  saveSettings();
+  toast('⚙️ 설정이 초기화됐어요!');
 }
 function applySettingsToUI() {
   const s = (id, v) => { const el = document.getElementById(id); if(el) el.value = v; };
