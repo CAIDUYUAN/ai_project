@@ -199,6 +199,18 @@ function matchAllStoreProfit(idx) {
   toast('✅ 모든 플랫폼 가격이 가게 순수익 기준으로 설정됐어요!');
 }
 
+// ── 메뉴 삭제 ──
+function deleteMenuItem(idx) {
+  const name = MENU_DATA[idx]?.name || '';
+  if (!confirm(`"${name}" 메뉴를 삭제하시겠습니까?`)) return;
+  MENU_DATA.splice(idx, 1);
+  MENU_DATA_ORIG.splice(idx, 1);
+  localStorage.setItem('menuCostData', JSON.stringify(MENU_DATA));
+  localStorage.setItem('menuCostDataOrig', JSON.stringify(MENU_DATA_ORIG));
+  renderMenuCost();
+  toast(`🗑 "${name}" 삭제됨`);
+}
+
 // ── 플랫폼 가격 초기화 (엑셀 원본으로) ──
 function resetPfPrices(idx) {
   if (!MENU_DATA_ORIG[idx]) return;
@@ -355,6 +367,7 @@ function renderMenuCards(items) {
         <div style="display:flex;gap:6px;align-items:center">
           <span style="padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;background:${badgeColor}">${item.grade}</span>
           <button onclick="resetPfPrices(${item.idx})" style="padding:4px 8px;border:1px solid var(--bd);background:var(--bg3);color:var(--tx2);border-radius:6px;font-size:11px;cursor:pointer">🔄 초기화</button>
+          <button onclick="deleteMenuItem(${item.idx})" style="padding:4px 8px;border:1px solid var(--danger);background:rgba(229,48,42,0.1);color:var(--danger);border-radius:6px;font-size:11px;cursor:pointer">🗑 삭제</button>
         </div>
       </div>
 
