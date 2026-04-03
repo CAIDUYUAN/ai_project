@@ -65,24 +65,26 @@ function loadMenuXlsx(files) {
       for (let i = 3; i < rows.length; i++) {
         const r = rows[i];
         if (!r[0] || String(r[0]).trim() === '') continue;
+        // 컬럼순서: 메뉴명(0) 가게판매가(1) 가게할인가(2) 배민판매(3) 배민할인(4)
+        //           쿠팡판매(5) 쿠팡할인(6) 땡겨요판매(7) 땡겨요할인(8) 요기요판매(9) 요기요할인(10)
+        //           식재료비(11) 소스비(12) 포장재비(13) 반찬비(14) 기타원가(15)
         MENU_DATA.push({
           name: String(r[0]).trim(),
           price: Number(r[1]) || 0,
           discPrice: Number(r[2]) || 0,
-          food: Number(r[3]) || 0,
-          sauce: Number(r[4]) || 0,
-          pack: Number(r[5]) || 0,
-          side: Number(r[6]) || 0,
-          etc: Number(r[7]) || 0,
-          // 플랫폼별 판매가/할인가 (엑셀에 없으면 가게가격 사용)
-          pf_bm_price: Number(r[8]) || Number(r[1]) || 0,
-          pf_bm_disc:  Number(r[9]) || Number(r[2]) || 0,
-          pf_cp_price: Number(r[10]) || Number(r[1]) || 0,
-          pf_cp_disc:  Number(r[11]) || Number(r[2]) || 0,
-          pf_tg_price: Number(r[12]) || Number(r[1]) || 0,
-          pf_tg_disc:  Number(r[13]) || Number(r[2]) || 0,
-          pf_yg_price: Number(r[14]) || Number(r[1]) || 0,
-          pf_yg_disc:  Number(r[15]) || Number(r[2]) || 0,
+          pf_bm_price: Number(r[3]) || Number(r[1]) || 0,
+          pf_bm_disc:  Number(r[4]) || Number(r[2]) || 0,
+          pf_cp_price: Number(r[5]) || Number(r[1]) || 0,
+          pf_cp_disc:  Number(r[6]) || Number(r[2]) || 0,
+          pf_tg_price: Number(r[7]) || Number(r[1]) || 0,
+          pf_tg_disc:  Number(r[8]) || Number(r[2]) || 0,
+          pf_yg_price: Number(r[9]) || Number(r[1]) || 0,
+          pf_yg_disc:  Number(r[10]) || Number(r[2]) || 0,
+          food: Number(r[11]) || 0,
+          sauce: Number(r[12]) || 0,
+          pack: Number(r[13]) || 0,
+          side: Number(r[14]) || 0,
+          etc: Number(r[15]) || 0,
         });
       }
 
@@ -108,16 +110,16 @@ function loadMenuXlsx(files) {
 // ── 샘플 파일 다운로드 ──
 function downloadMenuSample() {
   const headers = [
-    '메뉴명','가게 판매가\n(원)','가게 할인후가격\n(원)',
-    '식재료비\n(원)','소스비\n(원)','포장재비\n(비닐+숟가락+젓가락+용기)','반찬비\n(용기포함)','기타원가\n(원)',
-    '배민 판매가\n(원)','배민 할인가\n(원)',
-    '쿠팡 판매가\n(원)','쿠팡 할인가\n(원)',
-    '땡겨요 판매가\n(원)','땡겨요 할인가\n(원)',
-    '요기요 판매가\n(원)','요기요 할인가\n(원)',
+    '메뉴명','가게 판매가(원)','가게 할인후가격(원)',
+    '배민 판매가(원)','배민 할인가(원)',
+    '쿠팡 판매가(원)','쿠팡 할인가(원)',
+    '땡겨요 판매가(원)','땡겨요 할인가(원)',
+    '요기요 판매가(원)','요기요 할인가(원)',
+    '식재료비(원)','소스비(원)','포장재비\n(비닐+숟가락+젓가락+용기)','반찬비(용기포함)','기타원가(원)',
   ];
   const sample = [
-    ['마라탕', 13900, 11900, 3800, 500, 600, 400, 300, 15900, 13900, 16900, 14900, 14900, 12900, 15900, 13900],
-    ['꿔바로우', 16900, 14900, 4800, 600, 650, 450, 300, 18900, 16900, 19900, 17900, 17900, 15900, 18900, 16900],
+    ['메뉴1', 13900, 11900, 15900, 13900, 16900, 14900, 14900, 12900, 15900, 13900, 3800, 500, 600, 400, 300],
+    ['메뉴2', 16900, 14900, 18900, 16900, 19900, 17900, 17900, 15900, 18900, 16900, 4800, 600, 650, 450, 300],
   ];
 
   const ws = XLSX.utils.aoa_to_sheet([
@@ -128,8 +130,9 @@ function downloadMenuSample() {
   ]);
 
   ws['!cols'] = [
-    {wch:12},{wch:13},{wch:15},{wch:10},{wch:8},{wch:18},{wch:12},{wch:10},
-    {wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}
+    {wch:12},{wch:14},{wch:16},
+    {wch:13},{wch:13},{wch:13},{wch:13},{wch:14},{wch:14},{wch:13},{wch:13},
+    {wch:10},{wch:8},{wch:20},{wch:14},{wch:10}
   ];
 
   const wb = XLSX.utils.book_new();
