@@ -16,6 +16,21 @@ function storeData(pf, data, filename) {
     return;
   }
 
+  // 배민 매입 데이터는 별도 처리
+  if (pf === 'bm' && data && data.type === 'purchase') {
+    mergeBM_purchase(data);
+    const key = data.ym[0] + '-' + String(data.ym[1]).padStart(2,'0');
+    const fnKey = key + '_purchase';
+    FILES[pf] = FILES[pf].filter(f => f.key !== fnKey);
+    FILES[pf].push({key:fnKey, period:data.period+' 매입', filename});
+    FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
+    if (DB.bm[key]) saveToSupabase('bm', key, DB.bm[key], filename).catch(e => console.warn(e));
+    updateUploadUI(pf);
+    updateFileList();
+    renderAll();
+    return;
+  }
+
   // 땡겨요 매입 데이터는 별도 처리
   if (pf === 'tg' && data && data.type === 'purchase') {
     mergeTG_purchase(data);
@@ -36,6 +51,14 @@ function storeData(pf, data, filename) {
   const items = Array.isArray(data) ? data : [data];
   items.forEach(d => {
     const key = d.ym[0] + '-' + String(d.ym[1]).padStart(2,'0');
+    // 배민: 매입 데이터가 먼저 로드된 경우 병합
+    if (pf === 'bm' && DB.bm[key] && DB.bm[key]._hasPurchaseData) {
+      const prev = DB.bm[key];
+      d.fee = prev.fee;
+      d.delivery = prev.delivery;
+      d.feeRate = d.totalRev ? prev.fee / d.totalRev : 0;
+      d._hasPurchaseData = true;
+    }
     // 요기요: 매입 데이터가 먼저 로드된 경우 병합
     if (pf === 'yg' && DB.yg[key] && DB.yg[key]._hasPurchaseData) {
       const prev = DB.yg[key];
@@ -78,7 +101,7 @@ function loadXlsx2(files, pf) {
       try {
         const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
         let data;
-        if      (pf === 'bm') data = parseBM_xlsx(wb, file.name);
+        if      (pf === 'bm') data = /매입상세내역/.test(file.name) ? parseBM_purchase_xlsx(wb, file.name) : parseBM_xlsx(wb, file.name);
         else if (pf === 'cp') data = parseCP_xlsx(wb, file.name);
         else if (pf === 'yg') data = parseYG_xlsx(wb, file.name);
         else                  data = parseTG_xlsx(wb, file.name);
@@ -116,7 +139,7 @@ function drSetProgress(v) { document.getElementById('dr-prog').style.display = v
 // 플랫폼 감지 (파일명 기준)
 function detectPlatform(name) {
   if (/coupang[_\-]eats/i.test(name))                        return 'cp';
-  if (/매출상세내역/.test(name))                              return 'bm';
+  if (/매출상세내역|매입상세내역/.test(name))                  return 'bm';
   if (/땡겨요/.test(name))                                    return 'tg';
   if (/매출내역/.test(name) && /^\d{6}_\d{6}/.test(name))   return 'tg';
   if (/_매출내역_|_매입내역_/.test(name))                     return 'yg';

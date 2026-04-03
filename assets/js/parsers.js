@@ -115,6 +115,72 @@ function parseBM_xlsx(wb, filename) {
 }
 
 // ==============================================
+// [E2] 파싱 - 배민 매입 엑셀 (XLSX)
+// ==============================================
+function parseBM_purchase_xlsx(wb, filename) {
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+  // 파일명에서 연월 추출
+  const mf = filename.match(/(\d{4})년(\d{2})월/);
+  if (!mf) throw new Error('배민 매입 파일명에서 연월을 추출할 수 없습니다');
+  const yr = +mf[1], mn = +mf[2];
+  const period = yr+'년 '+mn+'월';
+
+  // 헤더 행 찾기 (일자, 서비스, 수수료유형 등)
+  let hi = -1;
+  for (let i=0; i<Math.min(rows.length,15); i++) {
+    if ((rows[i]||[]).some(v => v && /수수료유형/.test(String(v)))) { hi=i; break; }
+  }
+  if (hi < 0) throw new Error('배민 매입 헤더를 찾을 수 없습니다');
+
+  const headers = (rows[hi]||[]).map(v => String(v||'').trim());
+  const ci = {
+    date:    headers.findIndex(h => /^일자$/.test(h)),
+    feeType: headers.findIndex(h => /수수료유형/.test(h)),
+    amount:  headers.findIndex(h => /^합계$/.test(h)),
+  };
+
+  let totalFee=0, totalDelivery=0, totalAd=0;
+  for (let i=hi+1; i<rows.length; i++) {
+    const r = rows[i];
+    if (!r || !r[ci.date] || r[ci.date]==='계') continue;
+    const feeType = String(r[ci.feeType]||'').trim();
+    const amount = Number(r[ci.amount])||0;
+    // 배민부담금액은 제외
+    if (/배민부담금액/.test(feeType)) continue;
+    if (/배달비/.test(feeType)) totalDelivery += amount;
+    else if (/광고이용료/.test(feeType)) totalAd += amount;
+    else totalFee += amount; // 중개이용료, 결제정산수수료
+  }
+
+  return {
+    type: 'purchase', ym:[yr,mn], period,
+    fee: totalFee, delivery: totalDelivery, ad: totalAd
+  };
+}
+
+// 배민 매입 병합
+function mergeBM_purchase(purchaseData) {
+  const key = purchaseData.ym[0] + '-' + String(purchaseData.ym[1]).padStart(2,'0');
+  const existing = DB.bm[key];
+  if (existing) {
+    existing.fee = purchaseData.fee;
+    existing.delivery = purchaseData.delivery;
+    existing.feeRate = existing.totalRev ? purchaseData.fee / existing.totalRev : 0;
+    existing._hasPurchaseData = true;
+  } else {
+    DB.bm[key] = {
+      period: purchaseData.period, ym: purchaseData.ym,
+      totalRev:0, orders:0, daily:{},
+      fee: purchaseData.fee, delivery: purchaseData.delivery,
+      feeRate:0, coupon:0,
+      _hasPurchaseData: true
+    };
+  }
+}
+
+// ==============================================
 // [F] 파싱 - 쿠팡 엑셀 (XLSX)
 // ==============================================
 function parseCP_xlsx(wb, filename) {
