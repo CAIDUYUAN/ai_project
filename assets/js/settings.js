@@ -6,6 +6,7 @@ const S = {
   bmComm:6.8, bmPg:1.3, bmVat:0.68, bmExtra:0, bmDel:3100,
   cpComm:7.8, cpPg:2.8, cpVat:2.5,  cpExtra:0, cpDel:3400,
   tgFee:9.0, tgDel:0,  // 땡겨요: 수수료 9% + 카드 3.3% = 12.3%, 배달비 0(자체배달)
+  ygFee:0, ygDel:0,    // 요기요: 수수료는 매입에서 가져옴, 배달비 0
   cp1Min:14900, cp1Amt:1000,
   cp2Min:25000, cp2Amt:2000,
   cp3Min:35000, cp3Amt:3000,

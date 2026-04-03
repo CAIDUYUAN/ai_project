@@ -1,6 +1,21 @@
 // [I] DB 저장 공통 (땡겨요 다중 월 배열 + 매입 병합 지원)
 // ==============================================
 function storeData(pf, data, filename) {
+  // 요기요 매입 데이터는 별도 처리
+  if (pf === 'yg' && data && data.type === 'purchase') {
+    mergeYG_purchase(data);
+    const key = data.ym[0] + '-' + String(data.ym[1]).padStart(2,'0');
+    const fnKey = key + '_purchase';
+    FILES[pf] = FILES[pf].filter(f => f.key !== fnKey);
+    FILES[pf].push({key:fnKey, period:data.period+' 매입', filename});
+    FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
+    if (DB.yg[key]) saveToSupabase('yg', key, DB.yg[key], filename).catch(e => console.warn(e));
+    updateUploadUI(pf);
+    updateFileList();
+    renderAll();
+    return;
+  }
+
   // 땡겨요 매입 데이터는 별도 처리
   if (pf === 'tg' && data && data.type === 'purchase') {
     mergeTG_purchase(data);
@@ -21,6 +36,14 @@ function storeData(pf, data, filename) {
   const items = Array.isArray(data) ? data : [data];
   items.forEach(d => {
     const key = d.ym[0] + '-' + String(d.ym[1]).padStart(2,'0');
+    // 요기요: 매입 데이터가 먼저 로드된 경우 병합
+    if (pf === 'yg' && DB.yg[key] && DB.yg[key]._hasPurchaseData) {
+      const prev = DB.yg[key];
+      d.fee = prev.fee;
+      d.delivery = prev.delivery;
+      d.feeRate = d.totalRev ? prev.fee / d.totalRev : 0;
+      d._hasPurchaseData = true;
+    }
     // 땡겨요: 매입 데이터가 먼저 로드된 경우 병합
     if (pf === 'tg' && DB.tg[key] && DB.tg[key]._hasPurchaseData) {
       const prev = DB.tg[key];
@@ -57,9 +80,10 @@ function loadXlsx2(files, pf) {
         let data;
         if      (pf === 'bm') data = parseBM_xlsx(wb, file.name);
         else if (pf === 'cp') data = parseCP_xlsx(wb, file.name);
+        else if (pf === 'yg') data = parseYG_xlsx(wb, file.name);
         else                  data = parseTG_xlsx(wb, file.name);
         storeData(pf, data, file.name);
-        const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':'땡겨요';
+        const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':'땡겨요';
         const first = Array.isArray(data) ? data[0] : data;
         toast(`${label} ${first.period} 로드 완료!`);
       } catch(err) { alert(`파일 오류(${file.name}): ${err.message}`); }
@@ -95,6 +119,7 @@ function detectPlatform(name) {
   if (/매출상세내역/.test(name))                              return 'bm';
   if (/땡겨요/.test(name))                                    return 'tg';
   if (/매출내역/.test(name) && /^\d{6}_\d{6}/.test(name))   return 'tg';
+  if (/_매출내역_|_매입내역_/.test(name))                     return 'yg';
   return null;
 }
 
@@ -121,7 +146,7 @@ async function loadFromDrive() {
       if (!f.content || f.content.trim().length < 50 || f.type === 'error') return false;
       if (f.name.includes('제목 없는')) return false;
       const key = f.name.trim() + '|' + f.content.trim().length;
-      if (seen.has(key)) { console.log('🔁 중복 제거:', f.name); return false; }
+      if (seen.has(key)) return false;
       seen.add(key); return true;
     });
 
@@ -140,7 +165,7 @@ async function loadFromDrive() {
         else                  parsed = parseTG(content, f.name);
         storeData(pf, parsed, f.name);
         const first = Array.isArray(parsed) ? parsed[0] : parsed;
-        const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':'땡겨요';
+        const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':'땡겨요';
         loaded++;
         toast(`${label} ${first.period} 로드!`);
       } catch(e) { console.warn('파싱 실패:', f.name, e.message); failed++; }

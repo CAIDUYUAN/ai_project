@@ -1,7 +1,7 @@
 // [B] 데이터 저장소
 // ==============================================
-const DB    = { bm:{}, cp:{}, tg:{} };  // tg = 땡겨요
-const FILES = { bm:[], cp:[], tg:[] };
+const DB    = { bm:{}, cp:{}, tg:{}, yg:{} };  // tg = 땡겨요, yg = 요기요
+const FILES = { bm:[], cp:[], tg:[], yg:[] };
 
 // ==============================================
 // [C] 헬퍼 유틸
@@ -10,7 +10,7 @@ const W         = n  => '₩' + Math.round(n||0).toLocaleString('ko-KR');
 const Pct       = (a,b) => b ? (a/b*100).toFixed(1)+'%' : '0%';
 const fixedCost = () => S.rent + S.mgmt + S.util + S.pack + S.etc;
 const bmFeeRate = () => (S.bmComm + S.bmPg + S.bmVat + S.bmExtra) / 100;
-const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg)])].sort();
+const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg), ...Object.keys(DB.yg)])].sort();
 
 function couponAmt(orderAmt) {
   if (orderAmt >= S.cp3Min) return S.cp3Amt;
@@ -600,4 +600,193 @@ function parseTG_xlsx(wb, filename) {
     return v.includes(',')?'"'+v+'"':v;
   }).join(','));
   return parseTG(csvLines.join('\n'), filename);
+}
+
+// ==============================================
+// [I1] 파싱 - 요기요 파일명에서 연월 추출
+// ==============================================
+function parseYG_extractYM(filename) {
+  // 파일명 패턴: 사업자번호_매출내역_YYYYMMDD_YYYYMMDD.xlsx 또는 사업자번호_매입내역_YYYYMMDD_YYYYMMDD.xlsx
+  const m = filename.match(/_(매출내역|매입내역)_(\d{4})(\d{2})\d{2}_(\d{4})(\d{2})\d{2}/);
+  if (!m) return null;
+  const type = m[1] === '매입내역' ? 'purchase' : 'sales';
+  const yr = +m[2], mn = +m[3];
+  return { yr, mn, period: yr+'년 '+mn+'월', type };
+}
+
+// ==============================================
+// [I2] 파싱 - 요기요 매출 (XLSX)
+// ==============================================
+function parseYG_sales_xlsx(wb, filename) {
+  const info = parseYG_extractYM(filename);
+  if (!info) throw new Error('파일명에서 연월을 추출할 수 없습니다: ' + filename);
+  const { yr, mn, period } = info;
+
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const toNum = v => parseFloat(String(v||'').replace(/[,₩"]/g,''))||0;
+
+  // 행 15~16 영역에서 합계 헤더 찾기 (매출건수, 매출합계)
+  let summaryRow = null;
+  for (let i=0; i<Math.min(rows.length,20); i++) {
+    if ((rows[i]||[]).some(v => v && /매출건수/.test(String(v)))) {
+      summaryRow = rows[i+1]; // 데이터는 헤더 바로 다음 행
+      break;
+    }
+  }
+
+  let totalOrders = 0, totalRev = 0;
+  if (summaryRow) {
+    totalOrders = toNum(summaryRow[0]);
+    totalRev = toNum(summaryRow[summaryRow.length-1]); // 마지막 컬럼 = 매출합계
+  }
+
+  // 상세 데이터 헤더 찾기 (거래일시, 주문번호 등)
+  let detailHi = -1;
+  for (let i=0; i<Math.min(rows.length,25); i++) {
+    if ((rows[i]||[]).some(v => v && /거래일시/.test(String(v)))) { detailHi=i; break; }
+  }
+
+  const daily = {};
+  if (detailHi >= 0 && detailHi+1 < rows.length) {
+    const headers = (rows[detailHi]||[]).map(v => String(v||'').trim());
+    const ci = {
+      date: headers.findIndex(h => /거래일시/.test(h)),
+      rev:  headers.findIndex(h => /주문금액$/.test(h)),
+    };
+    if (ci.date < 0) ci.date = 0;
+    if (ci.rev < 0) ci.rev = 4; // 주문금액 컬럼
+
+    let detailOrders = 0, detailRev = 0;
+    for (let i=detailHi+1; i<rows.length; i++) {
+      const r = rows[i];
+      if (!r || !r[ci.date]) continue;
+      let ds = '';
+      const rawDate = r[ci.date];
+      if (rawDate instanceof Date) {
+        ds = rawDate.toISOString().substring(0,10);
+      } else {
+        ds = String(rawDate).substring(0,10);
+      }
+      if (!ds || ds.length < 10) continue;
+
+      const rev = toNum(r[ci.rev]);
+      if (!rev) continue;
+
+      if (!daily[ds]) daily[ds] = {rev:0, orders:0};
+      daily[ds].rev += rev;
+      daily[ds].orders++;
+      detailOrders++;
+      detailRev += rev;
+    }
+    if (detailOrders > 0) {
+      totalOrders = detailOrders;
+      totalRev = detailRev;
+    }
+  }
+
+  // 상세 데이터가 없으면 월 1일에 총액 할당
+  if (Object.keys(daily).length === 0 && totalRev > 0) {
+    const ds = `${yr}-${String(mn).padStart(2,'0')}-01`;
+    daily[ds] = {rev: totalRev, orders: totalOrders};
+  }
+
+  return {
+    period, ym:[yr,mn], totalRev, orders:totalOrders, daily,
+    fee:0, feeRate:0, delivery:0, coupon:0,
+    _hasPurchaseData: false
+  };
+}
+
+// ==============================================
+// [I3] 파싱 - 요기요 매입 (XLSX)
+// ==============================================
+function parseYG_purchase_xlsx(wb, filename) {
+  const info = parseYG_extractYM(filename);
+  if (!info) throw new Error('파일명에서 연월을 추출할 수 없습니다: ' + filename);
+  const { yr, mn, period } = info;
+
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const toNum = v => parseFloat(String(v||'').replace(/[,₩"]/g,''))||0;
+
+  // 합계 행 찾기 (행 14~15 영역: 매수, 공급가액, 세액, 합계)
+  let totalFee = 0;
+  for (let i=0; i<Math.min(rows.length,20); i++) {
+    if ((rows[i]||[]).some(v => v && /합계/.test(String(v)))) {
+      // 합계 헤더 다음 행이 데이터
+      const dataRow = rows[i+1];
+      if (dataRow) {
+        // 합계금액 = 마지막 컬럼 또는 인덱스 3
+        totalFee = toNum(dataRow[3]) || toNum(dataRow[dataRow.length-1]);
+      }
+      break;
+    }
+    // 매수 헤더 찾기
+    if ((rows[i]||[]).some(v => v && /매수/.test(String(v)) && /공급가액/.test(String(rows[i]||[])))) {
+      const dataRow = rows[i+1];
+      if (dataRow) {
+        totalFee = toNum(dataRow[3]) || toNum(dataRow[dataRow.length-1]);
+      }
+      break;
+    }
+  }
+
+  // 헤더에서 직접 찾기: "매수, 공급가액, 세액, 합계" 패턴
+  if (!totalFee) {
+    for (let i=0; i<Math.min(rows.length,20); i++) {
+      const r = rows[i];
+      if (!r) continue;
+      const rowStr = (r||[]).map(v=>String(v||'')).join(',');
+      if (/매수/.test(rowStr) && /공급가액/.test(rowStr)) {
+        const dataRow = rows[i+1];
+        if (dataRow) {
+          // 합계 컬럼 (보통 인덱스 3)
+          totalFee = toNum(dataRow[3]);
+        }
+        break;
+      }
+    }
+  }
+
+  return {
+    type: 'purchase', ym:[yr,mn], period,
+    fee: totalFee,
+    delivery: 0,
+    feeRate: 0
+  };
+}
+
+// ==============================================
+// [I4] 요기요 매입 데이터를 기존 매출에 병합
+// ==============================================
+function mergeYG_purchase(purchaseData) {
+  const key = purchaseData.ym[0] + '-' + String(purchaseData.ym[1]).padStart(2,'0');
+  const existing = DB.yg[key];
+
+  if (existing) {
+    existing.fee = purchaseData.fee;
+    existing.delivery = purchaseData.delivery || 0;
+    existing.feeRate = existing.totalRev ? purchaseData.fee / existing.totalRev : 0;
+    existing._hasPurchaseData = true;
+  } else {
+    DB.yg[key] = {
+      period: purchaseData.period, ym: purchaseData.ym,
+      totalRev:0, orders:0, daily:{},
+      fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
+      feeRate:0, coupon:0,
+      _hasPurchaseData: true, _pendingPurchase: purchaseData
+    };
+  }
+}
+
+// ==============================================
+// [I5] 파싱 - 요기요 엑셀 (XLSX) - 매출/매입 자동 감지
+// ==============================================
+function parseYG_xlsx(wb, filename) {
+  const info = parseYG_extractYM(filename);
+  if (!info) throw new Error('요기요 파일명을 인식할 수 없습니다: ' + filename);
+
+  if (info.type === 'purchase') return parseYG_purchase_xlsx(wb, filename);
+  return parseYG_sales_xlsx(wb, filename);
 }

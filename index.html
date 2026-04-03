@@ -26,7 +26,7 @@
     <div class="logo-icon">🌶️</div>
     <div>
       <h1>빨마라</h1>
-      <p>배민 · 쿠팡이츠 매출 대시보드</p>
+      <p>배민 · 쿠팡이츠 · 땡겨요 · 요기요 매출 대시보드</p>
     </div>
   </div>
   <div class="header-info">
@@ -142,6 +142,7 @@
             · 배민: <code>매출상세내역_YYYY년MM월...</code><br>
             · 쿠팡: <code>coupang_eats_YYYY-MM</code><br>
             · 땡겨요: <code>땡겨요 YYYY년 MM월 매출</code> / <code>땡겨요 YYYY년 MM월 매입</code><br>
+            · 요기요: <code>사업자번호_매출내역_YYYYMMDD_YYYYMMDD</code> / <code>사업자번호_매입내역_YYYYMMDD_YYYYMMDD</code><br>
             <span style="color:var(--muted);font-size:11px">파일명이 규칙과 다르면 플랫폼 자동 인식이 안 됩니다</span>
           </div>
         </div>
@@ -234,11 +235,20 @@
           </div>
         </div>
 
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <strong>요기요 파일 다운로드 (매출 + 매입)</strong><br>
+            요기요 사장님사이트 → <strong>부가세 신고자료</strong> → 월 선택 → <strong>매출/매입 각각 다운로드</strong><br>
+            파일명 예시: <code>227-31-01549_매출내역_20260101_20260131.xlsx</code> + <code>227-31-01549_매입내역_20260101_20260131.xlsx</code>
+          </div>
+        </div>
+
         <div class="step-item done">
-          <div class="step-num" style="border-color:var(--grn);color:var(--grn);background:rgba(26,158,107,0.15)">4</div>
+          <div class="step-num" style="border-color:var(--grn);color:var(--grn);background:rgba(26,158,107,0.15)">5</div>
           <div class="step-text">
             <strong>아래 박스에 파일 드래그 or 클릭</strong><br>
-            배민 → 왼쪽 / 쿠팡 → 가운데 / 땡겨요 → 오른쪽 박스<br>
+            배민 / 쿠팡 / 땡겨요 / 요기요 각각의 박스에 업로드<br>
             <strong>여러 달 파일을 한번에</strong> 선택해도 됩니다
           </div>
         </div>
@@ -255,7 +265,7 @@
 
       <hr class="step-divider">
 
-      <div class="upload-grid" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="upload-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">
         <div class="upload-box" id="box-bm"
           ondragover="onDrag(event,'box-bm')" ondragleave="offDrag('box-bm')"
           ondrop="onDrop(event,'bm')">
@@ -288,6 +298,17 @@
             땡겨요 YYYY년 MM월 매출/매입<br>매출+매입 함께 선택 가능
           </div>
           <div id="tags-tg" class="upload-tags"></div>
+        </div>
+        <div class="upload-box" id="box-yg"
+          ondragover="onDrag(event,'box-yg')" ondragleave="offDrag('box-yg')"
+          ondrop="onDrop(event,'yg')">
+          <input type="file" accept=".xlsx,.xls" multiple onchange="loadXlsx(this,'yg')">
+          <div style="font-size:26px;margin-bottom:8px">🟠</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#FF4500">요기요</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.5">
+            사업자번호_매출/매입내역_...<br>매출+매입 함께 선택 가능
+          </div>
+          <div id="tags-yg" class="upload-tags"></div>
         </div>
       </div>
 
@@ -407,6 +428,7 @@
       <div class="legend-item"><div class="legend-dot" style="background:var(--grn)"></div>배민</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>쿠팡</div>
       <div class="legend-item"><div class="legend-dot" style="background:#06D6A0"></div>땡겨요</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FF4500"></div>요기요</div>
     </div>
     <div class="bar-chart" id="bar-chart"></div>
   </div>
@@ -421,6 +443,7 @@
           <th style="color:#4ade80">배민</th>
           <th style="color:#f87171">쿠팡</th>
           <th style="color:#06D6A0">땡겨요</th>
+          <th style="color:#FF4500">요기요</th>
           <th>합계</th><th>주문</th>
           <th>차감합계</th><th>입금예정</th><th>순수익</th>
         </tr></thead>
@@ -445,6 +468,7 @@
           <th style="color:#4ade80">배달의민족</th>
           <th style="color:#f87171">쿠팡이츠</th>
           <th style="color:#06D6A0">땡겨요</th>
+          <th style="color:#FF4500">요기요</th>
           <th>합계</th>
         </tr></thead>
         <tbody id="cmp-tbody"></tbody>
