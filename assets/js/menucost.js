@@ -233,13 +233,10 @@ function buildProfitGrid(item) {
       <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">${icon}${pfIcon(pf)} ${pfName(pf)}</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:2px">판매가 ${W(pfPrice)} / 할인금액 ${W(pfDiscount)} / 실제 ${W(pfActual)}</div>
       <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${color};margin-bottom:4px">순수익 ${W(profit)}${loss}</div>
-      <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">적정 판매가: <strong>${W(recPrice)}</strong>
-        <span style="color:${diffColor};margin-left:4px">(가게 대비 ${diffSign}${W(diff)})</span>
+      <div style="font-size:11px;color:var(--tx2)">적정판매가:
+        <strong onclick="matchStoreProfit(${item.idx},'${pf}')" style="color:var(--blue);cursor:pointer;text-decoration:underline;padding:2px 4px;border-radius:4px" title="클릭하면 이 가격으로 적용 (가게 순수익 ${W(item.storeProfit)} 맞춤)">${W(recPrice)}</strong>
+        <span style="color:${diffColor};margin-left:4px">(${diffSign}${W(diff)})</span>
       </div>
-      <button onclick="matchStoreProfit(${item.idx},'${pf}')"
-        style="width:100%;padding:4px 8px;font-size:11px;border:1px solid var(--grn);background:rgba(45,158,107,0.1);color:var(--grn);border-radius:6px;cursor:pointer;font-weight:600">
-        🏪 가게 순수익 맞추기 (${W(item.storeProfit)})
-      </button>
     </div>`;
   }).join('');
 }
@@ -350,7 +347,10 @@ function renderMenuCards(items) {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div>
           <span style="font-size:15px;font-weight:700">${item.name}</span>
-          <span style="font-size:12px;color:var(--muted);margin-left:8px">판매가 ${W(item.price)} — 할인금액 ${W(item.discount)} — 실제 ${W(item.storeActual)}</span>
+          <span style="font-size:13px;margin-left:10px">판매가 <strong style="color:var(--tx);font-size:14px">${W(item.price)}</strong></span>
+          <span style="font-size:12px;color:var(--muted);margin-left:6px">할인 ${W(item.discount)}</span>
+          <span style="font-size:12px;color:var(--muted)">→</span>
+          <span style="font-size:13px;color:var(--grn);font-weight:600">실제 ${W(item.storeActual)}</span>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
           <span style="padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;background:${badgeColor}">${item.grade}</span>
