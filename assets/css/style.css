@@ -208,32 +208,6 @@ tr:hover td { background:rgba(232,33,10,0.04); }
 .file-del { background:none; border:none; cursor:pointer; color:var(--muted); font-size:16px; line-height:1; }
 .file-del:hover { color:var(--red); }
 
-/* =============================================
-   13. 구글 드라이브 연동
-============================================= */
-.drive-section {
-  background:rgba(232,33,10,0.03); border:1px solid var(--bd);
-  border-radius:10px; padding:14px; margin-bottom:12px;
-}
-.drive-section label { display:block; font-size:11px; color:var(--muted); margin-bottom:5px; }
-.drive-input {
-  width:100%; padding:9px 11px; border-radius:7px;
-  background:rgba(255,255,255,0.05); border:1px solid var(--bd);
-  color:var(--tx); font-size:12px; outline:none; font-family:inherit;
-  transition:border-color .2s; margin-bottom:8px;
-}
-.drive-input:focus { border-color:var(--red); }
-.drive-folder-ok { font-size:11px; color:var(--grn); margin-bottom:8px; display:none; }
-.drive-status {
-  padding:8px 11px; border-radius:7px; font-size:12px;
-  margin-top:8px; display:none; line-height:1.5;
-}
-.drive-status.ld { background:rgba(255,184,0,0.07); border:1px solid rgba(255,184,0,0.2); color:#fbbf24; }
-.drive-status.ok { background:rgba(26,158,107,0.07); border:1px solid rgba(26,158,107,0.25); color:#4ade80; }
-.drive-status.er { background:rgba(232,33,10,0.07); border:1px solid rgba(232,33,10,0.25); color:#f87171; }
-.drive-progress { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:8px; overflow:hidden; display:none; }
-.drive-progress-fill { height:100%; background:var(--red); animation:pgbar 1.5s ease-in-out infinite; width:35%; }
-@keyframes pgbar { 0%{transform:translateX(-150%)} 100%{transform:translateX(400%)} }
 
 /* =============================================
    14. 플랫폼 비교 카드
@@ -304,54 +278,6 @@ tr:hover td { background:rgba(232,33,10,0.04); }
 .tt-val     { font-family:var(--mono); font-weight:700; }
 .tt-divider { border:none; border-top:1px solid var(--bd); margin:5px 0; }
 
-/* =============================================
-   16. 아코디언 (방법 A/B 토글)
-============================================= */
-.accordion-header {
-  display:flex; align-items:center; justify-content:space-between;
-  cursor:pointer; padding:14px 16px; border-radius:10px;
-  background:rgba(255,255,255,0.03); border:1px solid var(--bd);
-  transition:all .2s; user-select:none;
-}
-.accordion-header:hover { border-color:rgba(232,33,10,0.4); background:rgba(232,33,10,0.04); }
-.accordion-header.open  { border-color:rgba(232,33,10,0.5); background:rgba(232,33,10,0.07); border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none; }
-.accordion-header-left  { display:flex; align-items:center; gap:10px; }
-.accordion-title        { font-size:14px; font-weight:700; }
-.accordion-subtitle     { font-size:11px; color:var(--muted); margin-top:2px; }
-.accordion-arrow        { font-size:12px; color:var(--muted); transition:transform .25s; }
-.accordion-header.open .accordion-arrow { transform:rotate(180deg); }
-.accordion-body {
-  display:none; border:1px solid rgba(232,33,10,0.5);
-  border-top:none; border-radius:0 0 10px 10px;
-  padding:16px; background:rgba(232,33,10,0.03);
-  margin-bottom:12px;
-}
-.accordion-body.open { display:block; animation:fadeIn .3s ease-out; }
-
-/* 단계 안내 박스 */
-.step-list { margin-bottom:14px; }
-.step-item {
-  display:flex; gap:12px; align-items:flex-start;
-  padding:10px 12px; margin-bottom:6px;
-  background:rgba(255,255,255,0.03); border-radius:8px;
-  border-left:3px solid var(--bd);
-}
-.step-item.done  { border-left-color:var(--grn); }
-.step-item.warn  { border-left-color:var(--or); }
-.step-num {
-  min-width:22px; height:22px; border-radius:50%;
-  background:var(--red2); border:1px solid var(--red);
-  display:flex; align-items:center; justify-content:center;
-  font-size:11px; font-weight:700; color:var(--red); flex-shrink:0; margin-top:1px;
-}
-.step-text  { font-size:12px; line-height:1.8; color:var(--tx); }
-.step-text strong { color:#fcd34d; }
-.step-text code   {
-  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
-  border-radius:4px; padding:1px 6px; font-size:11px;
-  font-family:var(--mono); color:#a5f3fc; word-break:break-all;
-}
-.step-divider { border:none; border-top:1px solid var(--bd); margin:12px 0; }
 
 /* =============================================
    17. 설정

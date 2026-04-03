@@ -160,20 +160,20 @@ function parseBM_purchase_xlsx(wb, filename) {
   };
 }
 
-// 배민 매입 병합
-function mergeBM_purchase(purchaseData) {
+// 매입 데이터 병합 (bm, tg, yg 공통)
+function mergePurchase(pf, purchaseData) {
   const key = purchaseData.ym[0] + '-' + String(purchaseData.ym[1]).padStart(2,'0');
-  const existing = DB.bm[key];
+  const existing = DB[pf][key];
   if (existing) {
     existing.fee = purchaseData.fee;
-    existing.delivery = purchaseData.delivery;
+    existing.delivery = purchaseData.delivery || 0;
     existing.feeRate = existing.totalRev ? purchaseData.fee / existing.totalRev : 0;
     existing._hasPurchaseData = true;
   } else {
-    DB.bm[key] = {
+    DB[pf][key] = {
       period: purchaseData.period, ym: purchaseData.ym,
       totalRev:0, orders:0, daily:{},
-      fee: purchaseData.fee, delivery: purchaseData.delivery,
+      fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
       feeRate:0, coupon:0,
       _hasPurchaseData: true
     };
@@ -251,128 +251,6 @@ function parseCP_xlsx(wb, filename) {
     delivery: totalOrders * S.cpDel, coupon: totalCoupon};
 }
 
-// ==============================================
-// [G] 파싱 - 배민 CSV (구글 드라이브)
-// ==============================================
-function parseBM_csv(text, filename) {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-  let period = '기간 미상', ym = null;
-
-  const mf = filename.match(/(\d{4})년(\d{2})월/);
-  if (mf) { period = mf[1]+'년 '+mf[2]+'월'; ym = [+mf[1], +mf[2]]; }
-  else {
-    for (const line of lines.slice(0, 15)) {
-      const mm = line.match(/(\d{4})-(\d{2})/);
-      if (mm && !ym) { ym = [+mm[1], +mm[2]]; period = mm[1]+'년 '+mm[2]+'월'; }
-    }
-    if (!ym) throw new Error('연월 파악 불가: ' + filename);
-  }
-
-  // CSV 파싱 헬퍼
-  const splitCSV = line => {
-    const r = []; let c = '', q = false;
-    for (const ch of line) {
-      if (ch === '"') q = !q;
-      else if (ch === ',' && !q) { r.push(c.trim()); c = ''; }
-      else c += ch;
-    }
-    r.push(c.trim()); return r;
-  };
-  const toNum = v => parseFloat((v||'').replace(/[,₩"]/g,'')) || 0;
-
-  // 헤더 행 찾기
-  let hi = lines.findIndex(l => l.includes('일자') && l.includes('서비스거래번호'));
-  if (hi < 0) hi = lines.findIndex(l => l.includes(',') && l.split(',').length > 4);
-  const headers = splitCSV(lines[hi] || '');
-  const ci = {
-    date: headers.findIndex(h => h.includes('일자')),
-    txid: headers.findIndex(h => h.includes('서비스거래번호')),
-    type: headers.findIndex(h => h.includes('매출구분')),
-    amt:  headers.findIndex(h => h.includes('합계')),
-  };
-
-  const orderMap = {};
-  for (let i = hi + 1; i < lines.length; i++) {
-    const r = splitCSV(lines[i]);
-    const type = r[ci.type] || '';
-    if (!type.includes('카드매출') && !type.includes('현금매출')) continue;
-    const ds  = (r[ci.date] || '').substring(0, 10);
-    const on  = r[ci.txid] || (ds + i);
-    const amt = toNum(r[ci.amt]);
-    if (!ds || !amt) continue;
-    if (!orderMap[on]) orderMap[on] = {date:ds, total:0};
-    orderMap[on].total += amt;
-  }
-
-  const daily = {}; let totalOrders = 0, totalCoupon = 0;
-  for (const [, o] of Object.entries(orderMap)) {
-    if (o.total <= 0) continue;
-    if (!daily[o.date]) daily[o.date] = {rev:0, orders:0, coupon:0};
-    daily[o.date].rev += o.total; daily[o.date].orders++;
-    const cpn = couponAmt(o.total);
-    daily[o.date].coupon += cpn; totalCoupon += cpn; totalOrders++;
-  }
-
-  const totalRev    = Object.values(daily).reduce((s,v) => s + v.rev, 0);
-  const orderAmounts = Object.values(orderMap).filter(o => o.total > 0).map(o => o.total);
-  const d = {period, ym, totalRev, orders:totalOrders, daily, fee:0, feeRate:0, delivery:0, coupon:totalCoupon, _orderAmounts:orderAmounts};
-  recalcBM(d); return d;
-}
-
-// ==============================================
-// [H] 파싱 - 쿠팡 CSV (구글 드라이브)
-// ==============================================
-function parseCP_csv(text, filename) {
-  const m = filename.match(/(\d{4})-(\d{2})/);
-  if (!m) throw new Error('파일명 형식: coupang_eats_YYYY-MM');
-  const period = m[1]+'년 '+m[2]+'월', ym = [+m[1], +m[2]];
-
-  const lines  = text.split('\n').map(l => l.trim()).filter(l => l);
-  const splitCSV = line => {
-    const r = []; let c = '', q = false;
-    for (const ch of line) {
-      if (ch === '"') q = !q;
-      else if (ch === ',' && !q) { r.push(c.trim()); c = ''; }
-      else c += ch;
-    }
-    r.push(c.trim()); return r;
-  };
-  const toNum = v => parseFloat((v||'').replace(/[,₩"]/g,'')) || 0;
-
-  // 헤더 행 찾기
-  let hi = lines.findIndex(l => l.includes('거래유형'));
-  if (hi < 0) hi = 2;
-  const headers = splitCSV(lines[hi] || '');
-  const ci = {
-    date: 0,
-    type: headers.findIndex(h => h.includes('거래유형')),
-    rev:  headers.findIndex(h => h.includes('주문금액') || h.includes('총금액')),
-    fee:  headers.findIndex(h => h.includes('서비스수수료')),
-    cpn:  headers.findIndex(h => h.includes('상점부담')),
-  };
-  // fallback 컬럼 인덱스
-  if (ci.type < 0) ci.type = 7;
-  if (ci.rev  < 0) ci.rev  = 9;
-  if (ci.fee  < 0) ci.fee  = 14;
-
-  const daily = {}; let totalFee = 0, totalCoupon = 0, totalOrders = 0;
-  for (let i = hi + 1; i < lines.length; i++) {
-    const r = splitCSV(lines[i]);
-    if (!r[ci.date]) continue;
-    const type = r[ci.type] || '';
-    if (type && !/PAY|결제/i.test(type)) continue;
-    const ds  = r[ci.date].substring(0, 10);
-    const rev = toNum(r[ci.rev]);
-    const fee = toNum(r[ci.fee]);
-    const cpn = toNum(r[ci.cpn]);
-    if (!daily[ds]) daily[ds] = {rev:0, orders:0, fee:0, coupon:0};
-    daily[ds].rev += rev; daily[ds].orders++; daily[ds].fee += fee; daily[ds].coupon += cpn;
-    totalFee += fee; totalCoupon += cpn; totalOrders++;
-  }
-
-  const totalRev = Object.values(daily).reduce((s,v) => s + v.rev, 0);
-  return {period, ym, totalRev, orders:totalOrders, daily, fee:totalFee, feeRate:totalRev?totalFee/totalRev:0, delivery:totalOrders*S.cpDel, coupon:totalCoupon};
-}
 
 // ==============================================
 // [H2] 파싱 - 땡겨요 파일명에서 연월 추출 (공통)
@@ -541,30 +419,6 @@ function parseTG_purchase_xlsx(wb, filename) {
   };
 }
 
-// ==============================================
-// [H2-3] 땡겨요 매입 데이터를 기존 매출에 병합
-// ==============================================
-function mergeTG_purchase(purchaseData) {
-  const key = purchaseData.ym[0] + '-' + String(purchaseData.ym[1]).padStart(2,'0');
-  const existing = DB.tg[key];
-
-  if (existing) {
-    // 매출 데이터가 이미 있으면 실제 수수료/배달비로 업데이트
-    existing.fee = purchaseData.fee;
-    existing.delivery = purchaseData.delivery;
-    existing.feeRate = existing.totalRev ? purchaseData.fee / existing.totalRev : 0;
-    existing._hasPurchaseData = true;
-  } else {
-    // 매출 데이터가 아직 없으면 매입만 임시 저장
-    DB.tg[key] = {
-      period: purchaseData.period, ym: purchaseData.ym,
-      totalRev:0, orders:0, daily:{},
-      fee: purchaseData.fee, delivery: purchaseData.delivery,
-      feeRate:0, coupon:0, discount:0,
-      _hasPurchaseData: true, _pendingPurchase: purchaseData
-    };
-  }
-}
 
 // ==============================================
 // [H2-4] 파싱 - 땡겨요 CSV (구 형식, 구글 드라이브용)
@@ -823,28 +677,6 @@ function parseYG_purchase_xlsx(wb, filename) {
   };
 }
 
-// ==============================================
-// [I4] 요기요 매입 데이터를 기존 매출에 병합
-// ==============================================
-function mergeYG_purchase(purchaseData) {
-  const key = purchaseData.ym[0] + '-' + String(purchaseData.ym[1]).padStart(2,'0');
-  const existing = DB.yg[key];
-
-  if (existing) {
-    existing.fee = purchaseData.fee;
-    existing.delivery = purchaseData.delivery || 0;
-    existing.feeRate = existing.totalRev ? purchaseData.fee / existing.totalRev : 0;
-    existing._hasPurchaseData = true;
-  } else {
-    DB.yg[key] = {
-      period: purchaseData.period, ym: purchaseData.ym,
-      totalRev:0, orders:0, daily:{},
-      fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
-      feeRate:0, coupon:0,
-      _hasPurchaseData: true, _pendingPurchase: purchaseData
-    };
-  }
-}
 
 // ==============================================
 // [I5] 파싱 - 요기요 엑셀 (XLSX) - 매출/매입 자동 감지
