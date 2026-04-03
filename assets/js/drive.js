@@ -1,47 +1,21 @@
 // [I] DB 저장 공통 (땡겨요 다중 월 배열 + 매입 병합 지원)
 // ==============================================
 function storeData(pf, data, filename) {
-  // 요기요 매입 데이터는 별도 처리
-  if (pf === 'yg' && data && data.type === 'purchase') {
-    mergeYG_purchase(data);
+  // 매입 데이터는 별도 처리 (bm, tg, yg 공통)
+  if (data && data.type === 'purchase' && ['bm','tg','yg'].includes(pf)) {
+    const mergeFn = pf==='bm' ? mergeBM_purchase : pf==='tg' ? mergeTG_purchase : mergeYG_purchase;
+    mergeFn(data);
     const key = data.ym[0] + '-' + String(data.ym[1]).padStart(2,'0');
     const fnKey = key + '_purchase';
     FILES[pf] = FILES[pf].filter(f => f.key !== fnKey);
     FILES[pf].push({key:fnKey, period:data.period+' 매입', filename});
     FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
-    if (DB.yg[key]) saveToSupabase('yg', key, DB.yg[key], filename).catch(e => console.warn(e));
-    updateUploadUI(pf);
-    updateFileList();
-    renderAll();
-    return;
-  }
-
-  // 배민 매입 데이터는 별도 처리
-  if (pf === 'bm' && data && data.type === 'purchase') {
-    mergeBM_purchase(data);
-    const key = data.ym[0] + '-' + String(data.ym[1]).padStart(2,'0');
-    const fnKey = key + '_purchase';
-    FILES[pf] = FILES[pf].filter(f => f.key !== fnKey);
-    FILES[pf].push({key:fnKey, period:data.period+' 매입', filename});
-    FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
-    if (DB.bm[key]) saveToSupabase('bm', key, DB.bm[key], filename).catch(e => console.warn(e));
-    updateUploadUI(pf);
-    updateFileList();
-    renderAll();
-    return;
-  }
-
-  // 땡겨요 매입 데이터는 별도 처리
-  if (pf === 'tg' && data && data.type === 'purchase') {
-    mergeTG_purchase(data);
-    const key = data.ym[0] + '-' + String(data.ym[1]).padStart(2,'0');
-    // 파일 목록에 매입 파일 추가
-    const fnKey = key + '_purchase';
-    FILES[pf] = FILES[pf].filter(f => f.key !== fnKey);
-    FILES[pf].push({key:fnKey, period:data.period+' 매입', filename});
-    FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
-    // Supabase에 병합된 데이터 저장
-    if (DB.tg[key]) saveToSupabase('tg', key, DB.tg[key], filename).catch(e => console.warn(e));
+    // 매입 파일 정보를 DB 데이터에 저장 (Supabase 복원용)
+    if (DB[pf][key]) {
+      DB[pf][key]._purchaseFilename = filename;
+      DB[pf][key]._purchasePeriod = data.period + ' 매입';
+      saveToSupabase(pf, key, DB[pf][key], filename).catch(e => console.warn(e));
+    }
     updateUploadUI(pf);
     updateFileList();
     renderAll();

@@ -75,14 +75,22 @@ async function loadFromSupabase() {
       if (!DB[pf]) return;
 
       DB[pf][key] = row.data;
-      // FILES 복원
-      FILES[pf] = FILES[pf].filter(f => f.key !== key);
+      // FILES 복원 (매출)
+      FILES[pf] = FILES[pf].filter(f => f.key !== key && f.key !== key+'_purchase');
       FILES[pf].push({ key, period: row.period, filename: row.filename || '' });
+      // 매입 파일 정보도 복원
+      if (row.data && row.data._purchaseFilename) {
+        FILES[pf].push({
+          key: key + '_purchase',
+          period: row.data._purchasePeriod || row.period + ' 매입',
+          filename: row.data._purchaseFilename
+        });
+      }
       count++;
     });
 
     // 정렬
-    ['bm','cp','tg'].forEach(pf => {
+    ['bm','cp','tg','yg'].forEach(pf => {
       FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
       updateUploadUI(pf);
     });
