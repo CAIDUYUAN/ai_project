@@ -309,22 +309,216 @@ function parseCP_csv(text, filename) {
 }
 
 // ==============================================
-// [H2] 파싱 - 땡겨요 CSV (구글 드라이브 / 엑셀 공통)
+// [H2] 파싱 - 땡겨요 파일명에서 연월 추출 (공통)
+// ==============================================
+function parseTG_extractYM(filename) {
+  // 새 형식: "땡겨요 2025년 03월 매출" 또는 "땡겨요 2025년 03월 매입"
+  const mNew = filename.match(/땡겨요\s*(\d{4})년\s*(\d{1,2})월/);
+  if (mNew) {
+    const yr = +mNew[1], mn = +mNew[2];
+    const isSales = /매출/.test(filename);
+    const isPurchase = /매입/.test(filename);
+    return { yr, mn, period: yr+'년 '+mn+'월', type: isPurchase ? 'purchase' : 'sales' };
+  }
+  // 구 형식: YYMMDD_YYMMDD_빨간집_매출내역
+  const mOld = filename.match(/^(\d{2})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
+  if (mOld) {
+    const sy=2000+parseInt(mOld[1]), sm=parseInt(mOld[2]);
+    return { yr:sy, mn:sm, period: sy+'년 '+sm+'월', type:'sales' };
+  }
+  return null;
+}
+
+// ==============================================
+// [H2-1] 파싱 - 땡겨요 매출 (새 형식 XLSX)
+// ==============================================
+function parseTG_sales_xlsx(wb, filename) {
+  const info = parseTG_extractYM(filename);
+  if (!info) throw new Error('파일명에서 연월을 추출할 수 없습니다: ' + filename);
+  const { yr, mn, period } = info;
+
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const toNum = v => parseFloat(String(v||'').replace(/[,₩"]/g,''))||0;
+
+  // 주문번호 헤더 행 찾기
+  let hi = -1;
+  for (let i=0; i<Math.min(rows.length,15); i++) {
+    if ((rows[i]||[]).some(v => v && /주문번호/.test(String(v)))) { hi=i; break; }
+  }
+  if (hi < 0) throw new Error('땡겨요 매출 헤더를 찾을 수 없습니다');
+
+  const headers = (rows[hi]||[]).map(v => String(v||'').trim());
+  const ci = {
+    orderId: headers.findIndex(h => /주문번호/.test(h)),
+    date:    headers.findIndex(h => /주문일/.test(h)),
+    rev:     headers.findIndex(h => /주문결제/.test(h)),
+    discount:headers.findIndex(h => /매출할인/.test(h)),
+  };
+  if (ci.orderId<0) ci.orderId=0;
+  if (ci.date<0)    ci.date=1;
+  if (ci.rev<0)     ci.rev=2;
+
+  const daily = {}; let totalOrders=0, totalDiscount=0;
+  for (let i=hi+1; i<rows.length; i++) {
+    const r = rows[i];
+    if (!r || !r[ci.orderId]) continue;
+    const oid = String(r[ci.orderId]).trim();
+    if (oid === '합 계' || !oid) continue;
+
+    // 날짜 추출: "2026-03-06 17:33:48" 또는 빈 값이면 파일명 기준 월 사용
+    let ds = '';
+    const rawDate = r[ci.date];
+    if (rawDate) {
+      if (rawDate instanceof Date) {
+        ds = rawDate.toISOString().substring(0,10);
+      } else {
+        ds = String(rawDate).substring(0,10);
+      }
+    }
+    // 날짜가 없는 행은 해당 월의 데이터로 간주 (포장 주문 등)
+    if (!ds || ds.length < 10) ds = `${yr}-${String(mn).padStart(2,'0')}-01`;
+
+    const rev = toNum(r[ci.rev]);
+    const disc = ci.discount>=0 ? toNum(r[ci.discount]) : 0;
+    if (!rev) continue;
+
+    if (!daily[ds]) daily[ds] = {rev:0, orders:0};
+    daily[ds].rev += rev;
+    daily[ds].orders++;
+    totalOrders++;
+    totalDiscount += disc;
+  }
+
+  const totalRev = Object.values(daily).reduce((s,v) => s+v.rev, 0);
+  // 수수료는 매입 파일에서 가져옴, 없으면 추정치 사용
+  const feeRate = 0.09+0.033;
+
+  return {
+    period, ym:[yr,mn], totalRev, orders:totalOrders, daily,
+    fee:totalRev*feeRate, feeRate, delivery:0, coupon:0, discount:totalDiscount,
+    _hasPurchaseData: false
+  };
+}
+
+// ==============================================
+// [H2-2] 파싱 - 땡겨요 매입 (XLSX/XLS)
+// ==============================================
+function parseTG_purchase_xlsx(wb, filename) {
+  const info = parseTG_extractYM(filename);
+  if (!info) throw new Error('파일명에서 연월을 추출할 수 없습니다: ' + filename);
+  const { yr, mn, period } = info;
+
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const toNum = v => parseFloat(String(v||'').replace(/[,₩"]/g,''))||0;
+
+  // 상세 내역 헤더 행 찾기 (날짜, 사업자번호, 주문방법, 수수료유형, 주문번호, 공급대가)
+  let hi = -1;
+  for (let i=0; i<Math.min(rows.length,25); i++) {
+    if ((rows[i]||[]).some(v => v && /수수료유형/.test(String(v)))) { hi=i; break; }
+  }
+  if (hi < 0) throw new Error('땡겨요 매입 헤더를 찾을 수 없습니다');
+
+  const headers = (rows[hi]||[]).map(v => String(v||'').trim());
+  const ci = {
+    date:    headers.findIndex(h => /날짜/.test(h)),
+    method:  headers.findIndex(h => /주문방법/.test(h)),
+    feeType: headers.findIndex(h => /수수료유형/.test(h)),
+    orderId: headers.findIndex(h => /주문번호/.test(h)),
+    amount:  headers.findIndex(h => /공급대가/.test(h)),
+  };
+
+  // 수수료 유형별 합산 + 일별 집계
+  let totalFee=0, totalDelivery=0;
+  const dailyFees = {};
+
+  for (let i=hi+1; i<rows.length; i++) {
+    const r = rows[i];
+    if (!r || !r[ci.date]) continue;
+    const dateStr = String(r[ci.date]).trim();
+    if (dateStr === '합 계' || !dateStr) continue;
+
+    const ds = dateStr.substring(0,10);
+    const feeType = String(r[ci.feeType]||'').trim();
+    const amount = toNum(r[ci.amount]);
+
+    if (!dailyFees[ds]) dailyFees[ds] = {fee:0, delivery:0};
+
+    if (/땡배달이용료/.test(feeType)) {
+      totalDelivery += amount;
+      dailyFees[ds].delivery += amount;
+    } else {
+      // 주문중개이용료, 결제정산이용료 → 수수료
+      totalFee += amount;
+      dailyFees[ds].fee += amount;
+    }
+  }
+
+  // 요약 행에서도 확인 (행 10~14 영역)
+  let summaryFee=0, summaryDelivery=0;
+  for (let i=0; i<Math.min(rows.length,20); i++) {
+    const r = rows[i];
+    if (!r) continue;
+    const label = String(r[0]||'').trim();
+    const amount = toNum(r[3]); // 공급대가 컬럼
+    if (/주문중개이용료|결제정산이용료/.test(label)) summaryFee += amount;
+    if (/땡배달이용료/.test(label)) summaryDelivery += amount;
+  }
+
+  return {
+    type: 'purchase', ym:[yr,mn], period,
+    fee: totalFee || summaryFee,
+    delivery: totalDelivery || summaryDelivery,
+    dailyFees,
+    feeRate: 0 // 매출 데이터와 합칠 때 계산
+  };
+}
+
+// ==============================================
+// [H2-3] 땡겨요 매입 데이터를 기존 매출에 병합
+// ==============================================
+function mergeTG_purchase(purchaseData) {
+  const key = purchaseData.ym[0] + '-' + String(purchaseData.ym[1]).padStart(2,'0');
+  const existing = DB.tg[key];
+
+  if (existing) {
+    // 매출 데이터가 이미 있으면 실제 수수료/배달비로 업데이트
+    existing.fee = purchaseData.fee;
+    existing.delivery = purchaseData.delivery;
+    existing.feeRate = existing.totalRev ? purchaseData.fee / existing.totalRev : 0;
+    existing._hasPurchaseData = true;
+  } else {
+    // 매출 데이터가 아직 없으면 매입만 임시 저장
+    DB.tg[key] = {
+      period: purchaseData.period, ym: purchaseData.ym,
+      totalRev:0, orders:0, daily:{},
+      fee: purchaseData.fee, delivery: purchaseData.delivery,
+      feeRate:0, coupon:0, discount:0,
+      _hasPurchaseData: true, _pendingPurchase: purchaseData
+    };
+  }
+}
+
+// ==============================================
+// [H2-4] 파싱 - 땡겨요 CSV (구 형식, 구글 드라이브용)
 // ==============================================
 function parseTG(text, filename) {
-  // 파일명에서 날짜 추출: 250201_250228_... 형식
+  const info = parseTG_extractYM(filename);
+  // 구 형식 지원
   const mf = filename.match(/^(\d{2})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
-  if (!mf) throw new Error('파일명 형식: YYMMDD_YYMMDD_빨간집_매출내역');
+  if (!info && !mf) throw new Error('파일명 형식을 인식할 수 없습니다: ' + filename);
 
-  const sy=2000+parseInt(mf[1]), sm=parseInt(mf[2]);
-  const ey=2000+parseInt(mf[4]), em=parseInt(mf[5]);
-
-  // 연월 목록 생성 (여러 달 가능)
-  const ymList = [];
-  let y=sy, mo=sm;
-  while(y<ey||(y===ey&&mo<=em)){ ymList.push([y,mo]); mo++; if(mo>12){mo=1;y++;} }
-
-  const period = sy+'년 '+sm+'월' + (ymList.length>1 ? ' ~ '+ey+'년 '+em+'월' : '');
+  let ymList;
+  if (mf) {
+    const sy=2000+parseInt(mf[1]), sm=parseInt(mf[2]);
+    const ey=2000+parseInt(mf[4]), em=parseInt(mf[5]);
+    ymList = [];
+    let y=sy, mo=sm;
+    while(y<ey||(y===ey&&mo<=em)){ ymList.push([y,mo]); mo++; if(mo>12){mo=1;y++;} }
+  } else {
+    ymList = [[info.yr, info.mn]];
+  }
 
   const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
   const splitCSV = line => {
@@ -335,47 +529,35 @@ function parseTG(text, filename) {
   const toNum = v => parseFloat((v||'').replace(/[,₩"]/g,''))||0;
 
   // 헤더 행 찾기
-  let hi = lines.findIndex(l => l.includes('주문일') || l.includes('결제일'));
+  let hi = lines.findIndex(l => l.includes('주문번호') || l.includes('주문일') || l.includes('결제일'));
   if (hi < 0) hi = lines.findIndex(l => l.includes(',') && l.split(',').length > 3);
   const headers = splitCSV(lines[hi]||'');
   const ci = {
     date:   headers.findIndex(h=>/주문일|결제일|날짜/.test(h)),
-    rev:    headers.findIndex(h=>/주문금액|결제금액|매출금액|총.*금액/.test(h)),
+    rev:    headers.findIndex(h=>/주문결제|주문금액|결제금액|매출금액|총.*금액/.test(h)),
     status: headers.findIndex(h=>/상태|주문상태/.test(h)),
   };
-  if(ci.date<0) ci.date=0;
-  if(ci.rev<0)  ci.rev=3;
-
-  console.log('[땡겨요 디버그] 헤더행 인덱스:', hi);
-  console.log('[땡겨요 디버그] 헤더 컬럼:', headers);
-  console.log('[땡겨요 디버그] 컬럼 인덱스 → 날짜:', ci.date, '/ 금액:', ci.rev, '/ 상태:', ci.status);
-  console.log('[땡겨요 디버그] 첫 번째 데이터 행:', lines[hi+1]);
-  console.log('[땡겨요 디버그] ymList:', ymList);
+  if(ci.date<0) ci.date=1;
+  if(ci.rev<0)  ci.rev=2;
 
   const daily={}; let totalOrders=0;
   for(let i=hi+1;i<lines.length;i++){
     const r=splitCSV(lines[i]);
-    if(!r[ci.date]) continue;
-    // 취소 제외
+    if(!r[ci.date] && !r[0]) continue;
+    if(/합\s*계/.test(r[0]||'')) continue;
     const status=r[ci.status]||'';
     if(/취소|환불|cancel/i.test(status)) continue;
-    const ds=r[ci.date].substring(0,10).replace(/[./]/g,'-');
+    let ds = (r[ci.date]||'').substring(0,10).replace(/[./]/g,'-');
+    if (!ds || ds.length<10) ds = `${ymList[0][0]}-${String(ymList[0][1]).padStart(2,'0')}-01`;
     const rev=toNum(r[ci.rev]);
-    if(i <= hi+3) console.log(`[땡겨요 디버그] 행${i} → 날짜원본:"${r[ci.date]}" ds:"${ds}" 금액원본:"${r[ci.rev]}" rev:${rev}`);
     if(!rev) continue;
     if(!daily[ds]) daily[ds]={rev:0,orders:0};
     daily[ds].rev+=rev; daily[ds].orders++; totalOrders++;
   }
 
   const totalRev=Object.values(daily).reduce((s,v)=>s+v.rev,0);
-  console.log('[땡겨요 디버그] 파싱 완료 → totalOrders:', totalOrders, '/ totalRev:', totalRev);
-  console.log('[땡겨요 디버그] daily 날짜 샘플:', Object.keys(daily).slice(0,5));
-  // 땡겨요 수수료: 9% + 카드 3.3%
   const feeRate=0.09+0.033;
-  const fee=totalRev*feeRate;
-  const delivery=totalOrders*S.tgDel;
 
-  // 여러 달에 걸쳐 있으면 월별로 분리
   return ymList.map(([yr,mn])=>{
     const moStr=String(mn).padStart(2,'0');
     const moDaily={};
@@ -387,32 +569,31 @@ function parseTG(text, filename) {
     return {
       period: yr+'년 '+mn+'월', ym:[yr,mn],
       totalRev:moRev, orders:moOrd, daily:moDaily,
-      fee:moRev*feeRate, feeRate, delivery:moOrd*S.tgDel, coupon:0,
+      fee:moRev*feeRate, feeRate, delivery:0, coupon:0,
+      _hasPurchaseData: false
     };
   });
 }
 
 // ==============================================
-// [H3] 파싱 - 땡겨요 엑셀 (XLSX)
+// [H3] 파싱 - 땡겨요 엑셀 (XLSX) - 새/구 형식 자동 감지
 // ==============================================
 function parseTG_xlsx(wb, filename) {
+  const info = parseTG_extractYM(filename);
+
+  // 새 형식: "땡겨요 YYYY년 MM월 매출/매입"
+  if (info) {
+    if (info.type === 'purchase') return parseTG_purchase_xlsx(wb, filename);
+    return parseTG_sales_xlsx(wb, filename);
+  }
+
+  // 구 형식: YYMMDD_YYMMDD_... → CSV 변환 후 parseTG 사용
   const ws   = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
-  // 헤더 행 찾기
   let hi = 0;
   for(let i=0;i<Math.min(rows.length,10);i++){
     if((rows[i]||[]).some(v=>v&&/주문일|결제일/.test(String(v)))){ hi=i; break; }
   }
-  const headers=(rows[hi]||[]).map(v=>String(v||''));
-  const ci={
-    date:   headers.findIndex(h=>/주문일|결제일/.test(h)),
-    rev:    headers.findIndex(h=>/주문금액|결제금액|매출금액|총.*금액/.test(h)),
-    status: headers.findIndex(h=>/상태/.test(h)),
-  };
-  if(ci.date<0) ci.date=0;
-  if(ci.rev<0)  ci.rev=3;
-
-  // CSV 텍스트로 변환 후 재활용
   const csvLines = rows.slice(hi).map(row=>(row||[]).map(cell=>{
     if(cell instanceof Date) { const y=cell.getFullYear(),mo=String(cell.getMonth()+1).padStart(2,'0'),d=String(cell.getDate()).padStart(2,'0'); return `${y}-${mo}-${d}`; }
     const v=String(cell||'');

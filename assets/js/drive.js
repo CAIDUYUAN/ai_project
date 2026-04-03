@@ -1,9 +1,32 @@
-// [I] DB 저장 공통 (땡겨요 다중 월 배열 지원)
+// [I] DB 저장 공통 (땡겨요 다중 월 배열 + 매입 병합 지원)
 // ==============================================
 function storeData(pf, data, filename) {
+  // 땡겨요 매입 데이터는 별도 처리
+  if (pf === 'tg' && data && data.type === 'purchase') {
+    mergeTG_purchase(data);
+    const key = data.ym[0] + '-' + String(data.ym[1]).padStart(2,'0');
+    // 파일 목록에 매입 파일 추가
+    const fnKey = key + '_purchase';
+    FILES[pf] = FILES[pf].filter(f => f.key !== fnKey);
+    FILES[pf].push({key:fnKey, period:data.period+' 매입', filename});
+    FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
+    updateUploadUI(pf);
+    updateFileList();
+    renderAll();
+    return;
+  }
+
   const items = Array.isArray(data) ? data : [data];
   items.forEach(d => {
     const key = d.ym[0] + '-' + String(d.ym[1]).padStart(2,'0');
+    // 땡겨요: 매입 데이터가 먼저 로드된 경우 병합
+    if (pf === 'tg' && DB.tg[key] && DB.tg[key]._hasPurchaseData) {
+      const prev = DB.tg[key];
+      d.fee = prev.fee;
+      d.delivery = prev.delivery;
+      d.feeRate = d.totalRev ? prev.fee / d.totalRev : 0;
+      d._hasPurchaseData = true;
+    }
     DB[pf][key] = d;
     FILES[pf] = FILES[pf].filter(f => f.key !== key);
     FILES[pf].push({key, period:d.period, filename});
@@ -66,6 +89,7 @@ function drSetProgress(v) { document.getElementById('dr-prog').style.display = v
 function detectPlatform(name) {
   if (/coupang[_\-]eats/i.test(name))                        return 'cp';
   if (/매출상세내역/.test(name))                              return 'bm';
+  if (/땡겨요/.test(name))                                    return 'tg';
   if (/매출내역/.test(name) && /^\d{6}_\d{6}/.test(name))   return 'tg';
   return null;
 }

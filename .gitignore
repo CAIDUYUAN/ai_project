@@ -1,2 +1,20 @@
 # 보안 파일
 git hub token key
+*.env
+.env*
+credentials*
+*secret*
+*token*
+
+# 의존성
+node_modules/
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 임시 파일
+*.tmp
+*.log

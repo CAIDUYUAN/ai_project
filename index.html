@@ -140,7 +140,7 @@
             <strong>파일명 규칙 (변환 후 구글 시트 이름)</strong><br>
             · 배민: <code>매출상세내역_YYYY년MM월...</code><br>
             · 쿠팡: <code>coupang_eats_YYYY-MM</code><br>
-            · 땡겨요: <code>YYMMDD_YYMMDD_빨간집_매출내역</code><br>
+            · 땡겨요: <code>땡겨요 YYYY년 MM월 매출</code> / <code>땡겨요 YYYY년 MM월 매입</code><br>
             <span style="color:var(--muted);font-size:11px">파일명이 규칙과 다르면 플랫폼 자동 인식이 안 됩니다</span>
           </div>
         </div>
@@ -227,10 +227,9 @@
         <div class="step-item">
           <div class="step-num">3</div>
           <div class="step-text">
-            <strong>땡겨요 파일 다운로드</strong><br>
-            땡겨요 사장님사이트 →
-            <strong>정산 → 매출 내역</strong> → 기간 선택 → <strong>엑셀 다운로드</strong><br>
-            파일명 예시: <code>250201_250228_빨간집마라탕_매출내역.xlsx</code>
+            <strong>땡겨요 파일 다운로드 (매출 + 매입)</strong><br>
+            땡겨요 사장님사이트 → <strong>부가세 신고자료</strong> → 월 선택 → <strong>매출/매입 각각 다운로드</strong><br>
+            파일명 예시: <code>땡겨요 2026년 03월 매출.xlsx</code> + <code>땡겨요 2026년 03월 매입.xls</code>
           </div>
         </div>
 
@@ -281,11 +280,11 @@
         <div class="upload-box" id="box-tg"
           ondragover="onDrag(event,'box-tg')" ondragleave="offDrag('box-tg')"
           ondrop="onDrop(event,'tg')">
-          <input type="file" accept=".xlsx" multiple onchange="loadXlsx(this,'tg')">
+          <input type="file" accept=".xlsx,.xls" multiple onchange="loadXlsx(this,'tg')">
           <div style="font-size:26px;margin-bottom:8px">🟢</div>
           <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#06D6A0">땡겨요</div>
           <div style="font-size:11px;color:var(--muted);line-height:1.5">
-            YYMMDD_YYMMDD_빨간집_매출내역<br>여러 달 한번에 선택 가능
+            땡겨요 YYYY년 MM월 매출/매입<br>매출+매입 함께 선택 가능
           </div>
           <div id="tags-tg" class="upload-tags"></div>
         </div>
