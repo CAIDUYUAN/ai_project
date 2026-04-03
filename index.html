@@ -43,6 +43,7 @@
   <button class="tab active" data-tab="upload">📁 데이터</button>
   <button class="tab" data-tab="overview">📊 종합현황</button>
   <button class="tab" data-tab="compare">⚖️ 비교</button>
+  <button class="tab" data-tab="menucost">🧾 메뉴원가</button>
   <button class="tab" data-tab="calendar">📅 달력</button>
   <button class="tab" data-tab="diagnosis">🔴 진단센터</button>
   <button class="tab" data-tab="settings">⚙️ 설정</button>
@@ -224,6 +225,61 @@
           <th>합계</th>
         </tr></thead>
         <tbody id="cmp-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+     패널: 메뉴원가분석
+============================================= -->
+<div id="panel-menucost" class="panel">
+  <!-- 상단: 샘플 다운로드 + 업로드 -->
+  <div class="card">
+    <div class="card-title">🧾 메뉴 원가 입력 파일</div>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:12px">메뉴명, 판매가, 할인후가격, 식재료비, 소스비, 포장재비, 반찬비, 기타원가 8가지만 입력하세요</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn-action" onclick="downloadMenuSample()" style="flex:none">📥 샘플 파일 다운로드</button>
+      <div id="box-menu" class="upload-box" style="flex:1;min-width:200px;padding:14px"
+        ondragover="onDrag(event,'box-menu')" ondragleave="offDrag('box-menu')"
+        ondrop="event.preventDefault();offDrag('box-menu');loadMenuXlsx(event.dataTransfer.files)">
+        <div style="font-size:13px;color:var(--muted)">📂 엑셀 파일 드래그 또는 클릭</div>
+        <input type="file" accept=".xlsx,.xls" onchange="loadMenuXlsx(this.files)">
+      </div>
+    </div>
+    <div id="menu-filename" style="margin-top:8px;font-size:12px;color:var(--grn);display:none"></div>
+  </div>
+
+  <!-- 요약 지표 -->
+  <div id="mc-summary" style="display:none">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">전체 메뉴 수</div><div class="kpi-value" id="mc-count">0</div></div>
+      <div class="kpi"><div class="kpi-label">평균 원가율</div><div class="kpi-value" id="mc-avg-cost">0%</div></div>
+      <div class="kpi"><div class="kpi-label">마진 최고 메뉴</div><div class="kpi-value" id="mc-best" style="font-size:16px">-</div><div class="kpi-sub" id="mc-best-sub"></div></div>
+      <div class="kpi"><div class="kpi-label">마진 위험 메뉴</div><div class="kpi-value" id="mc-worst" style="font-size:16px">-</div><div class="kpi-sub" id="mc-worst-sub"></div></div>
+    </div>
+  </div>
+
+  <!-- 메뉴별 카드 리스트 -->
+  <div id="mc-cards"></div>
+
+  <!-- 전체 비교 테이블 -->
+  <div id="mc-table-card" class="card" style="display:none">
+    <div class="card-title">📊 전체 비교 테이블</div>
+    <div class="table-wrap">
+      <table id="mc-table">
+        <thead><tr>
+          <th style="text-align:left;cursor:pointer" onclick="sortMenuTable('name')">메뉴명 ↕</th>
+          <th style="cursor:pointer" onclick="sortMenuTable('price')">할인후가격 ↕</th>
+          <th style="cursor:pointer" onclick="sortMenuTable('costTotal')">원가합계 ↕</th>
+          <th style="cursor:pointer" onclick="sortMenuTable('costRate')">원가율 ↕</th>
+          <th style="cursor:pointer" onclick="sortMenuTable('bmProfit')">배민 ↕</th>
+          <th style="cursor:pointer" onclick="sortMenuTable('cpProfit')">쿠팡 ↕</th>
+          <th style="cursor:pointer" onclick="sortMenuTable('tgProfit')">땡겨요 ↕</th>
+          <th style="cursor:pointer" onclick="sortMenuTable('ygProfit')">요기요 ↕</th>
+          <th>최고플랫폼</th>
+        </tr></thead>
+        <tbody id="mc-tbody"></tbody>
       </table>
     </div>
   </div>
@@ -486,5 +542,6 @@
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/parsers.js"></script>
 <script src="assets/js/drive.js"></script>
+<script src="assets/js/menucost.js"></script>
 <script src="assets/js/render.js"></script>
 </html>

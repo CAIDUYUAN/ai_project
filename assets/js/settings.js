@@ -43,6 +43,7 @@ function saveSettings() {
   updateCouponPreview();
   renderAll();
   calcBEPSummary();
+  if (typeof renderMenuCost === 'function') renderMenuCost();
   toast('⚙️ 설정 저장됐어요!');
 }
 function resetSettings() {

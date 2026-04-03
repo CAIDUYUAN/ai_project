@@ -45,6 +45,7 @@ function goTab(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
   if (id === 'overview') renderOverview();
   if (id === 'compare')  renderCompare();
+  if (id === 'menucost') renderMenuCost();
   if (id === 'calendar') renderCalendar();
   if (id === 'diagnosis') renderDiagnosis();
   if (id === 'settings') { applySettingsToUI(); calcBEPSummary(); }
