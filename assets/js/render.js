@@ -58,6 +58,7 @@ function clearAll() {
   });
   clearAllSupabase().catch(e => console.warn(e));
   updateFileList();
+  renderAll();
 }
 function updateHeaderPeriod() {
   const months = allMonths();
