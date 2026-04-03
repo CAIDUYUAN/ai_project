@@ -409,7 +409,7 @@ function calcBEPSummary() {
 // ==============================================
 function switchDiag(id) {
   document.querySelectorAll('.diag-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('[data-dtab]').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
   const panel = document.getElementById('diag-' + id);
   if (panel) panel.classList.add('active');
   const btn = document.querySelector('[data-dtab="' + id + '"]');

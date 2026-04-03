@@ -68,6 +68,13 @@ header {
   cursor:pointer; transition:all .2s; white-space:nowrap;
 }
 .tab.active { background:var(--red); color:#fff; font-weight:700; box-shadow:0 2px 10px var(--red2); }
+.dtab {
+  flex:1; min-width:52px; padding:9px 6px; border:none;
+  background:transparent; color:var(--muted); font-family:inherit;
+  font-size:12px; font-weight:500; border-radius:7px;
+  cursor:pointer; transition:all .2s; white-space:nowrap;
+}
+.dtab.active { background:var(--red); color:#fff; font-weight:700; box-shadow:0 2px 10px var(--red2); }
 .panel { display:none; }
 .panel.active { display:block; animation:fadeIn .35s ease-out; }
 
@@ -345,4 +352,4 @@ tr:hover td { background:rgba(232,33,10,0.04); }
 #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 .diag-panel { display:none; }
 .diag-panel.active { display:block; animation:fadeIn .35s ease-out; }
-select option { background:var(--bg2); color:var(--tx); }
+select option { background:#1a1a1a; color:#ffffff; }
