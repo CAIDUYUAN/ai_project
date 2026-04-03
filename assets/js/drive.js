@@ -73,7 +73,7 @@ function loadXlsx2(files, pf) {
     const reader = new FileReader();
     reader.onload = e => {
       try {
-        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true, WTF:false});
         let data;
         if      (pf === 'bm') data = /매입상세내역/.test(file.name) ? parseBM_purchase_xlsx(wb, file.name) : parseBM_xlsx(wb, file.name);
         else if (pf === 'cp') data = parseCP_xlsx(wb, file.name);
