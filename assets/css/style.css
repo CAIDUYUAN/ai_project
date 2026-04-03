@@ -167,6 +167,12 @@ tr:hover td { background:rgba(255,255,255,0.03); }
 .file-item.cp { border-left:3px solid var(--danger); }
 .file-del { background:none; border:none; cursor:pointer; color:var(--muted); font-size:16px; line-height:1; }
 .file-del:hover { color:var(--danger); }
+.pf-btn {
+  padding:3px 7px; font-size:10px; border:1px solid var(--bd); background:var(--bg2);
+  color:var(--tx2); border-radius:6px; cursor:pointer; text-decoration:none;
+  font-family:inherit; transition:all .15s; white-space:nowrap;
+}
+.pf-btn:hover { border-color:var(--red); color:var(--red); }
 
 /* =============================================
    11. 플랫폼 비교
