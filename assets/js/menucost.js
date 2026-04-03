@@ -198,7 +198,7 @@ function renderMenuCards(items) {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div>
           <span style="font-size:15px;font-weight:700">${item.name}</span>
-          <span style="font-size:12px;color:var(--muted);margin-left:8px">${W(item.price)} → ${W(item.discPrice)}</span>
+          <span style="font-size:12px;color:var(--muted);margin-left:8px">판매가 ${W(item.price)} → 할인가 ${W(item.discPrice)}</span>
         </div>
         <span style="padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;background:${badgeColor}">${item.grade}</span>
       </div>
@@ -212,6 +212,7 @@ function renderMenuCards(items) {
           <span style="width:50px;font-size:11px;font-family:var(--mono);font-weight:700;color:${totalBarColor};text-align:right">${item.costRate.toFixed(1)}%</span>
         </div>
       </div>
+      <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">📦 플랫폼별 순수익 (할인가 - 수수료 - 배달비 - 원가)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${profitsHtml}</div>
     </div>`;
   }).join('');
