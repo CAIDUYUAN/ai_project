@@ -46,6 +46,7 @@ function goTab(id) {
   if (id === 'overview') renderOverview();
   if (id === 'compare')  renderCompare();
   if (id === 'calendar') renderCalendar();
+  if (id === 'diagnosis') renderDiagnosis();
   if (id === 'settings') { applySettingsToUI(); calcBEPSummary(); }
 }
 document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => goTab(btn.dataset.tab)));

@@ -343,3 +343,5 @@ tr:hover td { background:rgba(232,33,10,0.04); }
   box-shadow:0 8px 24px rgba(0,0,0,0.5);
 }
 #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+.diag-panel { display:none; }
+.diag-panel.active { display:block; animation:fadeIn .35s ease-out; }

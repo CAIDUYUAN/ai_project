@@ -39,10 +39,11 @@
      탭 네비게이션
 ============================================= -->
 <div class="tabs">
-  <button class="tab active" data-tab="upload">📁 데이터 입력</button>
+  <button class="tab active" data-tab="upload">📁 데이터</button>
   <button class="tab" data-tab="overview">📊 종합현황</button>
-  <button class="tab" data-tab="compare">⚖️ 플랫폼비교</button>
+  <button class="tab" data-tab="compare">⚖️ 비교</button>
   <button class="tab" data-tab="calendar">📅 달력</button>
+  <button class="tab" data-tab="diagnosis">🔴 진단센터</button>
   <button class="tab" data-tab="settings">⚙️ 설정</button>
 </div>
 
@@ -123,90 +124,51 @@
 <div id="panel-overview" class="panel">
   <div class="card"><div class="month-btns" id="ov-months"></div></div>
 
-  <!-- KPI 1행 -->
-  <div class="kpi-grid">
-    <div class="kpi">
-      <div class="kpi-label">총 매출</div>
+  <!-- KPI 1행 - 3개 핵심 KPI -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi" style="border:1.5px solid var(--red)">
+      <div class="kpi-label">이번달 총매출</div>
       <div class="kpi-value" id="k-rev">₩0</div>
-      <div class="kpi-sub"   id="k-orders">주문 0건</div>
+      <div class="kpi-sub" id="k-orders">주문 0건</div>
     </div>
     <div class="kpi green" style="border:1.5px solid var(--grn)">
-      <div class="kpi-label" style="color:#4ade80;font-weight:700">💰 입금예정금액</div>
+      <div class="kpi-label" style="color:#4ade80;font-weight:700">💰 실제 순수익</div>
+      <div class="kpi-value pos" id="k-net">₩0</div>
+      <div class="kpi-sub" id="k-net-sub"></div>
+    </div>
+    <div class="kpi blue" style="border:1.5px solid #3b82f6">
+      <div class="kpi-label">⏰ 내 시급</div>
+      <div class="kpi-value" id="k-hourly">₩0</div>
+      <div class="kpi-sub">월 26일 × 10시간 기준</div>
+    </div>
+  </div>
+
+  <!-- 경고 배너 -->
+  <div id="warning-banner" class="card" style="display:none;background:rgba(232,33,10,0.08);border-color:var(--red)">
+    <div id="warning-text" style="font-size:12px;line-height:1.8"></div>
+  </div>
+
+  <!-- KPI 2행 - 4개 상세 KPI -->
+  <div class="kpi-grid">
+    <div class="kpi green">
+      <div class="kpi-label">💰 입금예정금액</div>
       <div class="kpi-value pos" id="k-deposit">₩0</div>
-      <div class="kpi-sub"       id="k-deposit-sub"></div>
+      <div class="kpi-sub" id="k-deposit-sub"></div>
     </div>
     <div class="kpi amber">
       <div class="kpi-label">수수료+배달비+쿠폰</div>
       <div class="kpi-value" id="k-deduct">₩0</div>
-      <div class="kpi-sub"   id="k-deduct-sub"></div>
+      <div class="kpi-sub" id="k-deduct-sub"></div>
     </div>
     <div class="kpi blue">
       <div class="kpi-label">일평균 매출</div>
       <div class="kpi-value" id="k-avg">₩0</div>
-      <div class="kpi-sub"   id="k-days">0일 영업</div>
+      <div class="kpi-sub" id="k-days">0일 영업</div>
     </div>
-  </div>
-
-  <!-- KPI 2행 -->
-  <div class="kpi-grid">
     <div class="kpi">
-      <div class="kpi-label">플랫폼 수수료</div>
-      <div class="kpi-value" id="k-fee">₩0</div>
-      <div class="kpi-sub"   id="k-fee-rate">0%</div>
-    </div>
-    <div class="kpi amber">
-      <div class="kpi-label">배달비</div>
-      <div class="kpi-value" id="k-del">₩0</div>
-      <div class="kpi-sub"   id="k-del-sub"></div>
-    </div>
-    <div class="kpi green">
-      <div class="kpi-label">순수익 (재료비 후)</div>
-      <div class="kpi-value" id="k-net">₩0</div>
-      <div class="kpi-sub"   id="k-net-sub"></div>
-    </div>
-    <div class="kpi blue">
       <div class="kpi-label">건당 평균 매출</div>
       <div class="kpi-value" id="k-per-order">₩0</div>
       <div class="kpi-sub">건당</div>
-    </div>
-  </div>
-
-  <!-- BEP 달성률 -->
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <span class="card-title" style="margin-bottom:0">🎯 손익분기점 달성률</span>
-      <span id="bep-badge" style="font-size:12px;font-weight:700"></span>
-    </div>
-    <div class="bep-bar-bg"><div class="bep-bar-fill" id="bep-fill" style="width:0%"></div></div>
-    <div class="bep-labels">
-      <span>₩0</span>
-      <span id="bep-mid">BEP -</span>
-      <span id="bep-right">매출 ₩0</span>
-    </div>
-  </div>
-
-  <!-- 비용 게이지 -->
-  <div class="card">
-    <div class="card-title">💸 비용 구성 (매출 대비)</div>
-    <div class="gauge-row">
-      <div class="gauge-label">플랫폼수수료</div>
-      <div class="gauge-bg"><div class="gauge-fill" id="g-fee" style="width:0%;background:var(--red)"></div></div>
-      <div class="gauge-pct" id="gp-fee">0%</div>
-    </div>
-    <div class="gauge-row">
-      <div class="gauge-label">배달비</div>
-      <div class="gauge-bg"><div class="gauge-fill" id="g-del" style="width:0%;background:var(--or)"></div></div>
-      <div class="gauge-pct" id="gp-del">0%</div>
-    </div>
-    <div class="gauge-row">
-      <div class="gauge-label">쿠폰(상점부담)</div>
-      <div class="gauge-bg"><div class="gauge-fill" id="g-cpn" style="width:0%;background:#f87171"></div></div>
-      <div class="gauge-pct" id="gp-cpn">0%</div>
-    </div>
-    <div class="gauge-row">
-      <div class="gauge-label">고정비</div>
-      <div class="gauge-bg"><div class="gauge-fill" id="g-fix" style="width:0%;background:#60a5fa"></div></div>
-      <div class="gauge-pct" id="gp-fix">0%</div>
     </div>
   </div>
 
@@ -298,7 +260,68 @@
 </div>
 
 <!-- =============================================
-     패널 5: 설정
+     패널 5: 진단센터
+============================================= -->
+<div id="panel-diagnosis" class="panel">
+  <div class="tabs" style="margin-bottom:12px;background:var(--bg2)">
+    <button class="tab active" data-dtab="coupon" onclick="switchDiag('coupon')">🎟️ 쿠폰계산기</button>
+    <button class="tab" data-dtab="diagnosis1" onclick="switchDiag('diagnosis1')">💊 헛돈진단</button>
+    <button class="tab" data-dtab="leaks" onclick="switchDiag('leaks')">🔍 돈새는곳</button>
+    <button class="tab" data-dtab="pricing" onclick="switchDiag('pricing')">💰 가격설계</button>
+    <button class="tab" data-dtab="adcalc" onclick="switchDiag('adcalc')">📢 광고손익</button>
+  </div>
+  <div id="diag-coupon" class="diag-panel active">
+    <div class="card">
+      <div class="card-title">🎟️ 쿠폰 역이용 계산기</div>
+      <div class="settings-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="field"><label>메뉴 원가 (원)</label><input id="dc-cost" type="number" value="5250" oninput="calcCoupon()"></div>
+        <div class="field"><label>현재 판매가 (원)</label><input id="dc-price" type="number" value="15000" oninput="calcCoupon()"></div>
+        <div class="field"><label>목표 마진율 (%)</label><input id="dc-margin" type="number" value="20" oninput="calcCoupon()"></div>
+      </div>
+      <div class="settings-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
+        <div class="field"><label>쿠폰 할인액 (원)</label><input id="dc-discount" type="number" value="3000" oninput="calcCoupon()"></div>
+        <div class="field"><label>플랫폼</label><select id="dc-platform" style="background:rgba(255,255,255,0.05);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;color:var(--tx);font-family:inherit;font-size:13px;width:100%" onchange="calcCoupon()"><option value="bm">배달의민족</option><option value="cp">쿠팡이츠</option><option value="tg">땡겨요</option><option value="yg">요기요</option></select></div>
+      </div>
+    </div>
+    <div class="card" id="dc-result"></div>
+    <div class="card" id="dc-reverse"></div>
+  </div>
+  <div id="diag-diagnosis1" class="diag-panel">
+    <div class="card" id="diag1-result"></div>
+  </div>
+  <div id="diag-leaks" class="diag-panel">
+    <div class="card" id="leaks-result"></div>
+  </div>
+  <div id="diag-pricing" class="diag-panel">
+    <div class="card">
+      <div class="card-title">💰 적정 가격 설계기</div>
+      <div class="settings-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="field"><label>재료비 (원)</label><input id="dp-material" type="number" value="5000" oninput="calcPricing()"></div>
+        <div class="field"><label>인건비 배분 (원)</label><input id="dp-labor" type="number" value="2000" oninput="calcPricing()"></div>
+        <div class="field"><label>포장재 (원)</label><input id="dp-packing" type="number" value="500" oninput="calcPricing()"></div>
+      </div>
+      <div class="settings-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
+        <div class="field"><label>목표 마진율 (%)</label><input id="dp-margin" type="number" value="20" oninput="calcPricing()"></div>
+        <div class="field"><label>경쟁사 할인액 시뮬 (원)</label><input id="dp-competitor" type="number" value="2000" oninput="calcPricing()"></div>
+      </div>
+    </div>
+    <div class="card" id="dp-result"></div>
+  </div>
+  <div id="diag-adcalc" class="diag-panel">
+    <div class="card">
+      <div class="card-title">📢 플랫폼 광고 손익 계산기</div>
+      <div class="settings-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="field"><label>하루 광고비 (원)</label><input id="da-budget" type="number" value="10000" oninput="calcAd()"></div>
+        <div class="field"><label>광고 추가 주문수 (건/일)</label><input id="da-orders" type="number" value="3" oninput="calcAd()"></div>
+        <div class="field"><label>플랫폼</label><select id="da-platform" style="background:rgba(255,255,255,0.05);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;color:var(--tx);font-family:inherit;font-size:13px;width:100%" onchange="calcAd()"><option value="bm">배달의민족</option><option value="cp">쿠팡이츠</option></select></div>
+      </div>
+    </div>
+    <div class="card" id="da-result"></div>
+  </div>
+</div>
+
+<!-- =============================================
+     패널 6: 설정
 ============================================= -->
 <div id="panel-settings" class="panel">
   <!-- 고정비 -->

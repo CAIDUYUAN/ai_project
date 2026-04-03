@@ -170,33 +170,35 @@ function renderOverview() {
   renderMonthBtns('ov-months');
   const ag = aggregate(SEL);
 
-  // KPI
+  // KPI 1행 - 핵심
   set('k-rev', W(ag.tR)); set('k-orders', `주문 ${ag.tOrd}건`);
+  setKpi('k-net', W(ag.net), ag.net >= 0);
+  set('k-net-sub', `원가율 ${S.cogs}% | 고정비 -${W(ag.fixed)}`);
+  const hourly = ag.tOrd > 0 ? Math.round(ag.net / (26 * 10)) : 0;
+  set('k-hourly', W(hourly));
+
+  // 경고 배너
+  const warnings = [];
+  if (ag.tR > 0) {
+    const feeRate = ag.tFee / ag.tR * 100;
+    const delRate = ag.tDel / ag.tR * 100;
+    const fixedRate = ag.fixed / ag.tR * 100;
+    if (feeRate > 15) warnings.push('⚠️ 플랫폼 수수료 비중 ' + feeRate.toFixed(1) + '% (권장 15% 이하)');
+    if (delRate > 10) warnings.push('⚠️ 배달비 비중 ' + delRate.toFixed(1) + '% (권장 10% 이하)');
+    if (fixedRate > 50) warnings.push('⚠️ 고정비가 매출의 ' + fixedRate.toFixed(1) + '%를 차지합니다');
+  }
+  const banner = document.getElementById('warning-banner');
+  const bannerText = document.getElementById('warning-text');
+  if (warnings.length) { bannerText.innerHTML = warnings.join('<br>'); banner.style.display = 'block'; }
+  else { banner.style.display = 'none'; }
+
+  // KPI 2행 - 상세
   setKpi('k-deposit', W(ag.deposit), ag.deposit >= 0);
   set('k-deposit-sub', `정산율 ${Pct(ag.deposit,ag.tR)} | 차감 -${W(ag.tDeduct)}`);
   set('k-deduct', W(ag.tDeduct));
   set('k-deduct-sub', `수수료 ${W(ag.tFee)} | 배달 ${W(ag.tDel)} | 쿠폰 ${W(ag.tCpn)}`);
   set('k-avg', W(ag.days ? ag.tR/ag.days : 0)); set('k-days', `${ag.days}일 영업`);
-  set('k-fee', W(ag.tFee)); set('k-fee-rate', Pct(ag.tFee, ag.tR));
-  set('k-del', W(ag.tDel)); set('k-del-sub', `배민 ${ag.bm.ord} + 쿠팡 ${ag.cp.ord} + 요기요 ${ag.yg.ord}건`);
-  setKpi('k-net', W(ag.net), ag.net >= 0);
-  set('k-net-sub', `원가율 ${S.cogs}% | 고정비 -${W(ag.fixed)}`);
   set('k-per-order', W(ag.tOrd ? ag.tR/ag.tOrd : 0));
-
-  // BEP 바
-  const bp   = Math.min(ag.tR / ag.bep * 100, 120);
-  const fill = document.getElementById('bep-fill');
-  fill.style.width = bp + '%'; fill.className = 'bep-bar-fill' + (bp >= 100 ? ' ok' : '');
-  const badge = document.getElementById('bep-badge');
-  badge.textContent = bp >= 100 ? `✅ 달성! +${W(ag.tR-ag.bep)}` : `⏳ 부족 ${W(ag.bep-ag.tR)}`;
-  badge.style.color = bp >= 100 ? 'var(--grn)' : 'var(--or)';
-  set('bep-mid', `BEP: ${W(ag.bep)}`); set('bep-right', `매출 ${W(ag.tR)}`);
-
-  // 게이지
-  if (ag.tR) {
-    setGauge('fee', ag.tFee/ag.tR*100); setGauge('del', ag.tDel/ag.tR*100);
-    setGauge('cpn', ag.tCpn/ag.tR*100); setGauge('fix', ag.fixed/ag.tR*100);
-  }
 
   // 일별 막대 차트
   const allDays = [...new Set([...Object.keys(ag.dailyBM), ...Object.keys(ag.dailyCP), ...Object.keys(ag.dailyTG), ...Object.keys(ag.dailyYG)])].sort();
@@ -328,6 +330,9 @@ function renderCalendar() {
     const tot = bR+cR+gR+yR, totO = bO+cO+gO+yO;
     const cell = document.createElement('div');
     cell.className = 'cal-cell' + (tot>0?' has-data':'') + (ds===todayStr?' today':'');
+    const dailyTarget = fixedCost() / 26 / (1 - S.cogs/100 - 0.15);
+    if (tot > 0 && tot >= dailyTarget) cell.style.background = 'rgba(26,158,107,0.12)';
+    else if (tot > 0) cell.style.background = 'rgba(232,33,10,0.08)';
     if (tot > 0) {
       const bw=bR/tot*100, cw=cR/tot*100, gw=gR/tot*100, yw=100-bw-cw-gw;
       cell.innerHTML = `<div class="cal-day">${d}</div><div class="cal-rev">${W(tot).replace('₩','')}</div><div class="cal-orders">${totO}건</div><div class="cal-bar"><div class="cal-bar-bm" style="width:${bw}%"></div><div class="cal-bar-cp" style="width:${cw}%"></div><div style="background:#06D6A0;width:${gw}%"></div><div style="background:#FF4500;width:${yw}%"></div></div>`;
@@ -397,4 +402,143 @@ function calcBEPSummary() {
   const bep=(fixed)/(1-S.cogs/100-afr);
   const bep2=(fixed+S.living)/(1-S.cogs/100-afr);
   set('s-fixed-total',W(fixed)); set('s-bep',W(bep)); set('s-daily-bep',W(bep/26)); set('s-bep2',W(bep2));
+}
+
+// ==============================================
+// [T] 진단센터
+// ==============================================
+function switchDiag(id) {
+  document.querySelectorAll('.diag-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('[data-dtab]').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('diag-' + id);
+  if (panel) panel.classList.add('active');
+  const btn = document.querySelector('[data-dtab="' + id + '"]');
+  if (btn) btn.classList.add('active');
+  renderDiagnosis();
+}
+
+function renderDiagnosis() {
+  const activePanel = document.querySelector('.diag-panel.active');
+  if (!activePanel) return;
+  const id = activePanel.id.replace('diag-','');
+  if (id === 'diagnosis1') renderDiag1();
+  if (id === 'leaks') renderLeaks();
+  if (id === 'coupon') calcCoupon();
+  if (id === 'pricing') calcPricing();
+  if (id === 'adcalc') calcAd();
+}
+
+function calcCoupon() {
+  const cost = parseFloat(document.getElementById('dc-cost')?.value) || 0;
+  const price = parseFloat(document.getElementById('dc-price')?.value) || 0;
+  const targetMargin = parseFloat(document.getElementById('dc-margin')?.value) || 0;
+  const discount = parseFloat(document.getElementById('dc-discount')?.value) || 0;
+  const pf = document.getElementById('dc-platform')?.value || 'bm';
+  let feeRate;
+  if (pf === 'bm') feeRate = (S.bmComm + S.bmPg + S.bmVat + S.bmExtra) / 100;
+  else if (pf === 'cp') feeRate = (S.cpComm + S.cpPg + S.cpVat + S.cpExtra) / 100;
+  else if (pf === 'tg') feeRate = (S.tgComm + S.tgPg + S.tgVat + S.tgExtra) / 100;
+  else feeRate = (S.ygComm + S.ygPg + S.ygVat + S.ygExtra) / 100;
+  const delivery = pf === 'bm' ? S.bmDel : pf === 'cp' ? S.cpDel : pf === 'tg' ? S.tgDel : S.ygDel;
+  const actualPrice = price - discount;
+  const fee = price * feeRate;
+  const profit = actualPrice - fee - delivery - cost;
+  const profitRate = price > 0 ? (profit / price * 100) : 0;
+  let statusColor, statusText;
+  if (profitRate >= 20) { statusColor = 'var(--grn)'; statusText = '🟢 안전'; }
+  else if (profitRate >= 10) { statusColor = 'var(--or)'; statusText = '🟡 위험'; }
+  else { statusColor = 'var(--red)'; statusText = '🔴 손해'; }
+  const el = document.getElementById('dc-result');
+  if (el) el.innerHTML = '<div style="text-align:center;margin-bottom:12px"><div style="font-size:28px;font-weight:900;color:' + statusColor + '">' + statusText + '</div><div style="font-size:13px;color:var(--muted);margin-top:4px">순수익률 ' + profitRate.toFixed(1) + '%</div></div><div style="font-family:var(--mono);font-size:13px;line-height:2.2"><div style="display:flex;justify-content:space-between"><span>현재 판매가</span><span>' + W(price) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>쿠폰 할인</span><span>-' + W(discount) + '</span></div><div style="display:flex;justify-content:space-between"><span>실제 수령가</span><span>' + W(actualPrice) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>수수료 (' + (feeRate*100).toFixed(1) + '%)</span><span>-' + W(fee) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>배달비</span><span>-' + W(delivery) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>원가</span><span>-' + W(cost) + '</span></div><hr style="border:none;border-top:1px solid var(--bd);margin:4px 0"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;color:' + statusColor + '"><span>실제 순수익</span><span>' + W(profit) + ' (' + profitRate.toFixed(1) + '%)</span></div></div>';
+  const minPrice = (cost + delivery) / (1 - feeRate - targetMargin/100);
+  const reverseEl = document.getElementById('dc-reverse');
+  if (reverseEl) reverseEl.innerHTML = '<div class="card-title">🔄 목표 마진 ' + targetMargin + '% 유지하려면?</div><div style="font-size:14px;line-height:2"><div>최소 판매가: <strong style="color:#fcd34d">' + W(Math.ceil(minPrice/100)*100) + '</strong></div><div>쿠폰 ' + W(discount) + ' 할인 시 정가: <strong style="color:#fcd34d">' + W(Math.ceil((minPrice+discount)/100)*100) + '</strong></div><div style="margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(232,33,10,0.08);border:1px solid rgba(232,33,10,0.2);font-size:12px;color:#f87171">🔴 마지노선: ' + W(Math.ceil(((cost+delivery)/(1-feeRate))/100)*100) + ' 이하로 팔면 무조건 손해</div></div>';
+}
+
+function renderDiag1() {
+  const ag = aggregate(SEL);
+  const netRate = ag.tR > 0 ? (ag.net / ag.tR * 100) : 0;
+  let emoji, label, color, desc;
+  if (netRate >= 20) { emoji='🟢'; label='정상 운영'; color='var(--grn)'; desc='순수익률 ' + netRate.toFixed(1) + '% — 건강한 수익 구조입니다'; }
+  else if (netRate >= 10) { emoji='🟡'; label='위험 구간'; color='var(--or)'; desc='순수익률 ' + netRate.toFixed(1) + '% — 비용 구조 점검이 필요합니다'; }
+  else { emoji='🔴'; label='헛돈 구간'; color='var(--red)'; desc='매출 ' + W(ag.tR) + ' 중 실제 손에 쥐는 돈은 ' + W(ag.net) + ' (' + netRate.toFixed(1) + '%)'; }
+  const el = document.getElementById('diag1-result');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:20px 0"><div style="font-size:16px;color:var(--muted);margin-bottom:8px">이번 달 순수익</div><div style="font-size:36px;font-weight:900;color:' + color + ';margin-bottom:12px">' + W(ag.net) + '</div><div style="font-size:48px;margin-bottom:8px">' + emoji + '</div><div style="font-size:22px;font-weight:700;color:' + color + '">' + label + '</div><div style="font-size:13px;color:var(--muted);margin-top:8px">' + desc + '</div></div><hr style="border:none;border-top:1px solid var(--bd);margin:12px 0"><div style="font-size:12px;color:var(--muted);line-height:2"><div>원가율: ' + S.cogs.toFixed(1) + '% ' + (S.cogs > 35 ? '⚠️' : '✅') + ' (권장 35% 이하)</div><div>수수료율: ' + (ag.tR ? (ag.tFee/ag.tR*100).toFixed(1) : '0') + '% ' + (ag.tR && ag.tFee/ag.tR > 0.15 ? '⚠️' : '✅') + ' (권장 15% 이하)</div><div>고정비 비중: ' + (ag.tR ? (ag.fixed/ag.tR*100).toFixed(1) : '0') + '% ' + (ag.tR && ag.fixed/ag.tR > 0.5 ? '⚠️' : '✅') + ' (권장 50% 이하)</div></div>';
+}
+
+function renderLeaks() {
+  const ag = aggregate(SEL);
+  if (!ag.tR) { document.getElementById('leaks-result').innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">데이터를 먼저 업로드해주세요</div>'; return; }
+  const cogsCost = ag.tR * S.cogs / 100;
+  const items = [
+    {name:'원가', val:cogsCost, color:'#f87171', warn:S.cogs > 35, tip:'권장 35% 이하'},
+    {name:'플랫폼수수료', val:ag.tFee, color:'#fbbf24', warn:ag.tFee/ag.tR > 0.15, tip:'권장 15% 이하'},
+    {name:'배달비', val:ag.tDel, color:'#fb923c', warn:ag.tDel/ag.tR > 0.10, tip:'권장 10% 이하'},
+    {name:'쿠폰부담', val:ag.tCpn, color:'#f472b6', warn:false, tip:''},
+    {name:'고정비', val:ag.fixed, color:'#60a5fa', warn:ag.fixed/ag.tR > 0.50, tip:'권장 매출의 50% 이하'},
+    {name:'순수익', val:ag.net, color:'var(--grn)', warn:ag.net < 0, tip:''},
+  ];
+  const costItems = items.filter(i => i.name !== '순수익').sort((a,b) => b.val - a.val);
+  let html = '<div class="card-title">🔍 돈 새는 곳 찾기</div>';
+  html += '<div style="margin-bottom:16px">';
+  items.forEach(item => {
+    const pct = (item.val / ag.tR * 100);
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px"><div style="width:80px;color:var(--muted)">' + item.name + '</div><div style="flex:1;height:18px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + Math.min(pct,100) + '%;background:' + item.color + ';border-radius:4px;transition:width .5s"></div></div><div style="width:100px;text-align:right;font-family:var(--mono)">' + W(item.val) + ' <span style="color:var(--muted)">' + pct.toFixed(1) + '%</span></div><div style="width:20px">' + (item.warn ? '⚠️' : '') + '</div></div>';
+  });
+  html += '</div>';
+  const urgent = costItems.find(i => i.warn);
+  if (urgent) html += '<div style="padding:10px 14px;background:rgba(232,33,10,0.08);border:1px solid rgba(232,33,10,0.2);border-radius:8px;font-size:12px;color:#f87171">🚨 가장 시급: <strong>' + urgent.name + '</strong> 절감 (월 ' + W(urgent.val) + ' 지출, 매출의 ' + (urgent.val/ag.tR*100).toFixed(1) + '%)</div>';
+  document.getElementById('leaks-result').innerHTML = html;
+}
+
+function calcPricing() {
+  const material = parseFloat(document.getElementById('dp-material')?.value) || 0;
+  const labor = parseFloat(document.getElementById('dp-labor')?.value) || 0;
+  const packing = parseFloat(document.getElementById('dp-packing')?.value) || 0;
+  const targetMargin = parseFloat(document.getElementById('dp-margin')?.value) || 0;
+  const competitor = parseFloat(document.getElementById('dp-competitor')?.value) || 0;
+  const totalCost = material + labor + packing;
+  const ag = aggregate(SEL);
+  const avgOrders = ag.tOrd || 104;
+  const platforms = [
+    {name:'배민', fee:(S.bmComm+S.bmPg+S.bmVat+S.bmExtra)/100, del:S.bmDel, color:'#4ade80'},
+    {name:'쿠팡', fee:(S.cpComm+S.cpPg+S.cpVat+S.cpExtra)/100, del:S.cpDel, color:'#f87171'},
+    {name:'땡겨요', fee:(S.tgComm+S.tgPg+S.tgVat+S.tgExtra)/100, del:S.tgDel, color:'#06D6A0'},
+    {name:'요기요', fee:(S.ygComm+S.ygPg+S.ygVat+S.ygExtra)/100, del:S.ygDel, color:'#FF4500'},
+  ];
+  let html = '<div class="card-title">💰 플랫폼별 적정 가격</div>';
+  html += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">원가 합계: ' + W(totalCost) + ' (재료 ' + W(material) + ' + 인건비 ' + W(labor) + ' + 포장 ' + W(packing) + ')</div>';
+  platforms.forEach(p => {
+    if (!p.fee && !p.del) return;
+    const minPrice = (totalCost + p.del) / (1 - p.fee);
+    const recPrice = (totalCost + p.del) / (1 - p.fee - targetMargin/100);
+    const maxDiscount = recPrice - minPrice;
+    html += '<div style="display:flex;gap:12px;margin-bottom:8px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid ' + p.color + ';font-size:12px"><div style="width:50px;font-weight:700;color:' + p.color + '">' + p.name + '</div><div style="flex:1">최소 <strong>' + W(Math.ceil(minPrice/100)*100) + '</strong> · 권장 <strong style="color:#fcd34d">' + W(Math.ceil(recPrice/100)*100) + '</strong> · 최대 할인 ' + W(Math.floor(maxDiscount/100)*100) + '</div></div>';
+  });
+  if (competitor > 0) {
+    const monthlyLoss = competitor * avgOrders;
+    html += '<div style="margin-top:12px;padding:10px 14px;background:rgba(232,33,10,0.08);border:1px solid rgba(232,33,10,0.2);border-radius:8px;font-size:12px;color:#f87171">⚠️ 경쟁사 따라 ' + W(competitor) + ' 할인 시 → 월 ' + avgOrders + '건 기준 <strong>월 ' + W(monthlyLoss) + ' 추가 손실</strong></div>';
+  }
+  document.getElementById('dp-result').innerHTML = html;
+}
+
+function calcAd() {
+  const budget = parseFloat(document.getElementById('da-budget')?.value) || 0;
+  const orders = parseFloat(document.getElementById('da-orders')?.value) || 0;
+  const pf = document.getElementById('da-platform')?.value || 'bm';
+  const feeRate = pf === 'bm' ? (S.bmComm+S.bmPg+S.bmVat+S.bmExtra)/100 : (S.cpComm+S.cpPg+S.cpVat+S.cpExtra)/100;
+  const delivery = pf === 'bm' ? S.bmDel : S.cpDel;
+  const ag = aggregate(SEL);
+  const pfData = pf === 'bm' ? ag.bm : ag.cp;
+  const avgOrder = pfData.ord > 0 ? pfData.r / pfData.ord : 18000;
+  const addRev = avgOrder * orders;
+  const addFee = addRev * feeRate;
+  const addDel = delivery * orders;
+  const addCost = addRev * S.cogs / 100;
+  const addProfit = addRev - addFee - addDel - addCost - budget;
+  const monthProfit = addProfit * 26;
+  const bepOrders = budget > 0 ? Math.ceil(budget / (avgOrder * (1 - feeRate - S.cogs/100) - delivery)) : 0;
+  const isWorth = addProfit > 0;
+  const el = document.getElementById('da-result');
+  if (el) el.innerHTML = '<div style="text-align:center;margin-bottom:12px"><div style="font-size:28px;font-weight:900;color:' + (isWorth?'var(--grn)':'var(--red)') + '">' + (isWorth?'🟢 광고 이득':'🔴 광고 손해') + '</div></div><div style="font-family:var(--mono);font-size:13px;line-height:2.2"><div style="display:flex;justify-content:space-between"><span>하루 광고비</span><span>-' + W(budget) + '</span></div><div style="display:flex;justify-content:space-between"><span>추가 매출 (' + orders + '건 × ' + W(avgOrder) + ')</span><span>+' + W(addRev) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>추가 수수료+배달비+원가</span><span>-' + W(addFee+addDel+addCost) + '</span></div><hr style="border:none;border-top:1px solid var(--bd);margin:4px 0"><div style="display:flex;justify-content:space-between;font-weight:700;color:' + (isWorth?'var(--grn)':'var(--red)') + '"><span>하루 순이익</span><span>' + W(addProfit) + '</span></div><div style="display:flex;justify-content:space-between"><span>월 환산 (26일)</span><span style="font-weight:700">' + W(monthProfit) + '</span></div></div><div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:12px;color:var(--muted)">💡 손익분기: 하루 <strong style="color:var(--tx)">' + bepOrders + '건</strong> 이상 추가되면 광고가 이득</div>';
 }
