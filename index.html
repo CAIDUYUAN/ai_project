@@ -8,7 +8,8 @@
 <!-- 폰트 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <!-- 외부 라이브러리 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -86,7 +87,7 @@
           ondrop="onDrop(event,'tg')">
           <input type="file" accept=".xlsx,.xls" multiple onchange="loadXlsx(this,'tg')">
           <div style="font-size:26px;margin-bottom:8px">🟢</div>
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#06D6A0">땡겨요</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#2D9E6B">땡겨요</div>
           <div style="font-size:11px;color:var(--muted);line-height:1.5">
             땡겨요 YYYY년 MM월 매출/매입<br>매출+매입 함께 선택 가능
           </div>
@@ -97,7 +98,7 @@
           ondrop="onDrop(event,'yg')">
           <input type="file" accept=".xlsx,.xls" multiple onchange="loadXlsx(this,'yg')">
           <div style="font-size:26px;margin-bottom:8px">🟠</div>
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#FF4500">요기요</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#E5302A">요기요</div>
           <div style="font-size:11px;color:var(--muted);line-height:1.5">
             사업자번호_매출/매입내역_...<br>매출+매입 함께 선택 가능
           </div>
@@ -132,7 +133,7 @@
       <div class="kpi-sub" id="k-orders">주문 0건</div>
     </div>
     <div class="kpi green" style="border:1.5px solid var(--grn)">
-      <div class="kpi-label" style="color:#4ade80;font-weight:700">💰 실제 순수익</div>
+      <div class="kpi-label" style="color:var(--grn);font-weight:700">💰 실제 순수익</div>
       <div class="kpi-value pos" id="k-net">₩0</div>
       <div class="kpi-sub" id="k-net-sub"></div>
     </div>
@@ -144,7 +145,7 @@
   </div>
 
   <!-- 경고 배너 -->
-  <div id="warning-banner" class="card" style="display:none;background:rgba(232,33,10,0.08);border-color:var(--red)">
+  <div id="warning-banner" class="card" style="display:none;background:#FEF9EC;border-color:var(--red)">
     <div id="warning-text" style="font-size:12px;line-height:1.8"></div>
   </div>
 
@@ -178,8 +179,8 @@
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:var(--grn)"></div>배민</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>쿠팡</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#06D6A0"></div>땡겨요</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#FF4500"></div>요기요</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2D9E6B"></div>땡겨요</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#E5302A"></div>요기요</div>
     </div>
     <div class="bar-chart" id="bar-chart"></div>
   </div>
@@ -191,10 +192,10 @@
       <table>
         <thead><tr>
           <th style="text-align:left">월</th>
-          <th style="color:#4ade80">배민</th>
-          <th style="color:#f87171">쿠팡</th>
-          <th style="color:#06D6A0">땡겨요</th>
-          <th style="color:#FF4500">요기요</th>
+          <th style="color:var(--grn)">배민</th>
+          <th style="color:var(--danger)">쿠팡</th>
+          <th style="color:#2D9E6B">땡겨요</th>
+          <th style="color:#E5302A">요기요</th>
           <th>합계</th><th>주문</th>
           <th>차감합계</th><th>입금예정</th><th>순수익</th>
         </tr></thead>
@@ -216,10 +217,10 @@
       <table>
         <thead><tr>
           <th style="text-align:left">항목</th>
-          <th style="color:#4ade80">배달의민족</th>
-          <th style="color:#f87171">쿠팡이츠</th>
-          <th style="color:#06D6A0">땡겨요</th>
-          <th style="color:#FF4500">요기요</th>
+          <th style="color:var(--grn)">배달의민족</th>
+          <th style="color:var(--danger)">쿠팡이츠</th>
+          <th style="color:#2D9E6B">땡겨요</th>
+          <th style="color:#E5302A">요기요</th>
           <th>합계</th>
         </tr></thead>
         <tbody id="cmp-tbody"></tbody>
@@ -280,7 +281,7 @@
       </div>
       <div class="settings-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
         <div class="field"><label>쿠폰 할인액 (원)</label><input id="dc-discount" type="number" value="3000" oninput="calcCoupon()"></div>
-        <div class="field"><label>플랫폼</label><select id="dc-platform" style="background:rgba(255,255,255,0.05);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;color:var(--tx);font-family:inherit;font-size:13px;width:100%" onchange="calcCoupon()"><option value="bm">배달의민족</option><option value="cp">쿠팡이츠</option><option value="tg">땡겨요</option><option value="yg">요기요</option></select></div>
+        <div class="field"><label>플랫폼</label><select id="dc-platform" style="background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;color:var(--tx);font-family:inherit;font-size:13px;width:100%" onchange="calcCoupon()"><option value="bm">배달의민족</option><option value="cp">쿠팡이츠</option><option value="tg">땡겨요</option><option value="yg">요기요</option></select></div>
       </div>
     </div>
     <div class="card" id="dc-result"></div>
@@ -313,7 +314,7 @@
       <div class="settings-grid" style="grid-template-columns:1fr 1fr 1fr">
         <div class="field"><label>하루 광고비 (원)</label><input id="da-budget" type="number" value="10000" oninput="calcAd()"></div>
         <div class="field"><label>광고 추가 주문수 (건/일)</label><input id="da-orders" type="number" value="3" oninput="calcAd()"></div>
-        <div class="field"><label>플랫폼</label><select id="da-platform" style="background:rgba(255,255,255,0.05);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;color:var(--tx);font-family:inherit;font-size:13px;width:100%" onchange="calcAd()"><option value="bm">배달의민족</option><option value="cp">쿠팡이츠</option></select></div>
+        <div class="field"><label>플랫폼</label><select id="da-platform" style="background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;color:var(--tx);font-family:inherit;font-size:13px;width:100%" onchange="calcAd()"><option value="bm">배달의민족</option><option value="cp">쿠팡이츠</option></select></div>
       </div>
     </div>
     <div class="card" id="da-result"></div>
@@ -348,51 +349,51 @@
   <!-- 수수료 설정 -->
   <div class="fee-cards" style="grid-template-columns:1fr 1fr 1fr 1fr">
     <div class="fee-card bm">
-      <div style="font-weight:700;margin-bottom:10px;color:#4ade80">🛵 배달의민족</div>
+      <div style="font-weight:700;margin-bottom:10px;color:var(--grn)">🛵 배달의민족</div>
       <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-bm-comm"  type="number" step="0.1"  value="6.8"  oninput="updateFeeTotal('bm')"></div>
       <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-bm-pg"    type="number" step="0.1"  value="1.3"  oninput="updateFeeTotal('bm')"></div>
       <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-bm-vat"   type="number" step="0.01" value="0.68" oninput="updateFeeTotal('bm')"></div>
       <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-bm-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('bm')"></div>
       <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-bm-del"   type="number" value="3100"></div>
       <div class="fee-total bm">
-        <span style="font-size:12px;color:#4ade80">총 수수료율</span>
-        <span id="bm-fee-total" style="font-weight:700;color:#4ade80">8.78%</span>
+        <span style="font-size:12px;color:var(--grn)">총 수수료율</span>
+        <span id="bm-fee-total" style="font-weight:700;color:var(--grn)">8.78%</span>
       </div>
     </div>
     <div class="fee-card cp">
-      <div style="font-weight:700;margin-bottom:10px;color:#f87171">🧡 쿠팡이츠</div>
+      <div style="font-weight:700;margin-bottom:10px;color:var(--danger)">🧡 쿠팡이츠</div>
       <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-cp-comm"  type="number" step="0.1"  value="7.8"  oninput="updateFeeTotal('cp')"></div>
       <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-cp-pg"    type="number" step="0.1"  value="2.8"  oninput="updateFeeTotal('cp')"></div>
       <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-cp-vat"   type="number" step="0.01" value="2.5"  oninput="updateFeeTotal('cp')"></div>
       <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-cp-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('cp')"></div>
       <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-cp-del"   type="number" value="3400"></div>
       <div class="fee-total cp">
-        <span style="font-size:12px;color:#f87171">총 수수료율</span>
-        <span id="cp-fee-total" style="font-weight:700;color:#f87171">13.10%</span>
+        <span style="font-size:12px;color:var(--danger)">총 수수료율</span>
+        <span id="cp-fee-total" style="font-weight:700;color:var(--danger)">13.10%</span>
       </div>
     </div>
-    <div class="fee-card" style="border:1px solid var(--bd);border-top:3px solid #06D6A0">
-      <div style="font-weight:700;margin-bottom:10px;color:#06D6A0">🟢 땡겨요</div>
+    <div class="fee-card" style="border:1px solid var(--bd);border-top:3px solid #2D9E6B">
+      <div style="font-weight:700;margin-bottom:10px;color:#2D9E6B">🟢 땡겨요</div>
       <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-tg-comm"  type="number" step="0.1"  value="9.0"  oninput="updateFeeTotal('tg')"></div>
       <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-tg-pg"    type="number" step="0.1"  value="3.3"  oninput="updateFeeTotal('tg')"></div>
       <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-tg-vat"   type="number" step="0.01" value="0"    oninput="updateFeeTotal('tg')"></div>
       <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-tg-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('tg')"></div>
       <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-tg-del"   type="number" value="0"></div>
-      <div class="fee-total" style="background:rgba(6,214,160,0.1);border:1px solid rgba(6,214,160,0.3)">
-        <span style="font-size:12px;color:#06D6A0">총 수수료율</span>
-        <span id="tg-fee-total" style="font-weight:700;color:#06D6A0">12.30%</span>
+      <div class="fee-total" style="background:rgba(45,158,107,0.1);border:1px solid rgba(45,158,107,0.3)">
+        <span style="font-size:12px;color:#2D9E6B">총 수수료율</span>
+        <span id="tg-fee-total" style="font-weight:700;color:#2D9E6B">12.30%</span>
       </div>
     </div>
-    <div class="fee-card" style="border:1px solid var(--bd);border-top:3px solid #FF4500">
-      <div style="font-weight:700;margin-bottom:10px;color:#FF4500">🟠 요기요</div>
+    <div class="fee-card" style="border:1px solid var(--bd);border-top:3px solid #E5302A">
+      <div style="font-weight:700;margin-bottom:10px;color:#E5302A">🟠 요기요</div>
       <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-yg-comm"  type="number" step="0.1"  value="0"    oninput="updateFeeTotal('yg')"></div>
       <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-yg-pg"    type="number" step="0.1"  value="0"    oninput="updateFeeTotal('yg')"></div>
       <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-yg-vat"   type="number" step="0.01" value="0"    oninput="updateFeeTotal('yg')"></div>
       <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-yg-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('yg')"></div>
       <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-yg-del"   type="number" value="0"></div>
-      <div class="fee-total" style="background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3)">
-        <span style="font-size:12px;color:#FF4500">총 수수료율</span>
-        <span id="yg-fee-total" style="font-weight:700;color:#FF4500">0.00%</span>
+      <div class="fee-total" style="background:rgba(229,48,42,0.1);border:1px solid rgba(229,48,42,0.3)">
+        <span style="font-size:12px;color:#E5302A">총 수수료율</span>
+        <span id="yg-fee-total" style="font-weight:700;color:#E5302A">0.00%</span>
       </div>
     </div>
   </div>

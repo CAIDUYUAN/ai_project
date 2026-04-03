@@ -8,7 +8,7 @@ function updateUploadUI(pf) {
 }
 function updateFileList() {
   const pfLabel = {bm:'배민', cp:'쿠팡', tg:'땡겨요', yg:'요기요'};
-  const pfColor = {bm:'var(--grn)', cp:'var(--red)', tg:'#06D6A0', yg:'#FF4500'};
+  const pfColor = {bm:'var(--grn)', cp:'var(--red)', tg:'#2D9E6B', yg:'#E5302A'};
   const all = [
     ...FILES.bm.map(f=>({...f,pf:'bm'})),
     ...FILES.cp.map(f=>({...f,pf:'cp'})),
@@ -210,7 +210,7 @@ function renderOverview() {
     const tot = bR+cR+gR+yR, H = Math.max(tot/maxRev*82, 2);
     const bH=tot?bR/tot*H:0, cH=tot?cR/tot*H:0, gH=tot?gR/tot*H:0, yH=H-bH-cH-gH;
     const col = document.createElement('div'); col.className = 'bar-col';
-    col.innerHTML = `<div class="bar-bm" style="height:${bH}px"></div><div class="bar-cp" style="height:${cH}px"></div><div style="width:100%;background:#06D6A0;min-height:${gR?2:0}px;height:${gH}px"></div><div style="width:100%;background:#FF4500;min-height:${yR?2:0}px;height:${yH}px"></div><div class="bar-label">${parseInt(day.split('-')[2])}</div>`;
+    col.innerHTML = `<div class="bar-bm" style="height:${bH}px"></div><div class="bar-cp" style="height:${cH}px"></div><div style="width:100%;background:#2D9E6B;min-height:${gR?2:0}px;height:${gH}px"></div><div style="width:100%;background:#E5302A;min-height:${yR?2:0}px;height:${yH}px"></div><div class="bar-label">${parseInt(day.split('-')[2])}</div>`;
     chart.appendChild(col);
   });
 
@@ -227,17 +227,17 @@ function renderOverview() {
                  + (yg?.fee||0)+(yg?.delivery||0);
     const dep=tot-deduct, prf=dep-fixed1;
     const tr = document.createElement('tr');
-    if (SEL===mo) tr.style.background='rgba(232,33,10,0.06)';
+    if (SEL===mo) tr.style.background='rgba(229,48,42,0.04)';
     tr.innerHTML = `
       <td style="font-weight:${SEL===mo?700:400}">${mo.replace('-','년 ')}월</td>
-      <td style="color:#4ade80">${W(bmR)}</td>
-      <td style="color:#f87171">${W(cpR)}</td>
-      <td style="color:#06D6A0">${W(tgR)}</td>
-      <td style="color:#FF4500">${W(ygR)}</td>
+      <td style="color:var(--grn)">${W(bmR)}</td>
+      <td style="color:var(--danger)">${W(cpR)}</td>
+      <td style="color:#2D9E6B">${W(tgR)}</td>
+      <td style="color:#E5302A">${W(ygR)}</td>
       <td style="font-weight:700">${W(tot)}</td>
       <td>${totO}건</td>
       <td class="neg">-${W(deduct)}</td>
-      <td style="color:#4ade80;font-weight:700">${W(dep)}</td>
+      <td style="color:var(--grn);font-weight:700">${W(dep)}</td>
       <td class="${prf>=0?'pos':'neg'}">${W(prf)}</td>`;
     tbody.appendChild(tr);
   });
@@ -245,7 +245,7 @@ function renderOverview() {
   if (ag.months.length > 1) {
     const totDep=ag.tR-ag.tDeduct, totPrf=totDep-fixed1*ag.months.length;
     const tr = document.createElement('tr'); tr.className='tfoot';
-    tr.innerHTML=`<td>합계</td><td style="color:#4ade80">${W(ag.bm.r)}</td><td style="color:#f87171">${W(ag.cp.r)}</td><td style="color:#06D6A0">${W(ag.tg.r)}</td><td style="color:#FF4500">${W(ag.yg.r)}</td><td>${W(ag.tR)}</td><td>${ag.tOrd}건</td><td class="neg">-${W(ag.tDeduct)}</td><td style="color:#4ade80;font-weight:700">${W(totDep)}</td><td class="${totPrf>=0?'pos':'neg'}">${W(totPrf)}</td>`;
+    tr.innerHTML=`<td>합계</td><td style="color:var(--grn)">${W(ag.bm.r)}</td><td style="color:var(--danger)">${W(ag.cp.r)}</td><td style="color:#2D9E6B">${W(ag.tg.r)}</td><td style="color:#E5302A">${W(ag.yg.r)}</td><td>${W(ag.tR)}</td><td>${ag.tOrd}건</td><td class="neg">-${W(ag.tDeduct)}</td><td style="color:var(--grn);font-weight:700">${W(totDep)}</td><td class="${totPrf>=0?'pos':'neg'}">${W(totPrf)}</td>`;
     tbody.appendChild(tr);
   }
 }
@@ -258,10 +258,10 @@ function renderCompare() {
   const ag = aggregate(SEL);
   const container = document.getElementById('pcard-container'); container.innerHTML = '';
 
-  [{pf:'bm', name:'배달의민족', color:'#4ade80', dot:'var(--grn)', ...ag.bm},
-   {pf:'cp', name:'쿠팡이츠',   color:'#f87171', dot:'var(--red)', ...ag.cp},
-   {pf:'tg', name:'땡겨요',     color:'#06D6A0', dot:'#06D6A0',   ...ag.tg},
-   {pf:'yg', name:'요기요',     color:'#FF4500', dot:'#FF4500',   ...ag.yg},
+  [{pf:'bm', name:'배달의민족', color:'var(--grn)', dot:'var(--grn)', ...ag.bm},
+   {pf:'cp', name:'쿠팡이츠',   color:'var(--danger)', dot:'var(--red)', ...ag.cp},
+   {pf:'tg', name:'땡겨요',     color:'#2D9E6B', dot:'#2D9E6B',   ...ag.tg},
+   {pf:'yg', name:'요기요',     color:'#E5302A', dot:'#E5302A',   ...ag.yg},
   ].forEach(p => {
     const div = document.createElement('div'); div.className = 'pcard';
     const dep = p.r - p.fee - p.del - (p.cpn||0);
@@ -276,7 +276,7 @@ function renderCompare() {
       <div class="pcard-row"><span class="l">건당 평균</span>     <span class="v">${W(p.ord?p.r/p.ord:0)}</span></div>
       <div class="pcard-row"><span class="l">수수료</span>        <span class="v neg">-${W(p.fee)}</span></div>
       <div class="pcard-row"><span class="l">배달비</span>        <span class="v" style="color:var(--or)">-${W(p.del)}</span></div>
-      ${p.cpn ? `<div class="pcard-row"><span class="l">쿠폰(상점부담)</span><span class="v" style="color:#f87171">-${W(p.cpn)}</span></div>` : ''}
+      ${p.cpn ? `<div class="pcard-row"><span class="l">쿠폰(상점부담)</span><span class="v" style="color:var(--danger)">-${W(p.cpn)}</span></div>` : ''}
       <hr class="pcard-divider">
       <div class="pcard-row"><span class="l">정산율</span>        <span class="v">${Pct(dep,p.r)}</span></div>
       <div class="pcard-row"><span class="l">순수익(재료前)</span><span class="v ${prf>=0?'pos':'neg'}">${W(prf)}</span></div>
@@ -297,11 +297,11 @@ function renderCompare() {
     ['배달비',         W(ag.bm.del),             W(ag.cp.del),             W(ag.tg.del), W(ag.yg.del), W(ag.tDel)],
     ['쿠폰(상점부담)', W(ag.bm.cpn),             W(ag.cp.cpn),             '-',          '-',          W(ag.tCpn)],
     ['💰 입금예정금액',
-      `<span style="color:#4ade80;font-weight:700">${W(bmDep)}</span>`,
-      `<span style="color:#f87171;font-weight:700">${W(cpDep)}</span>`,
-      `<span style="color:#06D6A0;font-weight:700">${W(tgDep)}</span>`,
-      `<span style="color:#FF4500;font-weight:700">${W(ygDep)}</span>`,
-      `<span style="color:#4ade80;font-weight:700">${W(ag.deposit)}</span>`],
+      `<span style="color:var(--grn);font-weight:700">${W(bmDep)}</span>`,
+      `<span style="color:var(--danger);font-weight:700">${W(cpDep)}</span>`,
+      `<span style="color:#2D9E6B;font-weight:700">${W(tgDep)}</span>`,
+      `<span style="color:#E5302A;font-weight:700">${W(ygDep)}</span>`,
+      `<span style="color:var(--grn);font-weight:700">${W(ag.deposit)}</span>`],
   ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td style="font-weight:700">${r[5]}</td></tr>`).join('');
 }
 
@@ -332,11 +332,11 @@ function renderCalendar() {
     const cell = document.createElement('div');
     cell.className = 'cal-cell' + (tot>0?' has-data':'') + (ds===todayStr?' today':'');
     const dailyTarget = fixedCost() / 26 / (1 - S.cogs/100 - 0.15);
-    if (tot > 0 && tot >= dailyTarget) cell.style.background = 'rgba(26,158,107,0.12)';
-    else if (tot > 0) cell.style.background = 'rgba(232,33,10,0.08)';
+    if (tot > 0 && tot >= dailyTarget) cell.style.background = 'rgba(45,158,107,0.08)';
+    else if (tot > 0) cell.style.background = 'rgba(229,48,42,0.06)';
     if (tot > 0) {
       const bw=bR/tot*100, cw=cR/tot*100, gw=gR/tot*100, yw=100-bw-cw-gw;
-      cell.innerHTML = `<div class="cal-day">${d}</div><div class="cal-rev">${W(tot).replace('₩','')}</div><div class="cal-orders">${totO}건</div><div class="cal-bar"><div class="cal-bar-bm" style="width:${bw}%"></div><div class="cal-bar-cp" style="width:${cw}%"></div><div style="background:#06D6A0;width:${gw}%"></div><div style="background:#FF4500;width:${yw}%"></div></div>`;
+      cell.innerHTML = `<div class="cal-day">${d}</div><div class="cal-rev">${W(tot).replace('₩','')}</div><div class="cal-orders">${totO}건</div><div class="cal-bar"><div class="cal-bar-bm" style="width:${bw}%"></div><div class="cal-bar-cp" style="width:${cw}%"></div><div style="background:#2D9E6B;width:${gw}%"></div><div style="background:#E5302A;width:${yw}%"></div></div>`;
       cell.addEventListener('mouseenter', () => showTooltip(cell,ds,bR,cR,bO,cO,bmMo,cpMo,gR,gO,yR,yO));
       cell.addEventListener('mouseleave', hideTooltip);
     } else {
@@ -359,10 +359,10 @@ function showTooltip(cell, ds, bR, cR, bO, cO, bmMo, cpMo, gR, gO, yR, yO) {
   const bDl  = bO * S.bmDel, cDl = cO * S.cpDel;
   const totalR = bR+cR+gR+yR, totalO = bO+cO+gO+yO;
   let html   = `<div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600">${ds}</div>`;
-  if (bR) html += `<div class="tt-row"><span class="tt-label"><span class="tt-dot" style="background:var(--grn)"></span>배민</span><span class="tt-val" style="color:#4ade80">${W(bR)}</span></div><div class="tt-row"><span class="tt-label" style="padding-left:11px">수수료</span><span class="tt-val neg">-${W(bFee)}</span></div><div class="tt-row"><span class="tt-label" style="padding-left:11px">배달비(${bO}건)</span><span class="tt-val" style="color:var(--or)">-${W(bDl)}</span></div>`;
-  if (cR) html += `<div class="tt-row" style="margin-top:3px"><span class="tt-label"><span class="tt-dot" style="background:var(--red)"></span>쿠팡</span><span class="tt-val" style="color:#f87171">${W(cR)}</span></div><div class="tt-row"><span class="tt-label" style="padding-left:11px">수수료</span><span class="tt-val neg">-${W(cFee)}</span></div><div class="tt-row"><span class="tt-label" style="padding-left:11px">배달비(${cO}건)</span><span class="tt-val" style="color:var(--or)">-${W(cDl)}</span></div>`;
-  if (gR) html += `<div class="tt-row" style="margin-top:3px"><span class="tt-label"><span class="tt-dot" style="background:#06D6A0"></span>땡겨요</span><span class="tt-val" style="color:#06D6A0">${W(gR)}</span></div>`;
-  if (yR) html += `<div class="tt-row" style="margin-top:3px"><span class="tt-label"><span class="tt-dot" style="background:#FF4500"></span>요기요</span><span class="tt-val" style="color:#FF4500">${W(yR)}</span></div>`;
+  if (bR) html += `<div class="tt-row"><span class="tt-label"><span class="tt-dot" style="background:var(--grn)"></span>배민</span><span class="tt-val" style="color:var(--grn)">${W(bR)}</span></div><div class="tt-row"><span class="tt-label" style="padding-left:11px">수수료</span><span class="tt-val neg">-${W(bFee)}</span></div><div class="tt-row"><span class="tt-label" style="padding-left:11px">배달비(${bO}건)</span><span class="tt-val" style="color:var(--or)">-${W(bDl)}</span></div>`;
+  if (cR) html += `<div class="tt-row" style="margin-top:3px"><span class="tt-label"><span class="tt-dot" style="background:var(--red)"></span>쿠팡</span><span class="tt-val" style="color:var(--danger)">${W(cR)}</span></div><div class="tt-row"><span class="tt-label" style="padding-left:11px">수수료</span><span class="tt-val neg">-${W(cFee)}</span></div><div class="tt-row"><span class="tt-label" style="padding-left:11px">배달비(${cO}건)</span><span class="tt-val" style="color:var(--or)">-${W(cDl)}</span></div>`;
+  if (gR) html += `<div class="tt-row" style="margin-top:3px"><span class="tt-label"><span class="tt-dot" style="background:#2D9E6B"></span>땡겨요</span><span class="tt-val" style="color:#2D9E6B">${W(gR)}</span></div>`;
+  if (yR) html += `<div class="tt-row" style="margin-top:3px"><span class="tt-label"><span class="tt-dot" style="background:#E5302A"></span>요기요</span><span class="tt-val" style="color:#E5302A">${W(yR)}</span></div>`;
   html += `<hr class="tt-divider"><div class="tt-row"><span style="font-weight:700">합계</span><span class="tt-val">${W(totalR)}</span></div><div class="tt-row"><span style="font-size:10px;color:var(--muted)">${totalO}건</span><span style="font-size:10px;color:var(--muted)">건당 ${W(totalO?totalR/totalO:0)}</span></div>`;
   tt.innerHTML = html;
   const cr = cell.getBoundingClientRect(), pr = document.getElementById('cal-grid').getBoundingClientRect();
@@ -380,11 +380,11 @@ function renderCalSummary(y, m, bmMo, cpMo, tgMo, ygMo) {
   const gR=tgMo?.totalRev||0, gO=tgMo?.orders||0, gFee=tgMo?.fee||0,   gDl=tgMo?.delivery||0;
   const yR=ygMo?.totalRev||0, yO=ygMo?.orders||0, yFee=ygMo?.fee||0,   yDl=ygMo?.delivery||0;
   document.getElementById('cal-tbody').innerHTML = `
-    <tr><td><span style="color:#4ade80;font-weight:700">배달의민족</span></td><td>${bO}건</td><td>${W(bR)}</td><td class="neg">-${W(bFee)}</td><td style="color:var(--or)">-${W(bDl)}</td><td style="color:#f87171">-${W(bCpn)}</td><td>${W(bO?bR/bO:0)}</td></tr>
-    <tr><td><span style="color:#f87171;font-weight:700">쿠팡이츠</span></td>  <td>${cO}건</td><td>${W(cR)}</td><td class="neg">-${W(cFee)}</td><td style="color:var(--or)">-${W(cDl)}</td><td style="color:#f87171">-${W(cCpn)}</td><td>${W(cO?cR/cO:0)}</td></tr>
-    <tr><td><span style="color:#06D6A0;font-weight:700">땡겨요</span></td>    <td>${gO}건</td><td>${W(gR)}</td><td class="neg">-${W(gFee)}</td><td style="color:var(--or)">-${W(gDl)}</td><td style="color:#f87171">-</td><td>${W(gO?gR/gO:0)}</td></tr>
-    <tr><td><span style="color:#FF4500;font-weight:700">요기요</span></td>    <td>${yO}건</td><td>${W(yR)}</td><td class="neg">-${W(yFee)}</td><td style="color:var(--or)">-${W(yDl)}</td><td style="color:#f87171">-</td><td>${W(yO?yR/yO:0)}</td></tr>
-    <tr class="tfoot"><td>합계</td><td>${bO+cO+gO+yO}건</td><td>${W(bR+cR+gR+yR)}</td><td class="neg">-${W(bFee+cFee+gFee+yFee)}</td><td style="color:var(--or)">-${W(bDl+cDl+gDl+yDl)}</td><td style="color:#f87171">-${W(bCpn+cCpn)}</td><td>${W((bO+cO+gO+yO)?(bR+cR+gR+yR)/(bO+cO+gO+yO):0)}</td></tr>`;
+    <tr><td><span style="color:var(--grn);font-weight:700">배달의민족</span></td><td>${bO}건</td><td>${W(bR)}</td><td class="neg">-${W(bFee)}</td><td style="color:var(--or)">-${W(bDl)}</td><td style="color:var(--danger)">-${W(bCpn)}</td><td>${W(bO?bR/bO:0)}</td></tr>
+    <tr><td><span style="color:var(--danger);font-weight:700">쿠팡이츠</span></td>  <td>${cO}건</td><td>${W(cR)}</td><td class="neg">-${W(cFee)}</td><td style="color:var(--or)">-${W(cDl)}</td><td style="color:var(--danger)">-${W(cCpn)}</td><td>${W(cO?cR/cO:0)}</td></tr>
+    <tr><td><span style="color:#2D9E6B;font-weight:700">땡겨요</span></td>    <td>${gO}건</td><td>${W(gR)}</td><td class="neg">-${W(gFee)}</td><td style="color:var(--or)">-${W(gDl)}</td><td style="color:var(--danger)">-</td><td>${W(gO?gR/gO:0)}</td></tr>
+    <tr><td><span style="color:#E5302A;font-weight:700">요기요</span></td>    <td>${yO}건</td><td>${W(yR)}</td><td class="neg">-${W(yFee)}</td><td style="color:var(--or)">-${W(yDl)}</td><td style="color:var(--danger)">-</td><td>${W(yO?yR/yO:0)}</td></tr>
+    <tr class="tfoot"><td>합계</td><td>${bO+cO+gO+yO}건</td><td>${W(bR+cR+gR+yR)}</td><td class="neg">-${W(bFee+cFee+gFee+yFee)}</td><td style="color:var(--or)">-${W(bDl+cDl+gDl+yDl)}</td><td style="color:var(--danger)">-${W(bCpn+cCpn)}</td><td>${W((bO+cO+gO+yO)?(bR+cR+gR+yR)/(bO+cO+gO+yO):0)}</td></tr>`;
 }
 
 // ==============================================
@@ -450,10 +450,10 @@ function calcCoupon() {
   else if (profitRate >= 10) { statusColor = 'var(--or)'; statusText = '🟡 위험'; }
   else { statusColor = 'var(--red)'; statusText = '🔴 손해'; }
   const el = document.getElementById('dc-result');
-  if (el) el.innerHTML = '<div style="text-align:center;margin-bottom:12px"><div style="font-size:28px;font-weight:900;color:' + statusColor + '">' + statusText + '</div><div style="font-size:13px;color:var(--muted);margin-top:4px">순수익률 ' + profitRate.toFixed(1) + '%</div></div><div style="font-family:var(--mono);font-size:13px;line-height:2.2"><div style="display:flex;justify-content:space-between"><span>현재 판매가</span><span>' + W(price) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>쿠폰 할인</span><span>-' + W(discount) + '</span></div><div style="display:flex;justify-content:space-between"><span>실제 수령가</span><span>' + W(actualPrice) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>수수료 (' + (feeRate*100).toFixed(1) + '%)</span><span>-' + W(fee) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>배달비</span><span>-' + W(delivery) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>원가</span><span>-' + W(cost) + '</span></div><hr style="border:none;border-top:1px solid var(--bd);margin:4px 0"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;color:' + statusColor + '"><span>실제 순수익</span><span>' + W(profit) + ' (' + profitRate.toFixed(1) + '%)</span></div></div>';
+  if (el) el.innerHTML = '<div style="text-align:center;margin-bottom:12px"><div style="font-size:28px;font-weight:900;color:' + statusColor + '">' + statusText + '</div><div style="font-size:13px;color:var(--muted);margin-top:4px">순수익률 ' + profitRate.toFixed(1) + '%</div></div><div style="font-family:var(--mono);font-size:13px;line-height:2.2"><div style="display:flex;justify-content:space-between"><span>현재 판매가</span><span>' + W(price) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>쿠폰 할인</span><span>-' + W(discount) + '</span></div><div style="display:flex;justify-content:space-between"><span>실제 수령가</span><span>' + W(actualPrice) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>수수료 (' + (feeRate*100).toFixed(1) + '%)</span><span>-' + W(fee) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>배달비</span><span>-' + W(delivery) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>원가</span><span>-' + W(cost) + '</span></div><hr style="border:none;border-top:1px solid var(--bd);margin:4px 0"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;color:' + statusColor + '"><span>실제 순수익</span><span>' + W(profit) + ' (' + profitRate.toFixed(1) + '%)</span></div></div>';
   const minPrice = (cost + delivery) / (1 - feeRate - targetMargin/100);
   const reverseEl = document.getElementById('dc-reverse');
-  if (reverseEl) reverseEl.innerHTML = '<div class="card-title">🔄 목표 마진 ' + targetMargin + '% 유지하려면?</div><div style="font-size:14px;line-height:2"><div>최소 판매가: <strong style="color:#fcd34d">' + W(Math.ceil(minPrice/100)*100) + '</strong></div><div>쿠폰 ' + W(discount) + ' 할인 시 정가: <strong style="color:#fcd34d">' + W(Math.ceil((minPrice+discount)/100)*100) + '</strong></div><div style="margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(232,33,10,0.08);border:1px solid rgba(232,33,10,0.2);font-size:12px;color:#f87171">🔴 마지노선: ' + W(Math.ceil(((cost+delivery)/(1-feeRate))/100)*100) + ' 이하로 팔면 무조건 손해</div></div>';
+  if (reverseEl) reverseEl.innerHTML = '<div class="card-title">🔄 목표 마진 ' + targetMargin + '% 유지하려면?</div><div style="font-size:14px;line-height:2"><div>최소 판매가: <strong style="color:var(--or)">' + W(Math.ceil(minPrice/100)*100) + '</strong></div><div>쿠폰 ' + W(discount) + ' 할인 시 정가: <strong style="color:var(--or)">' + W(Math.ceil((minPrice+discount)/100)*100) + '</strong></div><div style="margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(229,48,42,0.06);border:1px solid rgba(229,48,42,0.15);font-size:12px;color:var(--danger)">🔴 마지노선: ' + W(Math.ceil(((cost+delivery)/(1-feeRate))/100)*100) + ' 이하로 팔면 무조건 손해</div></div>';
 }
 
 function renderDiag1() {
@@ -472,11 +472,11 @@ function renderLeaks() {
   if (!ag.tR) { document.getElementById('leaks-result').innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">데이터를 먼저 업로드해주세요</div>'; return; }
   const cogsCost = ag.tR * S.cogs / 100;
   const items = [
-    {name:'원가', val:cogsCost, color:'#f87171', warn:S.cogs > 35, tip:'권장 35% 이하'},
+    {name:'원가', val:cogsCost, color:'var(--danger)', warn:S.cogs > 35, tip:'권장 35% 이하'},
     {name:'플랫폼수수료', val:ag.tFee, color:'#fbbf24', warn:ag.tFee/ag.tR > 0.15, tip:'권장 15% 이하'},
     {name:'배달비', val:ag.tDel, color:'#fb923c', warn:ag.tDel/ag.tR > 0.10, tip:'권장 10% 이하'},
     {name:'쿠폰부담', val:ag.tCpn, color:'#f472b6', warn:false, tip:''},
-    {name:'고정비', val:ag.fixed, color:'#60a5fa', warn:ag.fixed/ag.tR > 0.50, tip:'권장 매출의 50% 이하'},
+    {name:'고정비', val:ag.fixed, color:'var(--blue)', warn:ag.fixed/ag.tR > 0.50, tip:'권장 매출의 50% 이하'},
     {name:'순수익', val:ag.net, color:'var(--grn)', warn:ag.net < 0, tip:''},
   ];
   const costItems = items.filter(i => i.name !== '순수익').sort((a,b) => b.val - a.val);
@@ -484,11 +484,11 @@ function renderLeaks() {
   html += '<div style="margin-bottom:16px">';
   items.forEach(item => {
     const pct = (item.val / ag.tR * 100);
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px"><div style="width:80px;color:var(--muted)">' + item.name + '</div><div style="flex:1;height:18px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + Math.min(pct,100) + '%;background:' + item.color + ';border-radius:4px;transition:width .5s"></div></div><div style="width:100px;text-align:right;font-family:var(--mono)">' + W(item.val) + ' <span style="color:var(--muted)">' + pct.toFixed(1) + '%</span></div><div style="width:20px">' + (item.warn ? '⚠️' : '') + '</div></div>';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px"><div style="width:80px;color:var(--muted)">' + item.name + '</div><div style="flex:1;height:18px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + Math.min(pct,100) + '%;background:' + item.color + ';border-radius:4px;transition:width .5s"></div></div><div style="width:100px;text-align:right;font-family:var(--mono)">' + W(item.val) + ' <span style="color:var(--muted)">' + pct.toFixed(1) + '%</span></div><div style="width:20px">' + (item.warn ? '⚠️' : '') + '</div></div>';
   });
   html += '</div>';
   const urgent = costItems.find(i => i.warn);
-  if (urgent) html += '<div style="padding:10px 14px;background:rgba(232,33,10,0.08);border:1px solid rgba(232,33,10,0.2);border-radius:8px;font-size:12px;color:#f87171">🚨 가장 시급: <strong>' + urgent.name + '</strong> 절감 (월 ' + W(urgent.val) + ' 지출, 매출의 ' + (urgent.val/ag.tR*100).toFixed(1) + '%)</div>';
+  if (urgent) html += '<div style="padding:10px 14px;background:rgba(229,48,42,0.06);border:1px solid rgba(229,48,42,0.15);border-radius:8px;font-size:12px;color:var(--danger)">🚨 가장 시급: <strong>' + urgent.name + '</strong> 절감 (월 ' + W(urgent.val) + ' 지출, 매출의 ' + (urgent.val/ag.tR*100).toFixed(1) + '%)</div>';
   document.getElementById('leaks-result').innerHTML = html;
 }
 
@@ -502,10 +502,10 @@ function calcPricing() {
   const ag = aggregate(SEL);
   const avgOrders = ag.tOrd || 104;
   const platforms = [
-    {name:'배민', fee:(S.bmComm+S.bmPg+S.bmVat+S.bmExtra)/100, del:S.bmDel, color:'#4ade80'},
-    {name:'쿠팡', fee:(S.cpComm+S.cpPg+S.cpVat+S.cpExtra)/100, del:S.cpDel, color:'#f87171'},
-    {name:'땡겨요', fee:(S.tgComm+S.tgPg+S.tgVat+S.tgExtra)/100, del:S.tgDel, color:'#06D6A0'},
-    {name:'요기요', fee:(S.ygComm+S.ygPg+S.ygVat+S.ygExtra)/100, del:S.ygDel, color:'#FF4500'},
+    {name:'배민', fee:(S.bmComm+S.bmPg+S.bmVat+S.bmExtra)/100, del:S.bmDel, color:'var(--grn)'},
+    {name:'쿠팡', fee:(S.cpComm+S.cpPg+S.cpVat+S.cpExtra)/100, del:S.cpDel, color:'var(--danger)'},
+    {name:'땡겨요', fee:(S.tgComm+S.tgPg+S.tgVat+S.tgExtra)/100, del:S.tgDel, color:'#2D9E6B'},
+    {name:'요기요', fee:(S.ygComm+S.ygPg+S.ygVat+S.ygExtra)/100, del:S.ygDel, color:'#E5302A'},
   ];
   let html = '<div class="card-title">💰 플랫폼별 적정 가격</div>';
   html += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">원가 합계: ' + W(totalCost) + ' (재료 ' + W(material) + ' + 인건비 ' + W(labor) + ' + 포장 ' + W(packing) + ')</div>';
@@ -514,11 +514,11 @@ function calcPricing() {
     const minPrice = (totalCost + p.del) / (1 - p.fee);
     const recPrice = (totalCost + p.del) / (1 - p.fee - targetMargin/100);
     const maxDiscount = recPrice - minPrice;
-    html += '<div style="display:flex;gap:12px;margin-bottom:8px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid ' + p.color + ';font-size:12px"><div style="width:50px;font-weight:700;color:' + p.color + '">' + p.name + '</div><div style="flex:1">최소 <strong>' + W(Math.ceil(minPrice/100)*100) + '</strong> · 권장 <strong style="color:#fcd34d">' + W(Math.ceil(recPrice/100)*100) + '</strong> · 최대 할인 ' + W(Math.floor(maxDiscount/100)*100) + '</div></div>';
+    html += '<div style="display:flex;gap:12px;margin-bottom:8px;padding:8px 12px;background:var(--bg);border-radius:8px;border-left:3px solid ' + p.color + ';font-size:12px"><div style="width:50px;font-weight:700;color:' + p.color + '">' + p.name + '</div><div style="flex:1">최소 <strong>' + W(Math.ceil(minPrice/100)*100) + '</strong> · 권장 <strong style="color:var(--or)">' + W(Math.ceil(recPrice/100)*100) + '</strong> · 최대 할인 ' + W(Math.floor(maxDiscount/100)*100) + '</div></div>';
   });
   if (competitor > 0) {
     const monthlyLoss = competitor * avgOrders;
-    html += '<div style="margin-top:12px;padding:10px 14px;background:rgba(232,33,10,0.08);border:1px solid rgba(232,33,10,0.2);border-radius:8px;font-size:12px;color:#f87171">⚠️ 경쟁사 따라 ' + W(competitor) + ' 할인 시 → 월 ' + avgOrders + '건 기준 <strong>월 ' + W(monthlyLoss) + ' 추가 손실</strong></div>';
+    html += '<div style="margin-top:12px;padding:10px 14px;background:rgba(229,48,42,0.06);border:1px solid rgba(229,48,42,0.15);border-radius:8px;font-size:12px;color:var(--danger)">⚠️ 경쟁사 따라 ' + W(competitor) + ' 할인 시 → 월 ' + avgOrders + '건 기준 <strong>월 ' + W(monthlyLoss) + ' 추가 손실</strong></div>';
   }
   document.getElementById('dp-result').innerHTML = html;
 }
@@ -541,5 +541,5 @@ function calcAd() {
   const bepOrders = budget > 0 ? Math.ceil(budget / (avgOrder * (1 - feeRate - S.cogs/100) - delivery)) : 0;
   const isWorth = addProfit > 0;
   const el = document.getElementById('da-result');
-  if (el) el.innerHTML = '<div style="text-align:center;margin-bottom:12px"><div style="font-size:28px;font-weight:900;color:' + (isWorth?'var(--grn)':'var(--red)') + '">' + (isWorth?'🟢 광고 이득':'🔴 광고 손해') + '</div></div><div style="font-family:var(--mono);font-size:13px;line-height:2.2"><div style="display:flex;justify-content:space-between"><span>하루 광고비</span><span>-' + W(budget) + '</span></div><div style="display:flex;justify-content:space-between"><span>추가 매출 (' + orders + '건 × ' + W(avgOrder) + ')</span><span>+' + W(addRev) + '</span></div><div style="display:flex;justify-content:space-between;color:#f87171"><span>추가 수수료+배달비+원가</span><span>-' + W(addFee+addDel+addCost) + '</span></div><hr style="border:none;border-top:1px solid var(--bd);margin:4px 0"><div style="display:flex;justify-content:space-between;font-weight:700;color:' + (isWorth?'var(--grn)':'var(--red)') + '"><span>하루 순이익</span><span>' + W(addProfit) + '</span></div><div style="display:flex;justify-content:space-between"><span>월 환산 (26일)</span><span style="font-weight:700">' + W(monthProfit) + '</span></div></div><div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:12px;color:var(--muted)">💡 손익분기: 하루 <strong style="color:var(--tx)">' + bepOrders + '건</strong> 이상 추가되면 광고가 이득</div>';
+  if (el) el.innerHTML = '<div style="text-align:center;margin-bottom:12px"><div style="font-size:28px;font-weight:900;color:' + (isWorth?'var(--grn)':'var(--red)') + '">' + (isWorth?'🟢 광고 이득':'🔴 광고 손해') + '</div></div><div style="font-family:var(--mono);font-size:13px;line-height:2.2"><div style="display:flex;justify-content:space-between"><span>하루 광고비</span><span>-' + W(budget) + '</span></div><div style="display:flex;justify-content:space-between"><span>추가 매출 (' + orders + '건 × ' + W(avgOrder) + ')</span><span>+' + W(addRev) + '</span></div><div style="display:flex;justify-content:space-between;color:var(--danger)"><span>추가 수수료+배달비+원가</span><span>-' + W(addFee+addDel+addCost) + '</span></div><hr style="border:none;border-top:1px solid var(--bd);margin:4px 0"><div style="display:flex;justify-content:space-between;font-weight:700;color:' + (isWorth?'var(--grn)':'var(--red)') + '"><span>하루 순이익</span><span>' + W(addProfit) + '</span></div><div style="display:flex;justify-content:space-between"><span>월 환산 (26일)</span><span style="font-weight:700">' + W(monthProfit) + '</span></div></div><div style="margin-top:10px;padding:8px 12px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--muted)">💡 손익분기: 하루 <strong style="color:var(--tx)">' + bepOrders + '건</strong> 이상 추가되면 광고가 이득</div>';
 }
