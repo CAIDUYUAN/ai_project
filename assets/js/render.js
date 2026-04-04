@@ -284,6 +284,85 @@ function renderOverview() {
     tr.innerHTML=`<td>합계</td><td style="color:var(--grn)">${W(ag.bm.r)}</td><td style="color:var(--danger)">${W(ag.cp.r)}</td><td style="color:#2D9E6B">${W(ag.tg.r)}</td><td style="color:#E5302A">${W(ag.yg.r)}</td><td>${W(ag.tR)}</td><td>${ag.tOrd}건</td><td class="neg">-${W(ag.tDeduct)}</td><td style="color:var(--grn);font-weight:700">${W(totDep)}</td><td class="${totPrf>=0?'pos':'neg'}">${W(totPrf)}</td>`;
     tbody.appendChild(tr);
   }
+
+  // 서비스별 수수료 상세
+  renderServiceDetail(ag.filtered);
+}
+
+// ── 서비스별 수수료 상세 렌더 ──
+function renderServiceDetail(filteredMonths) {
+  const card = document.getElementById('svc-detail-card');
+  const content = document.getElementById('svc-detail-content');
+  if (!card || !content) return;
+
+  const pfLabels = {bm:'🛵 배민', cp:'🧡 쿠팡이츠', tg:'🟢 땡겨요', yg:'🟠 요기요'};
+  const pfColors = {bm:'var(--grn)', cp:'var(--danger)', tg:'#2D9E6B', yg:'#E5302A'};
+  let hasData = false;
+  let html = '';
+
+  ['bm','cp','tg','yg'].forEach(pf => {
+    // 선택된 월들의 서비스별 데이터 집계
+    const svcTotals = {};
+    filteredMonths.forEach(mo => {
+      const d = DB[pf][mo];
+      if (!d || !d.services) return;
+      Object.entries(d.services).forEach(([name, s]) => {
+        if (!svcTotals[name]) svcTotals[name] = {count:0, fee:0, delivery:0, ad:0, total:0};
+        svcTotals[name].count += s.count || 0;
+        svcTotals[name].fee += s.fee || 0;
+        svcTotals[name].delivery += s.delivery || 0;
+        svcTotals[name].ad += s.ad || 0;
+        svcTotals[name].total += s.total || 0;
+      });
+    });
+
+    if (!Object.keys(svcTotals).length) return;
+    hasData = true;
+
+    const svcRows = Object.entries(svcTotals)
+      .sort((a,b) => Math.abs(b[1].total) - Math.abs(a[1].total))
+      .map(([name, s]) => `
+        <tr>
+          <td style="text-align:left;font-family:inherit">${name}</td>
+          <td>${s.count.toLocaleString()}건</td>
+          <td class="neg">${W(s.fee)}</td>
+          <td class="neg">${W(s.delivery)}</td>
+          <td class="neg">${W(s.ad)}</td>
+          <td style="font-weight:700" class="neg">${W(s.total)}</td>
+        </tr>`).join('');
+
+    const grandTotal = Object.values(svcTotals).reduce((s,v) => ({
+      count:s.count+v.count, fee:s.fee+v.fee, delivery:s.delivery+v.delivery, ad:s.ad+v.ad, total:s.total+v.total
+    }), {count:0,fee:0,delivery:0,ad:0,total:0});
+
+    html += `
+      <div style="margin-bottom:16px">
+        <div style="font-weight:700;color:${pfColors[pf]};margin-bottom:8px;font-size:14px">${pfLabels[pf]}</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th style="text-align:left">서비스</th><th>건수</th><th>수수료</th><th>배달비</th><th>광고비</th><th>합계</th>
+            </tr></thead>
+            <tbody>${svcRows}</tbody>
+            <tfoot><tr class="tfoot">
+              <td style="text-align:left;font-family:inherit">합계</td>
+              <td>${grandTotal.count.toLocaleString()}건</td>
+              <td class="neg">${W(grandTotal.fee)}</td>
+              <td class="neg">${W(grandTotal.delivery)}</td>
+              <td class="neg">${W(grandTotal.ad)}</td>
+              <td style="font-weight:700" class="neg">${W(grandTotal.total)}</td>
+            </tr></tfoot>
+          </table>
+        </div>
+      </div>`;
+  });
+
+  if (hasData) {
+    card.style.display = 'block';
+    content.innerHTML = html;
+  } else {
+    card.style.display = 'none';
+  }
 }
 
 // ==============================================
