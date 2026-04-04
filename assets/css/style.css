@@ -108,8 +108,8 @@ header {
 /* =============================================
    7. 바 차트
 ============================================= */
-.bar-chart { display:flex; align-items:flex-end; gap:2px; height:90px; margin-top:6px; }
-.bar-col   { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.bar-chart { display:flex; align-items:flex-end; gap:2px; height:90px; margin-top:6px; min-width:max-content; }
+.bar-col   { flex:0 0 auto; width:20px; min-width:14px; display:flex; flex-direction:column; align-items:center; gap:2px; }
 .bar-bm    { width:100%; background:var(--grn); border-radius:2px 2px 0 0; min-height:2px; }
 .bar-cp    { width:100%; background:var(--danger); min-height:2px; }
 .bar-label { font-size:9px; color:var(--muted); }
