@@ -139,26 +139,47 @@ function parseBM_purchase_xlsx(wb, filename) {
   const headers = (rows[hi]||[]).map(v => String(v||'').trim());
   const ci = {
     date:    headers.findIndex(h => /^일자$/.test(h)),
+    service: headers.findIndex(h => /^서비스$/.test(h)),
     feeType: headers.findIndex(h => /수수료유형/.test(h)),
     amount:  headers.findIndex(h => /^합계$/.test(h)),
+    supplyAmt: headers.findIndex(h => /공급가액/.test(h)),
+    vat:     headers.findIndex(h => /부가세액/.test(h)),
   };
 
   let totalFee=0, totalDelivery=0, totalAd=0;
+  // 서비스별 집계: {서비스명: {count, fee, delivery, ad, total}}
+  const services = {};
+
   for (let i=hi+1; i<rows.length; i++) {
     const r = rows[i];
     if (!r || !r[ci.date] || r[ci.date]==='계') continue;
     const feeType = String(r[ci.feeType]||'').trim();
     const amount = Number(r[ci.amount])||0;
+    const serviceName = ci.service >= 0 ? String(r[ci.service]||'').trim() : '';
+
     // 배민부담금액은 제외
     if (/배민부담금액/.test(feeType)) continue;
+
+    // 서비스별 집계
+    if (serviceName) {
+      if (!services[serviceName]) services[serviceName] = {count:0, fee:0, delivery:0, ad:0, total:0};
+      services[serviceName].count++;
+      services[serviceName].total += amount;
+      if (/배달비/.test(feeType)) services[serviceName].delivery += amount;
+      else if (/광고이용료/.test(feeType)) services[serviceName].ad += amount;
+      else services[serviceName].fee += amount;
+    }
+
+    // 전체 합계
     if (/배달비/.test(feeType)) totalDelivery += amount;
     else if (/광고이용료/.test(feeType)) totalAd += amount;
-    else totalFee += amount; // 중개이용료, 결제정산수수료
+    else totalFee += amount;
   }
 
   return {
     type: 'purchase', ym:[yr,mn], period,
-    fee: totalFee, delivery: totalDelivery, ad: totalAd
+    fee: totalFee, delivery: totalDelivery, ad: totalAd,
+    services  // 서비스별 상세 데이터
   };
 }
 
@@ -171,13 +192,17 @@ function mergePurchase(pf, purchaseData) {
     existing.delivery = purchaseData.delivery || 0;
     existing.feeRate = existing.totalRev ? purchaseData.fee / existing.totalRev : 0;
     existing._hasPurchaseData = true;
+    if (purchaseData.services) existing.services = purchaseData.services;
+    if (purchaseData.ad) existing.ad = purchaseData.ad;
   } else {
     DB[pf][key] = {
       period: purchaseData.period, ym: purchaseData.ym,
       totalRev:0, orders:0, daily:{},
       fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
       feeRate:0, coupon:0,
-      _hasPurchaseData: true
+      _hasPurchaseData: true,
+      services: purchaseData.services || {},
+      ad: purchaseData.ad || 0,
     };
   }
 }

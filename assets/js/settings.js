@@ -160,6 +160,70 @@ function calcDbAvgFee(pf) {
   return { comm: parseFloat(avgFeeRate.toFixed(2)), pg: 0, vat: 0, extra: 0, del: avgDel };
 }
 
+// ── 서비스별 수수료 집계 (배민) ──
+function calcServiceFees(pf) {
+  const data = DB[pf];
+  if (!data) return {};
+  const result = {};
+  Object.values(data).forEach(d => {
+    if (!d.services) return;
+    Object.entries(d.services).forEach(([name, s]) => {
+      if (!result[name]) result[name] = {count:0, fee:0, delivery:0, ad:0, total:0};
+      result[name].count += s.count || 0;
+      result[name].fee += s.fee || 0;
+      result[name].delivery += s.delivery || 0;
+      result[name].ad += s.ad || 0;
+      result[name].total += s.total || 0;
+    });
+  });
+  return result;
+}
+
+// ── 서비스별 수수료 UI 업데이트 ──
+function updateServiceFeeUI(pf) {
+  const el = document.getElementById('svc-fee-' + pf);
+  if (!el) return;
+  const svcFees = calcServiceFees(pf);
+  if (!Object.keys(svcFees).length) {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'block';
+
+  // 포장류(우리가게클릭, 픽업, 포장 등) vs 배달류(배민배달, 배민1배달 등) 분류
+  let pickupFee=0, pickupDel=0, pickupCount=0;
+  let deliveryFee=0, deliveryDel=0, deliveryCount=0;
+  const pickupNames = [], deliveryNames = [];
+
+  Object.entries(svcFees).forEach(([name, s]) => {
+    if (/배달/.test(name)) {
+      deliveryFee += s.fee; deliveryDel += s.delivery; deliveryCount += s.count;
+      deliveryNames.push(name);
+    } else {
+      pickupFee += s.fee; pickupDel += s.delivery; pickupCount += s.count;
+      pickupNames.push(name);
+    }
+  });
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+      <div style="background:var(--bg3);border-radius:8px;padding:8px;font-size:11px">
+        <div style="font-weight:700;color:var(--blue);margin-bottom:4px">📦 포장/픽업</div>
+        <div style="color:var(--tx2)">${pickupNames.join(', ') || '-'}</div>
+        <div>건수: <strong>${pickupCount.toLocaleString()}</strong></div>
+        <div>수수료: <strong style="color:var(--danger)">${W(pickupFee)}</strong></div>
+        <div>배달비: <strong>${W(pickupDel)}</strong></div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:8px;font-size:11px">
+        <div style="font-weight:700;color:var(--grn);margin-bottom:4px">🛵 배달</div>
+        <div style="color:var(--tx2)">${deliveryNames.join(', ') || '-'}</div>
+        <div>건수: <strong>${deliveryCount.toLocaleString()}</strong></div>
+        <div>수수료: <strong style="color:var(--danger)">${W(deliveryFee)}</strong></div>
+        <div>배달비: <strong>${W(deliveryDel)}</strong></div>
+      </div>
+    </div>`;
+}
+
 // ── 페이지 로드 시 모드 적용 ──
 function applyFeeModes() {
   ['bm','cp','tg','yg'].forEach(pf => {
@@ -183,6 +247,8 @@ function applyFeeModes() {
   // UI에 반영 + 전체 재계산
   applySettingsToUI();
   localStorage.setItem('bbalgan_v2', JSON.stringify(S));
+  // 서비스별 수수료 UI 업데이트
+  ['bm','cp','tg','yg'].forEach(p => updateServiceFeeUI(p));
   renderAll();
   if (typeof renderMenuCost === 'function') renderMenuCost();
   calcBEPSummary();
