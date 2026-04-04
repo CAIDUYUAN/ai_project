@@ -31,17 +31,30 @@ function calcMenuItem(item, idx) {
   else { grade = '위험'; gradeClass = 'mc-bad'; }
 
   // 플랫폼별 계산
+  // 수수료 계산 기준: 쿠팡이츠는 쿠폰 차감 전(판매가), 나머지는 차감 후(실제판매가)
   const profits = {};
-  const recPrices = {}; // 가게 순수익과 동일하려면 필요한 판매가
+  const recPrices = {};
+  const pfFees = {};
   PFS.forEach(pf => {
     const pfPrice = item['pf_'+pf+'_price'] || item.price;
     const pfDiscount = item['pf_'+pf+'_discount'] || 0;
-    const pfActual = pfPrice - pfDiscount; // 플랫폼 실제판매가
-    profits[pf] = pfActual * (1 - pfFeeRate(pf)) - pfDel(pf) - costTotal;
-    // 적정판매가: 가게 순수익과 동일하려면 판매가가 얼마여야 하나
+    const pfActual = pfPrice - pfDiscount;
     const feeRate = pfFeeRate(pf);
-    const neededActual = feeRate < 1 ? Math.ceil((storeProfit + costTotal + pfDel(pf)) / (1 - feeRate)) : 0;
-    recPrices[pf] = neededActual + pfDiscount; // 할인금액 더해서 적정 판매가
+    // 쿠팡: 쿠폰 차감 전(판매가) 기준 수수료 / 나머지: 차감 후(실제판매가) 기준
+    const feeBase = pf === 'cp' ? pfPrice : pfActual;
+    const fee = feeBase * feeRate;
+    pfFees[pf] = fee;
+    profits[pf] = pfActual - fee - pfDel(pf) - costTotal;
+    // 적정판매가 역산
+    if (pf === 'cp') {
+      // 쿠팡: profit = (price-disc) - price*rate - del - cost = price*(1-rate) - disc - del - cost
+      const needed = feeRate < 1 ? Math.ceil((storeProfit + costTotal + pfDel(pf) + pfDiscount) / (1 - feeRate)) : 0;
+      recPrices[pf] = needed;
+    } else {
+      // 나머지: profit = actual*(1-rate) - del - cost, actual = price - disc
+      const neededActual = feeRate < 1 ? Math.ceil((storeProfit + costTotal + pfDel(pf)) / (1 - feeRate)) : 0;
+      recPrices[pf] = neededActual + pfDiscount;
+    }
   });
 
   const bestPf = PFS.reduce((a, b) => profits[a] > profits[b] ? a : b);
@@ -241,9 +254,15 @@ function buildProfitGrid(item) {
     const diffColor = diff >= 0 ? 'var(--grn)' : 'var(--danger)';
     const diffSign = diff >= 0 ? '+' : '';
 
+    const feeRate = pfFeeRate(pf);
+    const feeBase = pf === 'cp' ? pfPrice : pfActual;
+    const fee = feeBase * feeRate;
+    const feeTooltip = pf === 'cp' ? '쿠폰 차감 전 계산 (판매가 기준)' : '쿠폰 차감 후 계산 (실제판매가 기준)';
+
     return `<div style="background:${bg};border-radius:10px;padding:12px">
       <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">${icon}${pfIcon(pf)} ${pfName(pf)}</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:2px">판매가 ${W(pfPrice)} / 할인금액 ${W(pfDiscount)} / 실제 ${W(pfActual)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:2px"><span title="${feeTooltip}" style="cursor:help;border-bottom:1px dotted var(--muted)">수수료 ${(feeRate*100).toFixed(1)}%</span> = -${W(fee)}</div>
       <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${color};margin-bottom:4px">순수익 ${W(profit)}${loss}</div>
       <div style="font-size:11px;color:var(--tx2)">적정판매가:
         <strong onclick="matchStoreProfit(${item.idx},'${pf}')" style="color:var(--blue);cursor:pointer;text-decoration:underline;padding:2px 4px;border-radius:4px" title="클릭하면 이 가격으로 적용 (가게 순수익 ${W(item.storeProfit)} 맞춤)">${W(recPrice)}</strong>

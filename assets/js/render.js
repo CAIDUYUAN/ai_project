@@ -511,7 +511,10 @@ function calcCoupon() {
   else feeRate = (S.ygComm + S.ygPg + S.ygVat + S.ygExtra) / 100;
 
   const actualPrice = price - discount;
-  const fee = price * feeRate;
+  // 쿠팡: 쿠폰 차감 전(정가) 기준 수수료 / 나머지: 차감 후(실결제액) 기준
+  const feeBase = pf === 'cp' ? price : actualPrice;
+  const fee = feeBase * feeRate;
+  const feeTooltip = pf === 'cp' ? '쿠폰 차감 전 계산' : '쿠폰 차감 후 계산';
   const profit = actualPrice - fee - delivery - cost;
   const profitRate = price > 0 ? (profit / price * 100) : 0;
 
@@ -534,7 +537,7 @@ function calcCoupon() {
       row('정가', W(price), '') +
       row('쿠폰 할인', '-' + W(discount), 'var(--danger)') +
       row('실제 수령가', W(actualPrice), '') +
-      row('수수료 (' + (feeRate*100).toFixed(1) + '%)', '-' + W(fee), 'var(--danger)') +
+      '<div style="display:flex;justify-content:space-between;padding:6px 0;color:var(--danger)"><span title="' + feeTooltip + '" style="cursor:help;border-bottom:1px dotted var(--muted)">수수료 (' + (feeRate*100).toFixed(1) + '%) <span style="font-size:10px;color:var(--muted)">ℹ️</span></span><span>-' + W(fee) + '</span></div>' +
       row('배달비', '-' + W(delivery), 'var(--danger)') +
       row('원가', '-' + W(cost), 'var(--danger)') +
       '<div style="border-top:1px solid var(--bd);margin:6px 0"></div>' +
@@ -542,9 +545,19 @@ function calcCoupon() {
     '</div>';
 
   // 역산: 마진 15% 유지를 위한 가격
+  // 쿠팡: profit = (price-disc) - price*rate - del - cost → price = (cost+del+disc+target) / (1-rate)
+  // 나머지: profit = actual*(1-rate) - del - cost → actual = (cost+del+target) / (1-rate), price = actual+disc
   const targetMargin = 15;
-  const minPrice15 = (cost + delivery) / (1 - feeRate - targetMargin/100);
-  const lossPrice = (cost + delivery) / (1 - feeRate);
+  let minPrice15, lossPrice;
+  if (pf === 'cp') {
+    minPrice15 = (cost + delivery + discount) / (1 - feeRate - targetMargin/100);
+    lossPrice = (cost + delivery + discount) / (1 - feeRate);
+  } else {
+    const minActual = (cost + delivery) / (1 - feeRate - targetMargin/100);
+    minPrice15 = minActual + discount;
+    const lossActual = (cost + delivery) / (1 - feeRate);
+    lossPrice = lossActual + discount;
+  }
   const reverseEl = document.getElementById('dc-reverse');
   if (reverseEl) reverseEl.innerHTML =
     '<div class="card-title">🔄 마진 15% 유지하려면?</div>' +
