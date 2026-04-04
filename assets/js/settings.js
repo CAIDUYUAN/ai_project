@@ -180,6 +180,12 @@ function applyFeeModes() {
       inputs.forEach(el => { if (el) { el.readOnly = false; el.style.opacity = '1'; } });
     }
   });
+  // UI에 반영 + 전체 재계산
+  applySettingsToUI();
+  localStorage.setItem('bbalgan_v2', JSON.stringify(S));
+  renderAll();
+  if (typeof renderMenuCost === 'function') renderMenuCost();
+  calcBEPSummary();
 }
 
 function updateCouponPreview() {
