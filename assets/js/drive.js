@@ -97,5 +97,9 @@ window.addEventListener('load', () => {
   document.getElementById('hd-cp-del').textContent = S.cpDel.toLocaleString() + '원';
   calcBEPSummary();
   // Supabase에서 저장된 데이터 복원
-  loadFromSupabase();
+  loadFromSupabase().then(() => {
+    if (typeof applyFeeModes === 'function') applyFeeModes();
+  }).catch(() => {
+    if (typeof applyFeeModes === 'function') applyFeeModes();
+  });
 });

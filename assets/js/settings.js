@@ -5,11 +5,18 @@ const S = {
   cogs:35,
   bmComm:6.8, bmPg:1.3, bmVat:0.68, bmExtra:0, bmDel:3100,
   cpComm:7.8, cpPg:2.8, cpVat:2.5,  cpExtra:0, cpDel:3400,
-  tgComm:9.0, tgPg:3.3, tgVat:0, tgExtra:0, tgDel:0,
-  ygComm:0, ygPg:0, ygVat:0, ygExtra:0, ygDel:0,
+  tgComm:9.0, tgPg:3.3, tgVat:0, tgExtra:0, tgDel:2500,
+  ygComm:12.5, ygPg:3.3, ygVat:0, ygExtra:0, ygDel:3000,
   cp1Min:14900, cp1Amt:1000,
   cp2Min:25000, cp2Amt:2000,
   cp3Min:35000, cp3Amt:3000,
+  // 수수료 모드
+  feeMode_bm:'db', feeMode_cp:'db', feeMode_tg:'db', feeMode_yg:'db',
+  // 직접입력 저장값
+  manual_bmComm:6.8, manual_bmPg:1.3, manual_bmVat:0.68, manual_bmExtra:0, manual_bmDel:3100,
+  manual_cpComm:7.8, manual_cpPg:2.8, manual_cpVat:2.5, manual_cpExtra:0, manual_cpDel:3400,
+  manual_tgComm:9.0, manual_tgPg:3.3, manual_tgVat:0, manual_tgExtra:0, manual_tgDel:2500,
+  manual_ygComm:12.5, manual_ygPg:3.3, manual_ygVat:0, manual_ygExtra:0, manual_ygDel:3000,
 };
 
 function loadSettings() {
@@ -34,6 +41,14 @@ function saveSettings() {
     cp2Min:g('s-cp2-min'), cp2Amt:g('s-cp2-amt'),
     cp3Min:g('s-cp3-min'), cp3Amt:g('s-cp3-amt'),
   });
+  // manual 모드일 때 직접입력값도 저장
+  ['bm','cp','tg','yg'].forEach(pf => {
+    if (S['feeMode_'+pf] === 'manual') {
+      S['manual_'+pf+'Comm'] = S[pf+'Comm']; S['manual_'+pf+'Pg'] = S[pf+'Pg'];
+      S['manual_'+pf+'Vat'] = S[pf+'Vat']; S['manual_'+pf+'Extra'] = S[pf+'Extra'];
+      S['manual_'+pf+'Del'] = S[pf+'Del'];
+    }
+  });
   localStorage.setItem('bbalgan_v2', JSON.stringify(S));
   // Supabase에 설정 저장
   saveToSupabase('settings', 'config', S, 'settings').catch(e => console.warn(e));
@@ -52,8 +67,8 @@ function resetSettings() {
     rent:800000, mgmt:100000, util:150000, pack:100000, etc:50000, living:2000000, cogs:35,
     bmComm:6.8, bmPg:1.3, bmVat:0.68, bmExtra:0, bmDel:3100,
     cpComm:7.8, cpPg:2.8, cpVat:2.5, cpExtra:0, cpDel:3400,
-    tgComm:9.0, tgPg:3.3, tgVat:0, tgExtra:0, tgDel:0,
-    ygComm:0, ygPg:0, ygVat:0, ygExtra:0, ygDel:0,
+    tgComm:9.0, tgPg:3.3, tgVat:0, tgExtra:0, tgDel:2500,
+    ygComm:12.5, ygPg:3.3, ygVat:0, ygExtra:0, ygDel:3000,
     cp1Min:14900, cp1Amt:1000, cp2Min:25000, cp2Amt:2000, cp3Min:35000, cp3Amt:3000,
   };
   Object.assign(S, defaults);
@@ -79,6 +94,94 @@ function updateFeeTotal(pf) {
   const el = document.getElementById(pf + '-fee-total');
   if (el) el.textContent = tot.toFixed(2) + '%';
 }
+// ── 수수료 모드 전환 ──
+function setFeeMode(pf, mode) {
+  // 현재 모드가 manual이면 현재 입력값을 저장
+  if (S['feeMode_'+pf] === 'manual') {
+    const g = id => parseFloat(document.getElementById(id)?.value) || 0;
+    S['manual_'+pf+'Comm'] = g('s-'+pf+'-comm');
+    S['manual_'+pf+'Pg'] = g('s-'+pf+'-pg');
+    S['manual_'+pf+'Vat'] = g('s-'+pf+'-vat');
+    S['manual_'+pf+'Extra'] = g('s-'+pf+'-extra');
+    S['manual_'+pf+'Del'] = g('s-'+pf+'-del');
+  }
+
+  S['feeMode_'+pf] = mode;
+
+  // 버튼 UI 전환
+  document.getElementById('fee-mode-'+pf+'-db').classList.toggle('active', mode === 'db');
+  document.getElementById('fee-mode-'+pf+'-manual').classList.toggle('active', mode === 'manual');
+
+  const inputs = ['comm','pg','vat','extra','del'].map(f => document.getElementById('s-'+pf+'-'+f));
+
+  if (mode === 'db') {
+    // DB 평균값 계산해서 입력
+    const avg = calcDbAvgFee(pf);
+    if (avg) {
+      S[pf+'Comm'] = avg.comm; S[pf+'Pg'] = avg.pg; S[pf+'Vat'] = avg.vat; S[pf+'Extra'] = avg.extra; S[pf+'Del'] = avg.del;
+    }
+    inputs.forEach(el => { if (el) { el.readOnly = true; el.style.opacity = '0.6'; } });
+  } else {
+    // 직접입력 저장값 복원
+    S[pf+'Comm'] = S['manual_'+pf+'Comm']; S[pf+'Pg'] = S['manual_'+pf+'Pg'];
+    S[pf+'Vat'] = S['manual_'+pf+'Vat']; S[pf+'Extra'] = S['manual_'+pf+'Extra'];
+    S[pf+'Del'] = S['manual_'+pf+'Del'];
+    inputs.forEach(el => { if (el) { el.readOnly = false; el.style.opacity = '1'; } });
+  }
+
+  applySettingsToUI();
+  localStorage.setItem('bbalgan_v2', JSON.stringify(S));
+  renderAll();
+  if (typeof renderMenuCost === 'function') renderMenuCost();
+  calcBEPSummary();
+}
+
+// ── DB 평균 수수료 계산 ──
+function calcDbAvgFee(pf) {
+  const data = DB[pf];
+  if (!data || !Object.keys(data).length) return null;
+
+  let totalRev = 0, totalFee = 0, totalDel = 0, months = 0;
+  Object.values(data).forEach(d => {
+    if (d.totalRev > 0) {
+      totalRev += d.totalRev;
+      totalFee += d.fee || 0;
+      totalDel += d.delivery || 0;
+      months++;
+    }
+  });
+
+  if (!totalRev || !months) return null;
+
+  const avgFeeRate = (totalFee / totalRev * 100);
+  const avgDel = Math.round(totalDel / (Object.values(data).reduce((s, d) => s + (d.orders || 0), 0) || 1));
+
+  // 수수료율을 총합으로만 넣고 세부는 0으로 (DB에는 총합만 있음)
+  return { comm: parseFloat(avgFeeRate.toFixed(2)), pg: 0, vat: 0, extra: 0, del: avgDel };
+}
+
+// ── 페이지 로드 시 모드 적용 ──
+function applyFeeModes() {
+  ['bm','cp','tg','yg'].forEach(pf => {
+    const mode = S['feeMode_'+pf] || 'db';
+    const dbBtn = document.getElementById('fee-mode-'+pf+'-db');
+    const manBtn = document.getElementById('fee-mode-'+pf+'-manual');
+    if (dbBtn) dbBtn.classList.toggle('active', mode === 'db');
+    if (manBtn) manBtn.classList.toggle('active', mode === 'manual');
+
+    const inputs = ['comm','pg','vat','extra','del'].map(f => document.getElementById('s-'+pf+'-'+f));
+    if (mode === 'db') {
+      const avg = calcDbAvgFee(pf);
+      if (avg) {
+        S[pf+'Comm'] = avg.comm; S[pf+'Pg'] = avg.pg; S[pf+'Vat'] = avg.vat; S[pf+'Extra'] = avg.extra; S[pf+'Del'] = avg.del;
+      }
+      inputs.forEach(el => { if (el) { el.readOnly = true; el.style.opacity = '0.6'; } });
+    } else {
+      inputs.forEach(el => { if (el) { el.readOnly = false; el.style.opacity = '1'; } });
+    }
+  });
+}
+
 function updateCouponPreview() {
   const g = id => parseInt(document.getElementById(id)?.value) || 0;
   const el = document.getElementById('coupon-preview');

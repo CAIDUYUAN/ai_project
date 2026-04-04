@@ -254,6 +254,12 @@ tr:hover td { background:rgba(255,255,255,0.03); }
 @media(min-width:900px) { .fee-cards { grid-template-columns:repeat(4,1fr); } }
 @media(max-width:560px) { .fee-cards { grid-template-columns:1fr; } }
 .fee-card    { background:var(--bg2); border-radius:16px; padding:16px; }
+.fee-mode-btn {
+  padding:3px 8px; font-size:10px; border:1px solid var(--bd); background:var(--bg3);
+  color:var(--muted); border-radius:6px; cursor:pointer; font-family:inherit; transition:all .15s;
+}
+.fee-mode-btn.active { background:var(--red); border-color:var(--red); color:#fff; font-weight:700; }
+.fee-mode-btn:hover:not(.active) { border-color:var(--red); color:var(--red); }
 .fee-card.bm { border:1px solid var(--bd); border-top:3px solid var(--grn); }
 .fee-card.cp { border:1px solid var(--bd); border-top:3px solid var(--danger); }
 .fee-total   { padding:8px 10px; border-radius:8px; margin-top:6px; display:flex; justify-content:space-between; align-items:center; }
