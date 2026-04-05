@@ -22,27 +22,11 @@ async function storeData(pf, data, filename) {
   }
 
   const items = Array.isArray(data) ? data : [data];
-  items.forEach(d => {
+  for (const d of items) {
     const key = d.ym[0] + '-' + String(d.ym[1]).padStart(2,'0');
-    // 배민: 매입 데이터가 먼저 로드된 경우 병합
-    if (pf === 'bm' && DB.bm[key] && DB.bm[key]._hasPurchaseData) {
-      const prev = DB.bm[key];
-      d.fee = prev.fee;
-      d.delivery = prev.delivery;
-      d.feeRate = d.totalRev ? prev.fee / d.totalRev : 0;
-      d._hasPurchaseData = true;
-    }
-    // 요기요: 매입 데이터가 먼저 로드된 경우 병합
-    if (pf === 'yg' && DB.yg[key] && DB.yg[key]._hasPurchaseData) {
-      const prev = DB.yg[key];
-      d.fee = prev.fee;
-      d.delivery = prev.delivery;
-      d.feeRate = d.totalRev ? prev.fee / d.totalRev : 0;
-      d._hasPurchaseData = true;
-    }
-    // 땡겨요: 매입 데이터가 먼저 로드된 경우 병합
-    if (pf === 'tg' && DB.tg[key] && DB.tg[key]._hasPurchaseData) {
-      const prev = DB.tg[key];
+    // 매입 데이터가 먼저 로드된 경우 병합
+    if (['bm','yg','tg'].includes(pf) && DB[pf][key] && DB[pf][key]._hasPurchaseData) {
+      const prev = DB[pf][key];
       d.fee = prev.fee;
       d.delivery = prev.delivery;
       d.feeRate = d.totalRev ? prev.fee / d.totalRev : 0;
@@ -52,9 +36,8 @@ async function storeData(pf, data, filename) {
     FILES[pf] = FILES[pf].filter(f => f.key !== key);
     FILES[pf].push({key, period:d.period, filename});
     FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
-    // Supabase에 순차 저장
     await saveToSupabase(pf, key, d, filename).catch(e => console.warn(e));
-  });
+  }
   updateUploadUI(pf);
   updateFileList();
   renderAll();
