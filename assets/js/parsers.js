@@ -274,9 +274,9 @@ function mergePurchase(pf, purchaseData) {
 }
 
 // ==============================================
-// [F] 쿠팡이츠 파싱 (매출+매입 통합)
-// 파일명: coupang_eats_YYYY-MM.xlsx
-// 헤더: 행0=카테고리, 행1=메인헤더, 행2=서브헤더
+// [F] 쿠팡이츠 파싱 (매출+매입 통합, 구/신 형식 자동 감지)
+// 신형식(2025-04~): 행0=카테고리, 행1=메인헤더, 행2=서브헤더, 43컬럼
+// 구형식(~2025-03): 행0=메인헤더, 행1=서브헤더, 32컬럼
 // ==============================================
 function parseCP_xlsx(wb, filename) {
   const ws   = wb.Sheets[wb.SheetNames[0]];
@@ -285,97 +285,82 @@ function parseCP_xlsx(wb, filename) {
   if (!m) throw new Error('파일명 형식: coupang_eats_YYYY-MM.xlsx');
   const period = m[1]+'년 '+m[2]+'월', ym = [+m[1], +m[2]];
 
-  // 헤더: 행1이 메인 (일자,시간,주문번호,유형...)
-  const h1 = (rows[1]||[]).map(v => String(v||'').trim());
-  const h2 = (rows[2]||[]).map(v => String(v||'').trim());
+  // 구/신 형식 자동 감지: 행0에 "주문정보"가 있으면 신형식, "거래일"이 있으면 구형식
+  const row0str = (rows[0]||[]).map(v => String(v||'').trim()).join('');
+  const isNew = row0str.includes('주문정보');
+  const dataStart = isNew ? 3 : 2; // 데이터 시작 행
 
-  // 컬럼 인덱스 (행1 기준)
-  const ci = {
-    date: 0,      // 일자
-    time: 1,      // 시간
-    orderId: 2,   // 주문번호
-    type: 3,      // 유형 (배달/포장)
-    detail: 4,    // 상세내역
-    payment: 7,   // 결제방식
-    txType: 8,    // 거래유형 (결제/취소)
-    totalAmt: 9,  // 총금액
-    orderAmt: 10, // 주문금액
-    payAmt: 11,   // 결제금액
-    cpBurden: 12, // 쿠팡부담
-    shopBurden: 13,// 상점부담
-  };
-  // 중개이용료 산정후 = 16, 결제대행사수수료 기본=17, 배달비 산정후=21
-  // 서비스이용료 산정후: 공급가액=31, 부가세=32, 총액=33
-  // 광고비: 공급가액=34, 부가세=35, 총액=36
-  // 정산금액 산정후=39
-  const ciAdv = {
-    brokerAfter: 16,  // 중개이용료 산정후
-    pgFee: 17,        // 결제대행사 수수료 기본
-    pgPromo: 18,      // 결제대행사 프로모션
-    delBefore: 19,    // 배달비 산정전 기본
-    delPromo: 20,     // 배달비 프로모션
-    delAfter: 21,     // 배달비 산정후
-    instantDisc: 22,  // 즉시할인 배달전용
-    foodDisc: 23,     // 즉시할인 음식전용
-    custDel: 24,      // 고객부담배달비
-    svcSupply: 31,    // 서비스이용료 공급가액 (산정후)
-    svcVat: 32,       // 서비스이용료 부가세 (산정후)
-    svcTotal: 33,     // 서비스이용료 총액 (산정후)
-    adSupply: 34,     // 광고비 공급가액
-    adVat: 35,        // 광고비 부가세
-    adTotal: 36,      // 광고비 총액
-    settleAfter: 39,  // 정산금액 산정후
-  };
+  // 컬럼 매핑
+  let ci, getCols;
+  if (isNew) {
+    // 신형식 (43컬럼)
+    ci = {date:0, orderId:2, type:3, txType:8, totalAmt:9, orderAmt:10, payAmt:11, cpBurden:12, shopBurden:13};
+    getCols = r => ({
+      broker: Math.abs(Number(r[16])||0),
+      pgFee: Math.abs(Number(r[17])||0),
+      delFee: Math.abs(Number(r[21])||0),
+      svcTotal: Math.abs(Number(r[33])||0),
+      adTotal: Math.abs(Number(r[36])||0),
+      settleAmt: Number(r[39])||0,
+    });
+  } else {
+    // 구형식 (32컬럼): 거래일(0),거래유형(7),주문금액(10),중개(14),PG(15),배달비(16),최종요금총액(27),광고총액(30),정산(31)
+    ci = {date:0, orderId:4, type:2, txType:7, totalAmt:9, orderAmt:10, payAmt:11, cpBurden:12, shopBurden:13};
+    getCols = r => ({
+      broker: Math.abs(Number(r[14])||0),
+      pgFee: Math.abs(Number(r[15])||0),
+      delFee: Math.abs(Number(r[16])||0),
+      svcTotal: Math.abs(Number(r[27])||0),
+      adTotal: Math.abs(Number(r[30])||0),
+      settleAmt: Number(r[31])||0,
+    });
+  }
 
   const daily = {};
   let totalFee=0, totalDel=0, totalCoupon=0, totalOrders=0, totalAd=0;
   const orderList = [];
 
-  for (let i = 3; i < rows.length; i++) {
+  for (let i = dataStart; i < rows.length; i++) {
     const r = rows[i];
     if (!r || !r[ci.date]) continue;
     const ds = fmtDate(r[ci.date]);
     if (!ds) continue;
 
     const txType = String(r[ci.txType]||'').trim();
-    if (txType && !/결제/i.test(txType)) continue; // 취소 제외
+    // 신형식: "결제"/"취소", 구형식: "PAY"/"CANCEL"
+    if (txType && !/결제|PAY/i.test(txType)) continue;
 
     const orderAmt = Number(r[ci.orderAmt])||0;
     if (orderAmt <= 0) continue;
 
-    const totalAmt = Number(r[ci.totalAmt])||0;
-    const payAmt = Number(r[ci.payAmt])||0;
     const shopCoupon = Math.abs(Number(r[ci.shopBurden])||0);
     const cpCoupon = Math.abs(Number(r[ci.cpBurden])||0);
-    const broker = Math.abs(Number(r[ciAdv.brokerAfter])||0);
-    const pgFee = Math.abs(Number(r[ciAdv.pgFee])||0);
-    const pgPromo = Math.abs(Number(r[ciAdv.pgPromo])||0);
-    const delFee = Math.abs(Number(r[ciAdv.delAfter])||0);
-    const svcTotal = Math.abs(Number(r[ciAdv.svcTotal])||0);
-    const adTotal = Math.abs(Number(r[ciAdv.adTotal])||0);
-    const settleAmt = Number(r[ciAdv.settleAfter])||0;
+    const cols = getCols(r);
 
-    const fee = svcTotal; // 서비스이용료 총액 (수수료 합계)
+    const fee = cols.svcTotal;
 
     if (!daily[ds]) daily[ds] = {rev:0, orders:0, fee:0, coupon:0, delivery:0};
     daily[ds].rev += orderAmt;
     daily[ds].orders++;
     daily[ds].fee += fee;
     daily[ds].coupon += shopCoupon;
-    daily[ds].delivery += delFee;
+    daily[ds].delivery += cols.delFee;
 
     totalFee += fee;
-    totalDel += delFee;
+    totalDel += cols.delFee;
     totalCoupon += shopCoupon;
-    totalAd += adTotal;
+    totalAd += cols.adTotal;
     totalOrders++;
 
     orderList.push({
       date:ds, orderId:String(r[ci.orderId]||''), type:String(r[ci.type]||''),
-      totalAmt, orderAmt, payAmt, cpCoupon, shopCoupon,
-      broker, pgFee, delFee, svcTotal, adTotal, settleAmt,
+      orderAmt, shopCoupon, cpCoupon,
+      broker:cols.broker, pgFee:cols.pgFee, delFee:cols.delFee,
+      svcTotal:cols.svcTotal, adTotal:cols.adTotal, settleAmt:cols.settleAmt,
     });
   }
+
+  if (!totalOrders) throw new Error('쿠팡이츠 파일에서 데이터를 찾을 수 없습니다. 파일 형식을 확인해주세요.');
 
   const totalRev = Object.values(daily).reduce((s,v) => s + v.rev, 0);
 
