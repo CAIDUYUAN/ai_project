@@ -172,7 +172,8 @@ function aggregate(sel) {
     }
   });
 
-  const tDeduct = tFee + tDel + tCpn;
+  const tAd = bmAd + cpAd + tgAd + ygAd;
+  const tDeduct = tFee + tDel + tCpn + tAd;
   const deposit = tR - tDeduct;
   const fixed   = fixedCost() * filtered.length;
   const prf     = deposit - fixed;
@@ -182,7 +183,7 @@ function aggregate(sel) {
   const bep     = bepMo * filtered.length;
 
   return {
-    tR, tFee, tDel, tCpn, tDeduct, deposit, fixed, prf, net, tOrd,
+    tR, tFee, tDel, tCpn, tAd, tDeduct, deposit, fixed, prf, net, tOrd,
     days: new Set([...Object.keys(dailyBM),...Object.keys(dailyCP),...Object.keys(dailyTG),...Object.keys(dailyYG)]).size,
     months, filtered, dailyBM, dailyCP, dailyTG, dailyYG, bep, bepMo,
     bm:{r:bmR, fee:bmFee, del:bmDel, cpn:bmCpn, ord:bmOrd, ad:bmAd},
@@ -328,7 +329,8 @@ function renderOverview() {
   setKpi('k-deposit', W(ag.deposit), ag.deposit >= 0);
   set('k-deposit-sub', `정산율 ${Pct(ag.deposit,ag.tR)} | 차감 -${W(ag.tDeduct)}`);
   set('k-deduct', W(ag.tDeduct));
-  set('k-deduct-sub', `수수료 ${W(ag.tFee)} | 배달 ${W(ag.tDel)} | 쿠폰 ${W(ag.tCpn)}`);
+  const fP = ag.tR ? (v => (v/ag.tR*100).toFixed(1)+'%') : ()=>'0%';
+  set('k-deduct-sub', `수수료 ${W(ag.tFee)} (${fP(ag.tFee)}) | 배달 ${W(ag.tDel)} (${fP(ag.tDel)}) | 쿠폰 ${W(ag.tCpn)} (${fP(ag.tCpn)})${ag.tAd ? ' | 광고 '+W(ag.tAd)+' ('+fP(ag.tAd)+')' : ''}`);
   set('k-avg', W(ag.days ? ag.tR/ag.days : 0)); set('k-days', `${ag.days}일 영업`);
   set('k-per-order', W(ag.tOrd ? ag.tR/ag.tOrd : 0));
 
