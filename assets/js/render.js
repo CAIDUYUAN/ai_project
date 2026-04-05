@@ -151,8 +151,8 @@ function aggregate() {
   let tR=0,tFee=0,tDel=0,tCpn=0,tOrd=0;
   let bmR=0,bmFee=0,bmDel=0,bmCpn=0,bmOrd=0,bmAd=0;
   let cpR=0,cpFee=0,cpDel=0,cpCpn=0,cpOrd=0,cpAd=0;
-  let tgR=0,tgFee=0,tgDel=0,tgOrd=0,tgAd=0;
-  let ygR=0,ygFee=0,ygDel=0,ygOrd=0,ygAd=0;
+  let tgR=0,tgFee=0,tgDel=0,tgCpn=0,tgOrd=0,tgAd=0;
+  let ygR=0,ygFee=0,ygDel=0,ygCpn=0,ygOrd=0,ygAd=0;
   const dailyBM={}, dailyCP={}, dailyTG={}, dailyYG={};
 
   filtered.forEach(mo => {
@@ -168,13 +168,13 @@ function aggregate() {
       Object.entries(cp.daily).forEach(([d,v])=>{ if(!dailyCP[d])dailyCP[d]={rev:0,orders:0}; dailyCP[d].rev+=v.rev; dailyCP[d].orders+=v.orders; });
     }
     if (tg && SEL_PF.has('tg')) {
-      tR+=tg.totalRev; tFee+=tg.fee; tDel+=tg.delivery; tOrd+=tg.orders;
-      tgR+=tg.totalRev; tgFee+=tg.fee; tgDel+=tg.delivery; tgOrd+=tg.orders; tgAd+=(tg.ad||0);
+      tR+=tg.totalRev; tFee+=tg.fee; tDel+=tg.delivery; tCpn+=(tg.coupon||0); tOrd+=tg.orders;
+      tgR+=tg.totalRev; tgFee+=tg.fee; tgDel+=tg.delivery; tgCpn+=(tg.coupon||0); tgOrd+=tg.orders; tgAd+=(tg.ad||0);
       Object.entries(tg.daily).forEach(([d,v])=>{ if(!dailyTG[d])dailyTG[d]={rev:0,orders:0}; dailyTG[d].rev+=v.rev; dailyTG[d].orders+=v.orders; });
     }
     if (yg && SEL_PF.has('yg')) {
-      tR+=yg.totalRev; tFee+=yg.fee; tDel+=(yg.delivery||0); tOrd+=yg.orders;
-      ygR+=yg.totalRev; ygFee+=yg.fee; ygDel+=(yg.delivery||0); ygOrd+=yg.orders; ygAd+=(yg.ad||0);
+      tR+=yg.totalRev; tFee+=yg.fee; tDel+=(yg.delivery||0); tCpn+=(yg.coupon||0); tOrd+=yg.orders;
+      ygR+=yg.totalRev; ygFee+=yg.fee; ygDel+=(yg.delivery||0); ygCpn+=(yg.coupon||0); ygOrd+=yg.orders; ygAd+=(yg.ad||0);
       Object.entries(yg.daily).forEach(([d,v])=>{ if(!dailyYG[d])dailyYG[d]={rev:0,orders:0}; dailyYG[d].rev+=v.rev; dailyYG[d].orders+=v.orders; });
     }
   });
@@ -195,8 +195,8 @@ function aggregate() {
     months, filtered, dailyBM, dailyCP, dailyTG, dailyYG, bep, bepMo,
     bm:{r:bmR, fee:bmFee, del:bmDel, cpn:bmCpn, ord:bmOrd, ad:bmAd},
     cp:{r:cpR, fee:cpFee, del:cpDel, cpn:cpCpn, ord:cpOrd, ad:cpAd},
-    tg:{r:tgR, fee:tgFee, del:tgDel, cpn:0,     ord:tgOrd, ad:tgAd},
-    yg:{r:ygR, fee:ygFee, del:ygDel, cpn:0,     ord:ygOrd, ad:ygAd},
+    tg:{r:tgR, fee:tgFee, del:tgDel, cpn:tgCpn, ord:tgOrd, ad:tgAd},
+    yg:{r:ygR, fee:ygFee, del:ygDel, cpn:ygCpn, ord:ygOrd, ad:ygAd},
   };
 }
 
@@ -553,8 +553,8 @@ function renderCompare() {
 
   const bmDep=ag.bm.r-ag.bm.fee-ag.bm.del-ag.bm.cpn-(ag.bm.ad||0);
   const cpDep=ag.cp.r-ag.cp.fee-ag.cp.del-ag.cp.cpn-(ag.cp.ad||0);
-  const tgDep=ag.tg.r-ag.tg.fee-ag.tg.del-(ag.tg.ad||0);
-  const ygDep=ag.yg.r-ag.yg.fee-ag.yg.del-(ag.yg.ad||0);
+  const tgDep=ag.tg.r-ag.tg.fee-ag.tg.del-ag.tg.cpn-(ag.tg.ad||0);
+  const ygDep=ag.yg.r-ag.yg.fee-ag.yg.del-ag.yg.cpn-(ag.yg.ad||0);
   const fmtPct = (v, base) => base ? W(v) + ' (' + (v/base*100).toFixed(1) + '%)' : W(v);
   document.getElementById('cmp-tbody').innerHTML = [
     ['총 매출',         W(ag.bm.r),              W(ag.cp.r),              W(ag.tg.r),   W(ag.yg.r),   W(ag.tR)],
@@ -563,7 +563,7 @@ function renderCompare() {
     ['수수료',         fmtPct(ag.bm.fee,ag.bm.r), fmtPct(ag.cp.fee,ag.cp.r), fmtPct(ag.tg.fee,ag.tg.r), fmtPct(ag.yg.fee,ag.yg.r), fmtPct(ag.tFee,ag.tR)],
     ['배달비',         fmtPct(ag.bm.del,ag.bm.r), fmtPct(ag.cp.del,ag.cp.r), fmtPct(ag.tg.del,ag.tg.r), fmtPct(ag.yg.del,ag.yg.r), fmtPct(ag.tDel,ag.tR)],
     ['광고비',         fmtPct(ag.bm.ad,ag.bm.r), fmtPct(ag.cp.ad,ag.cp.r), fmtPct(ag.tg.ad,ag.tg.r), fmtPct(ag.yg.ad,ag.yg.r), fmtPct(ag.tAd,ag.tR)],
-    ['쿠폰(가게부담)', fmtPct(ag.bm.cpn,ag.bm.r), fmtPct(ag.cp.cpn,ag.cp.r), '-', '-', fmtPct(ag.tCpn,ag.tR)],
+    ['쿠폰(가게부담)', fmtPct(ag.bm.cpn,ag.bm.r), fmtPct(ag.cp.cpn,ag.cp.r), fmtPct(ag.tg.cpn,ag.tg.r), fmtPct(ag.yg.cpn,ag.yg.r), fmtPct(ag.tCpn,ag.tR)],
     ['💰 정산금액',
       `<span style="color:var(--grn);font-weight:700">${W(bmDep)}</span>`,
       `<span style="color:var(--danger);font-weight:700">${W(cpDep)}</span>`,
