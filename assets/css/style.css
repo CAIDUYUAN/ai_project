@@ -156,6 +156,10 @@ tr:hover td { background:rgba(255,255,255,0.03); }
 .utag { font-size:10px; padding:2px 7px; border-radius:8px; font-weight:600; }
 .utag.bm { background:rgba(45,158,107,0.1); color:var(--grn); }
 .utag.cp { background:rgba(229,48,42,0.1); color:var(--danger); }
+.utag.tg { background:rgba(45,158,107,0.1); color:#2D9E6B; }
+.utag.yg { background:rgba(229,48,42,0.1); color:#E5302A; }
+.utag.pur { border:1px dashed var(--muted); }
+.utag.both { border:1px solid var(--grn); }
 .file-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:10px; }
 @media(min-width:560px) { .file-grid { grid-template-columns:repeat(3,1fr); } }
 .file-item {

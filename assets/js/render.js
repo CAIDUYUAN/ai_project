@@ -46,7 +46,29 @@ function showGuide(pf) {
 // ==============================================
 function updateUploadUI(pf) {
   const tagsEl = document.getElementById('tags-' + pf);
-  if (tagsEl) tagsEl.innerHTML = FILES[pf].map(f => `<span class="utag ${pf}">${f.period}</span>`).join('');
+  if (tagsEl) {
+    // 월별로 매출/매입 합쳐서 표시
+    const monthMap = {};
+    FILES[pf].forEach(f => {
+      const baseKey = f.key.replace('_purchase','');
+      const basePeriod = f.period.replace(' 매입','');
+      if (!monthMap[baseKey]) monthMap[baseKey] = {period:basePeriod, sales:false, purchase:false};
+      if (f.key.includes('_purchase')) monthMap[baseKey].purchase = true;
+      else {
+        monthMap[baseKey].sales = true;
+        // 쿠팡/땡겨요는 매출+매입 통합 파일
+        const d = DB[pf] && DB[pf][baseKey];
+        if (d && d._hasPurchaseData && !f.key.includes('_purchase')) monthMap[baseKey].purchase = true;
+      }
+    });
+    tagsEl.innerHTML = Object.values(monthMap).map(m => {
+      const label = m.sales && m.purchase ? m.period + ' 매출+매입'
+                  : m.purchase ? m.period + ' 매입'
+                  : m.period + ' 매출';
+      const cls = m.sales && m.purchase ? 'both' : m.purchase ? 'pur' : '';
+      return `<span class="utag ${pf} ${cls}">${label}</span>`;
+    }).join('');
+  }
   const boxEl = document.getElementById('box-' + pf);
   if (boxEl && FILES[pf].length > 0) boxEl.classList.add('loaded');
 }
