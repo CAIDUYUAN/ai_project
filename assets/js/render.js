@@ -545,8 +545,8 @@ function renderCompare() {
       <div class="pcard-row"><span class="l">광고비</span><span class="v" style="color:var(--blue)">${ad ? '-'+W(ad)+pctOf(ad) : '₩0'}</span></div>
       <div class="pcard-row"><span class="l">쿠폰(가게부담)</span><span class="v" style="color:var(--danger)">${p.cpn ? '-'+W(p.cpn)+pctOf(p.cpn) : '₩0'}</span></div>
       <hr class="pcard-divider">
+      <div class="pcard-row"><span class="l">총 차감금액</span>   <span class="v neg">-${W(p.fee + p.del + ad + (p.cpn||0))}${pctOf(p.fee + p.del + ad + (p.cpn||0))}</span></div>
       <div class="pcard-row"><span class="l">정산율</span>        <span class="v">${Pct(dep,p.r)}</span></div>
-      <div class="pcard-row"><span class="l">순수익(재료前)</span><span class="v ${prf>=0?'pos':'neg'}">${W(prf)}</span></div>
       <div class="pcard-row"><span class="l">마진율</span>        <span class="v ${mg>=20?'pos':mg>=10?'':'neg'}">${mg.toFixed(1)}%</span></div>`;
     container.appendChild(div);
   });
