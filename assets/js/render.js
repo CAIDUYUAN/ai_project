@@ -120,32 +120,32 @@ function aggregate(sel) {
   const months   = allMonths();
   const filtered = sel === 'all' ? months : [sel];
   let tR=0,tFee=0,tDel=0,tCpn=0,tOrd=0;
-  let bmR=0,bmFee=0,bmDel=0,bmCpn=0,bmOrd=0;
-  let cpR=0,cpFee=0,cpDel=0,cpCpn=0,cpOrd=0;
-  let tgR=0,tgFee=0,tgDel=0,tgOrd=0;
-  let ygR=0,ygFee=0,ygDel=0,ygOrd=0;
+  let bmR=0,bmFee=0,bmDel=0,bmCpn=0,bmOrd=0,bmAd=0;
+  let cpR=0,cpFee=0,cpDel=0,cpCpn=0,cpOrd=0,cpAd=0;
+  let tgR=0,tgFee=0,tgDel=0,tgOrd=0,tgAd=0;
+  let ygR=0,ygFee=0,ygDel=0,ygOrd=0,ygAd=0;
   const dailyBM={}, dailyCP={}, dailyTG={}, dailyYG={};
 
   filtered.forEach(mo => {
     const bm=DB.bm[mo], cp=DB.cp[mo], tg=DB.tg[mo], yg=DB.yg[mo];
     if (bm) {
       tR+=bm.totalRev; tFee+=bm.fee; tDel+=bm.delivery; tCpn+=bm.coupon; tOrd+=bm.orders;
-      bmR+=bm.totalRev; bmFee+=bm.fee; bmDel+=bm.delivery; bmCpn+=bm.coupon; bmOrd+=bm.orders;
+      bmR+=bm.totalRev; bmFee+=bm.fee; bmDel+=bm.delivery; bmCpn+=bm.coupon; bmOrd+=bm.orders; bmAd+=(bm.ad||0);
       Object.entries(bm.daily).forEach(([d,v])=>{ if(!dailyBM[d])dailyBM[d]={rev:0,orders:0}; dailyBM[d].rev+=v.rev; dailyBM[d].orders+=v.orders; });
     }
     if (cp) {
       tR+=cp.totalRev; tFee+=cp.fee; tDel+=cp.delivery; tCpn+=cp.coupon; tOrd+=cp.orders;
-      cpR+=cp.totalRev; cpFee+=cp.fee; cpDel+=cp.delivery; cpCpn+=cp.coupon; cpOrd+=cp.orders;
+      cpR+=cp.totalRev; cpFee+=cp.fee; cpDel+=cp.delivery; cpCpn+=cp.coupon; cpOrd+=cp.orders; cpAd+=(cp.ad||0);
       Object.entries(cp.daily).forEach(([d,v])=>{ if(!dailyCP[d])dailyCP[d]={rev:0,orders:0}; dailyCP[d].rev+=v.rev; dailyCP[d].orders+=v.orders; });
     }
     if (tg) {
       tR+=tg.totalRev; tFee+=tg.fee; tDel+=tg.delivery; tOrd+=tg.orders;
-      tgR+=tg.totalRev; tgFee+=tg.fee; tgDel+=tg.delivery; tgOrd+=tg.orders;
+      tgR+=tg.totalRev; tgFee+=tg.fee; tgDel+=tg.delivery; tgOrd+=tg.orders; tgAd+=(tg.ad||0);
       Object.entries(tg.daily).forEach(([d,v])=>{ if(!dailyTG[d])dailyTG[d]={rev:0,orders:0}; dailyTG[d].rev+=v.rev; dailyTG[d].orders+=v.orders; });
     }
     if (yg) {
       tR+=yg.totalRev; tFee+=yg.fee; tDel+=(yg.delivery||0); tOrd+=yg.orders;
-      ygR+=yg.totalRev; ygFee+=yg.fee; ygDel+=(yg.delivery||0); ygOrd+=yg.orders;
+      ygR+=yg.totalRev; ygFee+=yg.fee; ygDel+=(yg.delivery||0); ygOrd+=yg.orders; ygAd+=(yg.ad||0);
       Object.entries(yg.daily).forEach(([d,v])=>{ if(!dailyYG[d])dailyYG[d]={rev:0,orders:0}; dailyYG[d].rev+=v.rev; dailyYG[d].orders+=v.orders; });
     }
   });
@@ -163,10 +163,10 @@ function aggregate(sel) {
     tR, tFee, tDel, tCpn, tDeduct, deposit, fixed, prf, net, tOrd,
     days: new Set([...Object.keys(dailyBM),...Object.keys(dailyCP),...Object.keys(dailyTG),...Object.keys(dailyYG)]).size,
     months, filtered, dailyBM, dailyCP, dailyTG, dailyYG, bep, bepMo,
-    bm:{r:bmR, fee:bmFee, del:bmDel, cpn:bmCpn, ord:bmOrd},
-    cp:{r:cpR, fee:cpFee, del:cpDel, cpn:cpCpn, ord:cpOrd},
-    tg:{r:tgR, fee:tgFee, del:tgDel, cpn:0,     ord:tgOrd},
-    yg:{r:ygR, fee:ygFee, del:ygDel, cpn:0,     ord:ygOrd},
+    bm:{r:bmR, fee:bmFee, del:bmDel, cpn:bmCpn, ord:bmOrd, ad:bmAd},
+    cp:{r:cpR, fee:cpFee, del:cpDel, cpn:cpCpn, ord:cpOrd, ad:cpAd},
+    tg:{r:tgR, fee:tgFee, del:tgDel, cpn:0,     ord:tgOrd, ad:tgAd},
+    yg:{r:ygR, fee:ygFee, del:ygDel, cpn:0,     ord:ygOrd, ad:ygAd},
   };
 }
 
@@ -211,6 +211,26 @@ function renderAll() {
 // ==============================================
 // [P] 종합현황 렌더
 // ==============================================
+// ── 경고 클릭 → 해당 탭+위치로 이동 ──
+function goToWarning(tab, targetId) {
+  goTab(tab);
+  // 진단센터 서브탭 처리
+  if (tab === 'diagnosis' && targetId.startsWith('diag-')) {
+    const subId = targetId.replace('diag-','');
+    switchDiag(subId);
+  }
+  setTimeout(() => {
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+      // 하이라이트 효과
+      el.style.transition = 'box-shadow 0.3s';
+      el.style.boxShadow = '0 0 0 3px var(--red)';
+      setTimeout(() => { el.style.boxShadow = ''; }, 2000);
+    }
+  }, 300);
+}
+
 function renderOverview() {
   renderMonthBtns('ov-months');
   const ag = aggregate(SEL);
@@ -222,20 +242,65 @@ function renderOverview() {
   const hourly = ag.tOrd > 0 ? Math.round(ag.net / (26 * 10)) : 0;
   set('k-hourly', W(hourly));
 
-  // 경고 배너
+  // 진단 경고 배너
   const warnings = [];
   if (ag.tR > 0) {
     const feeRate = ag.tFee / ag.tR * 100;
     const delRate = ag.tDel / ag.tR * 100;
     const fixedRate = ag.fixed / ag.tR * 100;
-    if (feeRate > 15) warnings.push('⚠️ 플랫폼 수수료 비중 ' + feeRate.toFixed(1) + '% (권장 15% 이하)');
-    if (delRate > 10) warnings.push('⚠️ 배달비 비중 ' + delRate.toFixed(1) + '% (권장 10% 이하)');
-    if (fixedRate > 50) warnings.push('⚠️ 고정비가 매출의 ' + fixedRate.toFixed(1) + '%를 차지합니다');
+    const netRate = ag.net / ag.tR * 100;
+    const adTotal = (ag.bm.ad||0) + (ag.cp.ad||0) + (ag.tg.ad||0) + (ag.yg.ad||0);
+    const adRate = adTotal / ag.tR * 100;
+    const avgOrder = ag.tOrd ? ag.tR / ag.tOrd : 0;
+
+    if (ag.net < 0)
+      warnings.push({icon:'🔴', msg:'순수익이 마이너스입니다! ' + W(ag.net), tab:'overview', target:'k-net', level:'danger'});
+    else if (netRate < 5)
+      warnings.push({icon:'🟡', msg:'순수익률 ' + netRate.toFixed(1) + '% (매우 낮음, 권장 10% 이상)', tab:'overview', target:'k-net', level:'warn'});
+
+    if (feeRate > 15)
+      warnings.push({icon:'🔴', msg:'수수료 비중 ' + feeRate.toFixed(1) + '% (권장 15% 이하)', tab:'compare', target:'cmp-tbody', level:'danger'});
+    else if (feeRate > 12)
+      warnings.push({icon:'🟡', msg:'수수료 비중 ' + feeRate.toFixed(1) + '% (주의 구간)', tab:'compare', target:'cmp-tbody', level:'warn'});
+
+    if (delRate > 15)
+      warnings.push({icon:'🔴', msg:'배달비 비중 ' + delRate.toFixed(1) + '% (매우 높음)', tab:'compare', target:'cmp-tbody', level:'danger'});
+    else if (delRate > 10)
+      warnings.push({icon:'🟡', msg:'배달비 비중 ' + delRate.toFixed(1) + '% (권장 10% 이하)', tab:'compare', target:'cmp-tbody', level:'warn'});
+
+    if (fixedRate > 50)
+      warnings.push({icon:'🔴', msg:'고정비가 매출의 ' + fixedRate.toFixed(1) + '% (과다)', tab:'settings', target:'s-rent', level:'danger'});
+
+    if (adRate > 5)
+      warnings.push({icon:'🟡', msg:'광고비 비중 ' + adRate.toFixed(1) + '% (' + W(adTotal) + ')', tab:'diagnosis', target:'diag-adcalc', level:'warn'});
+    else if (adTotal > 0 && adRate > 3)
+      warnings.push({icon:'🟢', msg:'광고비 ' + W(adTotal) + ' (' + adRate.toFixed(1) + '%)', tab:'diagnosis', target:'diag-adcalc', level:'info'});
+
+    if (avgOrder < 15000 && ag.tOrd > 10)
+      warnings.push({icon:'🟡', msg:'건당 평균 ' + W(avgOrder) + ' (단가가 낮음)', tab:'overview', target:'k-per-order', level:'warn'});
+
+    // 플랫폼별 수수료율 비교
+    ['bm','cp','tg','yg'].forEach(pf => {
+      const p = ag[pf];
+      if (p.r > 0 && p.fee / p.r > 0.15) {
+        const name = {bm:'배민',cp:'쿠팡',tg:'땡겨요',yg:'요기요'}[pf];
+        warnings.push({icon:'🟡', msg:name + ' 수수료율 ' + (p.fee/p.r*100).toFixed(1) + '%', tab:'settings', target:'s-'+pf+'-comm', level:'warn'});
+      }
+    });
+
+    if (ag.bep > 0 && ag.tR < ag.bep)
+      warnings.push({icon:'🔴', msg:'매출이 손익분기점(' + W(ag.bep) + ') 미달!', tab:'settings', target:'bep-summary', level:'danger'});
   }
+
   const banner = document.getElementById('warning-banner');
   const bannerText = document.getElementById('warning-text');
-  if (warnings.length) { bannerText.innerHTML = warnings.join('<br>'); banner.style.display = 'block'; }
-  else { banner.style.display = 'none'; }
+  if (warnings.length) {
+    bannerText.innerHTML = warnings.map(w => {
+      const bgColor = w.level === 'danger' ? 'rgba(229,48,42,0.1)' : w.level === 'warn' ? 'rgba(251,191,36,0.1)' : 'rgba(45,158,107,0.1)';
+      return `<div onclick="goToWarning('${w.tab}','${w.target}')" style="padding:4px 10px;margin-bottom:3px;border-radius:6px;background:${bgColor};cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">${w.icon} ${w.msg} <span style="font-size:10px;color:var(--muted)">→ 클릭하여 확인</span></div>`;
+    }).join('');
+    banner.style.display = 'block';
+  } else { banner.style.display = 'none'; }
 
   // KPI 2행 - 상세
   setKpi('k-deposit', W(ag.deposit), ag.deposit >= 0);
