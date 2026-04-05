@@ -136,11 +136,18 @@ function updateHeaderPeriod() {
 // ==============================================
 // [M] 데이터 집계
 // ==============================================
-let SEL = 'all';
+let SEL = new Set(['all']); // 다중 월 선택 (Set)
+let SEL_PF = new Set(['bm','cp','tg','yg']); // 플랫폼 필터
 
-function aggregate(sel) {
+function getFilteredMonths() {
+  const months = allMonths();
+  if (SEL.has('all')) return months;
+  return months.filter(m => SEL.has(m));
+}
+
+function aggregate() {
   const months   = allMonths();
-  const filtered = sel === 'all' ? months : [sel];
+  const filtered = getFilteredMonths();
   let tR=0,tFee=0,tDel=0,tCpn=0,tOrd=0;
   let bmR=0,bmFee=0,bmDel=0,bmCpn=0,bmOrd=0,bmAd=0;
   let cpR=0,cpFee=0,cpDel=0,cpCpn=0,cpOrd=0,cpAd=0;
@@ -150,22 +157,22 @@ function aggregate(sel) {
 
   filtered.forEach(mo => {
     const bm=DB.bm[mo], cp=DB.cp[mo], tg=DB.tg[mo], yg=DB.yg[mo];
-    if (bm) {
+    if (bm && SEL_PF.has('bm')) {
       tR+=bm.totalRev; tFee+=bm.fee; tDel+=bm.delivery; tCpn+=bm.coupon; tOrd+=bm.orders;
       bmR+=bm.totalRev; bmFee+=bm.fee; bmDel+=bm.delivery; bmCpn+=bm.coupon; bmOrd+=bm.orders; bmAd+=(bm.ad||0);
       Object.entries(bm.daily).forEach(([d,v])=>{ if(!dailyBM[d])dailyBM[d]={rev:0,orders:0}; dailyBM[d].rev+=v.rev; dailyBM[d].orders+=v.orders; });
     }
-    if (cp) {
+    if (cp && SEL_PF.has('cp')) {
       tR+=cp.totalRev; tFee+=cp.fee; tDel+=cp.delivery; tCpn+=cp.coupon; tOrd+=cp.orders;
       cpR+=cp.totalRev; cpFee+=cp.fee; cpDel+=cp.delivery; cpCpn+=cp.coupon; cpOrd+=cp.orders; cpAd+=(cp.ad||0);
       Object.entries(cp.daily).forEach(([d,v])=>{ if(!dailyCP[d])dailyCP[d]={rev:0,orders:0}; dailyCP[d].rev+=v.rev; dailyCP[d].orders+=v.orders; });
     }
-    if (tg) {
+    if (tg && SEL_PF.has('tg')) {
       tR+=tg.totalRev; tFee+=tg.fee; tDel+=tg.delivery; tOrd+=tg.orders;
       tgR+=tg.totalRev; tgFee+=tg.fee; tgDel+=tg.delivery; tgOrd+=tg.orders; tgAd+=(tg.ad||0);
       Object.entries(tg.daily).forEach(([d,v])=>{ if(!dailyTG[d])dailyTG[d]={rev:0,orders:0}; dailyTG[d].rev+=v.rev; dailyTG[d].orders+=v.orders; });
     }
-    if (yg) {
+    if (yg && SEL_PF.has('yg')) {
       tR+=yg.totalRev; tFee+=yg.fee; tDel+=(yg.delivery||0); tOrd+=yg.orders;
       ygR+=yg.totalRev; ygFee+=yg.fee; ygDel+=(yg.delivery||0); ygOrd+=yg.orders; ygAd+=(yg.ad||0);
       Object.entries(yg.daily).forEach(([d,v])=>{ if(!dailyYG[d])dailyYG[d]={rev:0,orders:0}; dailyYG[d].rev+=v.rev; dailyYG[d].orders+=v.orders; });
@@ -196,28 +203,76 @@ function aggregate(sel) {
 // ==============================================
 // [N] 월 선택 버튼
 // ==============================================
-function selectMonth(mo) {
-  SEL = mo;
-  // 달력도 선택된 월로 동기화
-  if (mo !== 'all') {
-    const [y, m] = mo.split('-').map(Number);
+function selectMonth(mo, e) {
+  if (mo === 'all') {
+    SEL = new Set(['all']);
+  } else if (e && (e.ctrlKey || e.metaKey)) {
+    // Ctrl 클릭: 다중 선택 토글
+    SEL.delete('all');
+    if (SEL.has(mo)) SEL.delete(mo);
+    else SEL.add(mo);
+    if (SEL.size === 0) SEL = new Set(['all']);
+  } else {
+    SEL = new Set([mo]);
+  }
+  // 달력 동기화
+  if (!SEL.has('all') && SEL.size === 1) {
+    const [y, m] = [...SEL][0].split('-').map(Number);
     calY = y; calM = m - 1;
   }
-  // 모든 탭 렌더
+  renderOverview(); renderCompare(); renderCalendar(); renderDiagnosis();
+}
+function togglePlatform(pf) {
+  if (SEL_PF.has(pf)) SEL_PF.delete(pf);
+  else SEL_PF.add(pf);
+  if (SEL_PF.size === 0) SEL_PF = new Set(['bm','cp','tg','yg']); // 전부 해제 시 전체 선택
   renderOverview(); renderCompare(); renderCalendar(); renderDiagnosis();
 }
 function renderMonthBtns(containerId) {
   const el = document.getElementById(containerId); if(!el) return;
   el.innerHTML = '';
+
+  // 플랫폼 필터 버튼
+  const pfBar = document.createElement('div');
+  pfBar.style.cssText = 'display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap';
+  const pfList = [
+    {pf:'bm', name:'🛵 배민', color:'var(--grn)'},
+    {pf:'cp', name:'🧡 쿠팡', color:'var(--danger)'},
+    {pf:'tg', name:'🟢 땡겨요', color:'#2D9E6B'},
+    {pf:'yg', name:'🟠 요기요', color:'#E5302A'},
+  ];
+  pfList.forEach(({pf, name, color}) => {
+    const btn = document.createElement('button');
+    const active = SEL_PF.has(pf);
+    btn.className = 'mbtn';
+    btn.style.cssText = active
+      ? `background:${color};color:#fff;border-color:${color};font-weight:700;font-size:11px`
+      : `opacity:0.4;font-size:11px`;
+    btn.textContent = name;
+    btn.onclick = () => togglePlatform(pf);
+    pfBar.appendChild(btn);
+  });
+  el.appendChild(pfBar);
+
+  // 월 선택 버튼
+  const monthBar = document.createElement('div');
+  monthBar.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap';
+
   const allBtn = document.createElement('button');
-  allBtn.className = 'mbtn' + (SEL==='all'?' active':''); allBtn.textContent = '전체';
-  allBtn.onclick = () => selectMonth('all'); el.appendChild(allBtn);
+  allBtn.className = 'mbtn' + (SEL.has('all')?' active':'');
+  allBtn.textContent = '전체';
+  allBtn.onclick = (e) => selectMonth('all', e);
+  monthBar.appendChild(allBtn);
+
   allMonths().forEach(mo => {
     const btn = document.createElement('button');
-    btn.className = 'mbtn' + (SEL===mo?' active':'');
+    btn.className = 'mbtn' + (SEL.has(mo)?' active':'');
     btn.textContent = mo.replace('-','년 ')+'월';
-    btn.onclick = () => selectMonth(mo); el.appendChild(btn);
+    btn.onclick = (e) => selectMonth(mo, e);
+    btn.title = 'Ctrl+클릭으로 다중 선택';
+    monthBar.appendChild(btn);
   });
+  el.appendChild(monthBar);
 }
 
 // ==============================================
@@ -256,7 +311,7 @@ function goToWarning(tab, targetId) {
 
 function renderOverview() {
   renderMonthBtns('ov-months');
-  const ag = aggregate(SEL);
+  const ag = aggregate();
 
   // KPI 1행 - 핵심
   set('k-rev', W(ag.tR)); set('k-orders', `주문 ${ag.tOrd}건`);
@@ -360,9 +415,9 @@ function renderOverview() {
                  + (yg?.fee||0)+(yg?.delivery||0);
     const dep=tot-deduct, prf=dep-fixed1;
     const tr = document.createElement('tr');
-    if (SEL===mo) tr.style.background='rgba(229,48,42,0.04)';
+    if (SEL.has(mo)) tr.style.background='rgba(229,48,42,0.04)';
     tr.innerHTML = `
-      <td style="font-weight:${SEL===mo?700:400}">${mo.replace('-','년 ')}월</td>
+      <td style="font-weight:${SEL.has(mo)?700:400}">${mo.replace('-','년 ')}월</td>
       <td style="color:var(--grn)">${W(bmR)}</td>
       <td style="color:var(--danger)">${W(cpR)}</td>
       <td style="color:#2D9E6B">${W(tgR)}</td>
@@ -467,7 +522,7 @@ function renderServiceDetail(filteredMonths) {
 // ==============================================
 function renderCompare() {
   renderMonthBtns('cmp-months');
-  const ag = aggregate(SEL);
+  const ag = aggregate();
   const container = document.getElementById('pcard-container'); container.innerHTML = '';
 
   [{pf:'bm', name:'배달의민족', color:'var(--grn)', dot:'var(--grn)', ...ag.bm},
@@ -561,7 +616,7 @@ function renderCalendar() {
 function moveMonth(dir) {
   calM += dir;
   if (calM < 0) { calM=11; calY--; } if (calM > 11) { calM=0; calY++; }
-  SEL = calY + '-' + String(calM+1).padStart(2,'0');
+  SEL = new Set([calY + '-' + String(calM+1).padStart(2,'0')]);
   renderOverview(); renderCompare(); renderCalendar();
 }
 function showTooltip(cell, ds, bR, cR, bO, cO, bmMo, cpMo, gR, gO, yR, yO) {
@@ -747,7 +802,7 @@ function calcCoupon() {
 }
 
 function renderDiag1() {
-  const ag = aggregate(SEL);
+  const ag = aggregate();
   const netRate = ag.tR > 0 ? (ag.net / ag.tR * 100) : 0;
   let emoji, label, color, desc;
   if (netRate >= 20) { emoji='🟢'; label='정상 운영'; color='var(--grn)'; desc='순수익률 ' + netRate.toFixed(1) + '% — 건강한 수익 구조입니다'; }
@@ -758,7 +813,7 @@ function renderDiag1() {
 }
 
 function renderLeaks() {
-  const ag = aggregate(SEL);
+  const ag = aggregate();
   if (!ag.tR) { document.getElementById('leaks-result').innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">데이터를 먼저 업로드해주세요</div>'; return; }
   const cogsCost = ag.tR * S.cogs / 100;
   const items = [
@@ -789,7 +844,7 @@ function calcPricing() {
   const targetMargin = parseFloat(document.getElementById('dp-margin')?.value) || 0;
   const competitor = parseFloat(document.getElementById('dp-competitor')?.value) || 0;
   const totalCost = material + labor + packing;
-  const ag = aggregate(SEL);
+  const ag = aggregate();
   const avgOrders = ag.tOrd || 104;
   const platforms = [
     {name:'배민', fee:(S.bmComm+S.bmPg+S.bmVat+S.bmExtra)/100, del:S.bmDel, color:'var(--grn)'},
@@ -819,7 +874,7 @@ function calcAd() {
   const pf = document.getElementById('da-platform')?.value || 'bm';
   const feeRate = pf === 'bm' ? (S.bmComm+S.bmPg+S.bmVat+S.bmExtra)/100 : (S.cpComm+S.cpPg+S.cpVat+S.cpExtra)/100;
   const delivery = pf === 'bm' ? S.bmDel : S.cpDel;
-  const ag = aggregate(SEL);
+  const ag = aggregate();
   const pfData = pf === 'bm' ? ag.bm : ag.cp;
   const avgOrder = pfData.ord > 0 ? pfData.r / pfData.ord : 18000;
   const addRev = avgOrder * orders;
