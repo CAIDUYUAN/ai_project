@@ -445,14 +445,27 @@ function parseCP_xlsx(wb, filename) {
 
   if (!totalOrders) throw new Error('쿠팡이츠 파일에서 데이터를 찾을 수 없습니다. 파일 형식을 확인해주세요.');
 
+  // 서비스(주문유형)별 집계
+  const services = {};
+  orderList.forEach(o => {
+    const sn = o.type || '기타';
+    if (!services[sn]) services[sn] = {count:0, orderAmt:0, fee:0, delivery:0, ad:0, total:0};
+    services[sn].count++;
+    services[sn].orderAmt += o.orderAmt;
+    services[sn].fee += o.svcTotal;
+    services[sn].delivery += o.delFee;
+    services[sn].ad += o.adTotal;
+    services[sn].total += o.svcTotal + o.delFee + o.adTotal;
+  });
+
   const totalRev = Object.values(daily).reduce((s,v) => s + v.rev, 0);
 
   return {
     period, ym, totalRev, orders:totalOrders, daily,
     fee: totalFee, feeRate: totalRev ? totalFee/totalRev : 0,
     delivery: totalDel, coupon: totalCoupon, ad: totalAd,
-    _hasPurchaseData: true, // 쿠팡은 매출+매입 통합
-    orderDetails: orderList,
+    _hasPurchaseData: true,
+    orderDetails: orderList, services,
   };
 }
 
@@ -553,20 +566,32 @@ function parseTG_xlsx(wb, filename) {
     });
   }
 
-  // 월별 결과 배열 반환
-  return Object.entries(monthData).map(([moKey, md]) => ({
-    period: md.yr+'년 '+md.mo+'월',
-    ym: [md.yr, md.mo],
-    totalRev: md.totalRev,
-    orders: md.orders,
-    daily: md.daily,
-    fee: md.totalFee,
-    feeRate: md.totalRev ? md.totalFee / md.totalRev : 0,
-    delivery: md.totalDel,
-    coupon: md.totalCoupon,
-    _hasPurchaseData: true,
-    orderDetails: md.orderList,
-  }));
+  // 월별 서비스별 집계 + 결과 반환
+  return Object.entries(monthData).map(([moKey, md]) => {
+    const services = {};
+    md.orderList.forEach(o => {
+      const sn = o.delType || o.orderType || '기타';
+      if (!services[sn]) services[sn] = {count:0, orderAmt:0, fee:0, delivery:0, ad:0, total:0};
+      services[sn].count++;
+      services[sn].orderAmt += o.orderAmt;
+      services[sn].fee += o.brokerFee + o.settleFee;
+      services[sn].delivery += o.ddDelFee;
+      services[sn].total += o.brokerFee + o.settleFee + o.ddDelFee;
+    });
+    return {
+      period: md.yr+'년 '+md.mo+'월',
+      ym: [md.yr, md.mo],
+      totalRev: md.totalRev,
+      orders: md.orders,
+      daily: md.daily,
+      fee: md.totalFee,
+      feeRate: md.totalRev ? md.totalFee / md.totalRev : 0,
+      delivery: md.totalDel,
+      coupon: md.totalCoupon,
+      _hasPurchaseData: true,
+      orderDetails: md.orderList, services,
+    };
+  });
 }
 
 // 구 형식 땡겨요 CSV (호환성 유지)
@@ -701,10 +726,18 @@ function parseYG_xlsx(wb, filename) {
   const daily = {};
   if (totalRev > 0) daily[ds] = {rev:totalRev, orders:1};
 
+  // 서비스별 집계 (요약 기반)
+  const services = {};
+  if (summary.brokerFee) services['주문중개'] = {count:0, orderAmt:totalRev, fee:summary.brokerFee||0, delivery:0, ad:0, total:summary.brokerFee||0};
+  if (summary.deliveryFee) services['배달대행'] = {count:0, orderAmt:0, fee:0, delivery:summary.deliveryFee||0, ad:0, total:summary.deliveryFee||0};
+  if (summary.pgFee) services['외부결제'] = {count:0, orderAmt:0, fee:summary.pgFee||0, delivery:0, ad:0, total:summary.pgFee||0};
+  if (summary.adFee) services['추천광고'] = {count:0, orderAmt:0, fee:0, delivery:0, ad:summary.adFee||0, total:summary.adFee||0};
+  if (summary.timeDealFee) services['요타임딜'] = {count:0, orderAmt:0, fee:summary.timeDealFee||0, delivery:0, ad:0, total:summary.timeDealFee||0};
+
   if (isPurchase) {
     return {
       type: 'purchase', ym:[yr,mn], period,
-      fee, delivery, ad, summary,
+      fee, delivery, ad, summary, services,
     };
   }
 
@@ -713,6 +746,6 @@ function parseYG_xlsx(wb, filename) {
     fee, feeRate: totalRev ? fee/totalRev : 0,
     delivery, coupon, ad,
     _hasPurchaseData: true,
-    purchaseSummary: summary,
+    purchaseSummary: summary, services,
   };
 }
