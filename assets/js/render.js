@@ -487,6 +487,14 @@ function renderServiceDetail(filteredMonths) {
       count:s.count+v.count, fee:s.fee+v.fee, delivery:s.delivery+v.delivery, ad:s.ad+v.ad, total:s.total+v.total
     }), {count:0,fee:0,delivery:0,ad:0,total:0});
 
+    // 쿠폰 합산 (매출 파일 데이터)
+    let pfCoupon = 0;
+    filteredMonths.forEach(mo => {
+      const d = DB[pf][mo];
+      if (d) pfCoupon += d.coupon || 0;
+    });
+    const grandWithCoupon = grandTotal.total + pfCoupon;
+
     html += `
       <div style="margin-bottom:16px">
         <div style="font-weight:700;color:${pfColors[pf]};margin-bottom:8px;font-size:14px">${pfLabels[pf]}</div>
@@ -495,14 +503,16 @@ function renderServiceDetail(filteredMonths) {
             <thead><tr>
               <th style="text-align:left">서비스</th><th>건수</th><th>수수료</th><th>배달비</th><th>광고비</th><th>합계</th>
             </tr></thead>
-            <tbody>${svcRows}</tbody>
+            <tbody>${svcRows}
+            ${pfCoupon ? `<tr><td style="text-align:left;font-family:inherit">쿠폰(가게부담)</td><td>-</td><td>-</td><td>-</td><td>-</td><td style="font-weight:700" class="neg">${W(pfCoupon)}</td></tr>` : ''}
+            </tbody>
             <tfoot><tr class="tfoot">
-              <td style="text-align:left;font-family:inherit">합계</td>
+              <td style="text-align:left;font-family:inherit">총 차감합계</td>
               <td>${grandTotal.count.toLocaleString()}건</td>
               <td class="neg">${W(grandTotal.fee)}</td>
               <td class="neg">${W(grandTotal.delivery)}</td>
               <td class="neg">${W(grandTotal.ad)}</td>
-              <td style="font-weight:700" class="neg">${W(grandTotal.total)}</td>
+              <td style="font-weight:700" class="neg">${W(grandWithCoupon)}</td>
             </tr></tfoot>
           </table>
         </div>

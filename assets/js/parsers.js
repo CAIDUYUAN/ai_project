@@ -223,7 +223,7 @@ function parseBM_purchase_xlsx(wb, filename) {
     od.actualTotal = od.total + od.bmTotal;
   });
 
-  // 서비스별 집계
+  // 서비스별 집계 (사장님 부담 기준: 수수료+배달비+광고비)
   Object.values(orderDetails).forEach(od => {
     const sn = od.service === '픽업' ? '포장' : (od.service || '기타');
     if (!services[sn]) services[sn] = {count:0, orderAmt:0, fee:0, delivery:0, ad:0, total:0};
@@ -232,7 +232,7 @@ function parseBM_purchase_xlsx(wb, filename) {
     services[sn].fee += od.settleFee + od.brokerageFee;
     services[sn].delivery += od.deliveryFee;
     services[sn].ad += od.adFee;
-    services[sn].total += od.actualTotal;
+    services[sn].total += (od.settleFee + od.brokerageFee) + od.deliveryFee + od.adFee;
   });
 
   return {
