@@ -531,19 +531,22 @@ function renderCompare() {
    {pf:'yg', name:'요기요',     color:'#E5302A', dot:'#E5302A',   ...ag.yg},
   ].forEach(p => {
     const div = document.createElement('div'); div.className = 'pcard';
-    const dep = p.r - p.fee - p.del - (p.cpn||0);
+    const ad = p.ad || 0;
+    const dep = p.r - p.fee - p.del - (p.cpn||0) - ad;
     const pfCount = [ag.bm.r,ag.cp.r,ag.tg.r,ag.yg.r].filter(r=>r>0).length || 1;
     const prf = dep - fixedCost() * (ag.filtered.length||1) / pfCount;
     const mg  = p.r ? prf/p.r*100 : 0;
+    const pctOf = v => p.r ? ' (' + (v/p.r*100).toFixed(1) + '%)' : '';
     div.innerHTML = `
       <div class="pcard-head"><div class="pcard-dot" style="background:${p.dot}"></div><div class="pcard-name">${p.name}</div></div>
-      <div class="deposit-box"><span class="l">💰 입금예정금액</span><span class="v">${W(dep)}</span></div>
+      <div class="deposit-box"><span class="l">💰 정산금액</span><span class="v">${W(dep)}</span></div>
       <div class="pcard-row"><span class="l">총 매출</span>       <span class="v">${W(p.r)}</span></div>
       <div class="pcard-row"><span class="l">주문 건수</span>     <span class="v">${p.ord}건</span></div>
       <div class="pcard-row"><span class="l">건당 평균</span>     <span class="v">${W(p.ord?p.r/p.ord:0)}</span></div>
-      <div class="pcard-row"><span class="l">수수료</span>        <span class="v neg">-${W(p.fee)}</span></div>
-      <div class="pcard-row"><span class="l">배달비</span>        <span class="v" style="color:var(--or)">-${W(p.del)}</span></div>
-      ${p.cpn ? `<div class="pcard-row"><span class="l">쿠폰(상점부담)</span><span class="v" style="color:var(--danger)">-${W(p.cpn)}</span></div>` : ''}
+      <div class="pcard-row"><span class="l">수수료</span>        <span class="v neg">-${W(p.fee)}${pctOf(p.fee)}</span></div>
+      <div class="pcard-row"><span class="l">배달비</span>        <span class="v" style="color:var(--or)">-${W(p.del)}${pctOf(p.del)}</span></div>
+      ${ad ? `<div class="pcard-row"><span class="l">광고비</span><span class="v" style="color:var(--blue)">-${W(ad)}${pctOf(ad)}</span></div>` : ''}
+      ${p.cpn ? `<div class="pcard-row"><span class="l">쿠폰(가게부담)</span><span class="v" style="color:var(--danger)">-${W(p.cpn)}${pctOf(p.cpn)}</span></div>` : ''}
       <hr class="pcard-divider">
       <div class="pcard-row"><span class="l">정산율</span>        <span class="v">${Pct(dep,p.r)}</span></div>
       <div class="pcard-row"><span class="l">순수익(재료前)</span><span class="v ${prf>=0?'pos':'neg'}">${W(prf)}</span></div>
@@ -551,19 +554,20 @@ function renderCompare() {
     container.appendChild(div);
   });
 
-  const bmDep=ag.bm.r-ag.bm.fee-ag.bm.del-ag.bm.cpn;
-  const cpDep=ag.cp.r-ag.cp.fee-ag.cp.del-ag.cp.cpn;
-  const tgDep=ag.tg.r-ag.tg.fee-ag.tg.del;
-  const ygDep=ag.yg.r-ag.yg.fee-ag.yg.del;
+  const bmDep=ag.bm.r-ag.bm.fee-ag.bm.del-ag.bm.cpn-(ag.bm.ad||0);
+  const cpDep=ag.cp.r-ag.cp.fee-ag.cp.del-ag.cp.cpn-(ag.cp.ad||0);
+  const tgDep=ag.tg.r-ag.tg.fee-ag.tg.del-(ag.tg.ad||0);
+  const ygDep=ag.yg.r-ag.yg.fee-ag.yg.del-(ag.yg.ad||0);
+  const fmtPct = (v, base) => base ? W(v) + ' (' + (v/base*100).toFixed(1) + '%)' : W(v);
   document.getElementById('cmp-tbody').innerHTML = [
     ['총 매출',         W(ag.bm.r),              W(ag.cp.r),              W(ag.tg.r),   W(ag.yg.r),   W(ag.tR)],
     ['주문 건수',       `${ag.bm.ord}건`,         `${ag.cp.ord}건`,         `${ag.tg.ord}건`, `${ag.yg.ord}건`, `${ag.tOrd}건`],
     ['건당 평균',       W(ag.bm.ord?ag.bm.r/ag.bm.ord:0), W(ag.cp.ord?ag.cp.r/ag.cp.ord:0), W(ag.tg.ord?ag.tg.r/ag.tg.ord:0), W(ag.yg.ord?ag.yg.r/ag.yg.ord:0), W(ag.tOrd?ag.tR/ag.tOrd:0)],
-    ['수수료',         W(ag.bm.fee),             W(ag.cp.fee),             W(ag.tg.fee), W(ag.yg.fee), W(ag.tFee)],
-    ['수수료율',        Pct(ag.bm.fee,ag.bm.r),   Pct(ag.cp.fee,ag.cp.r),   Pct(ag.tg.fee,ag.tg.r), Pct(ag.yg.fee,ag.yg.r), Pct(ag.tFee,ag.tR)],
-    ['배달비',         W(ag.bm.del),             W(ag.cp.del),             W(ag.tg.del), W(ag.yg.del), W(ag.tDel)],
-    ['쿠폰(상점부담)', W(ag.bm.cpn),             W(ag.cp.cpn),             '-',          '-',          W(ag.tCpn)],
-    ['💰 입금예정금액',
+    ['수수료',         fmtPct(ag.bm.fee,ag.bm.r), fmtPct(ag.cp.fee,ag.cp.r), fmtPct(ag.tg.fee,ag.tg.r), fmtPct(ag.yg.fee,ag.yg.r), fmtPct(ag.tFee,ag.tR)],
+    ['배달비',         fmtPct(ag.bm.del,ag.bm.r), fmtPct(ag.cp.del,ag.cp.r), fmtPct(ag.tg.del,ag.tg.r), fmtPct(ag.yg.del,ag.yg.r), fmtPct(ag.tDel,ag.tR)],
+    ['광고비',         fmtPct(ag.bm.ad,ag.bm.r), fmtPct(ag.cp.ad,ag.cp.r), fmtPct(ag.tg.ad,ag.tg.r), fmtPct(ag.yg.ad,ag.yg.r), fmtPct(ag.tAd,ag.tR)],
+    ['쿠폰(가게부담)', fmtPct(ag.bm.cpn,ag.bm.r), fmtPct(ag.cp.cpn,ag.cp.r), '-', '-', fmtPct(ag.tCpn,ag.tR)],
+    ['💰 정산금액',
       `<span style="color:var(--grn);font-weight:700">${W(bmDep)}</span>`,
       `<span style="color:var(--danger);font-weight:700">${W(cpDep)}</span>`,
       `<span style="color:#2D9E6B;font-weight:700">${W(tgDep)}</span>`,
