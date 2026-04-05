@@ -473,28 +473,15 @@ function renderServiceDetail(filteredMonths) {
 
     const svcRows = Object.entries(svcTotals)
       .sort((a,b) => Math.abs(b[1].total) - Math.abs(a[1].total))
-      .map(([name, s]) => {
-        const uid = `svc-${pf}-${name.replace(/\s/g,'')}`;
-        const monthRows = (svcMonthly[name]||[]).map(m =>
-          `<tr style="background:var(--bg3);font-size:11px">
-            <td style="text-align:left;font-family:inherit;padding-left:24px;color:var(--muted)">└ ${m.month.replace('-','년 ')}월</td>
-            <td style="color:var(--muted)">${m.count.toLocaleString()}건</td>
-            <td style="color:var(--muted)">${W(m.fee)}</td>
-            <td style="color:var(--muted)">${W(m.delivery)}</td>
-            <td style="color:var(--muted)">${W(m.ad)}</td>
-            <td style="color:var(--muted)">${W(m.total)}</td>
-          </tr>`).join('');
-        return `
-        <tr style="cursor:pointer" onmouseenter="document.getElementById('${uid}').style.maxHeight='500px';document.getElementById('${uid}').style.opacity='1'" onmouseleave="document.getElementById('${uid}').style.maxHeight='0';document.getElementById('${uid}').style.opacity='0'">
-          <td style="text-align:left;font-family:inherit">${name} <span style="font-size:9px;color:var(--muted)">▼</span></td>
+      .map(([name, s]) => `
+        <tr>
+          <td style="text-align:left;font-family:inherit">${name}</td>
           <td>${s.count.toLocaleString()}건</td>
           <td class="neg">${W(s.fee)}</td>
           <td class="neg">${W(s.delivery)}</td>
           <td class="neg">${W(s.ad)}</td>
           <td style="font-weight:700" class="neg">${W(s.total)}</td>
-        </tr>
-        <tr id="${uid}" style="max-height:0;opacity:0;overflow:hidden;transition:max-height .3s ease,opacity .3s ease"><td colspan="6" style="padding:0"><table style="width:100%;margin:0">${monthRows}</table></td></tr>`;
-      }).join('');
+        </tr>`).join('');
 
     const grandTotal = Object.values(svcTotals).reduce((s,v) => ({
       count:s.count+v.count, fee:s.fee+v.fee, delivery:s.delivery+v.delivery, ad:s.ad+v.ad, total:s.total+v.total
