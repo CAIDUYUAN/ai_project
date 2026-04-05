@@ -542,8 +542,8 @@ function renderCompare() {
       <div class="pcard-row"><span class="l">건당 평균</span>     <span class="v">${W(p.ord?p.r/p.ord:0)}</span></div>
       <div class="pcard-row"><span class="l">수수료</span>        <span class="v neg">-${W(p.fee)}${pctOf(p.fee)}</span></div>
       <div class="pcard-row"><span class="l">배달비</span>        <span class="v" style="color:var(--or)">-${W(p.del)}${pctOf(p.del)}</span></div>
-      ${ad ? `<div class="pcard-row"><span class="l">광고비</span><span class="v" style="color:var(--blue)">-${W(ad)}${pctOf(ad)}</span></div>` : ''}
-      ${p.cpn ? `<div class="pcard-row"><span class="l">쿠폰(가게부담)</span><span class="v" style="color:var(--danger)">-${W(p.cpn)}${pctOf(p.cpn)}</span></div>` : ''}
+      <div class="pcard-row"><span class="l">광고비</span><span class="v" style="color:var(--blue)">${ad ? '-'+W(ad)+pctOf(ad) : '₩0'}</span></div>
+      <div class="pcard-row"><span class="l">쿠폰(가게부담)</span><span class="v" style="color:var(--danger)">${p.cpn ? '-'+W(p.cpn)+pctOf(p.cpn) : '₩0'}</span></div>
       <hr class="pcard-divider">
       <div class="pcard-row"><span class="l">정산율</span>        <span class="v">${Pct(dep,p.r)}</span></div>
       <div class="pcard-row"><span class="l">순수익(재료前)</span><span class="v ${prf>=0?'pos':'neg'}">${W(prf)}</span></div>
