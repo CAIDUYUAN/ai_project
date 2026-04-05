@@ -311,7 +311,8 @@ function renderOverview() {
 
   // KPI 1행 - 핵심
   set('k-rev', W(ag.tR)); set('k-orders', `주문 ${ag.tOrd}건`);
-  setKpi('k-net', W(ag.net), ag.net >= 0);
+  const netPct = ag.tR ? (ag.net/ag.tR*100).toFixed(1) : '0.0';
+  setKpi('k-net', W(ag.net) + ` (${netPct}%)`, ag.net >= 0);
   set('k-net-sub', `원가율 ${S.cogs}% | 고정비 -${W(ag.fixed)}`);
   const hourly = ag.tOrd > 0 ? Math.round(ag.net / (26 * 10)) : 0;
   set('k-hourly', W(hourly));
