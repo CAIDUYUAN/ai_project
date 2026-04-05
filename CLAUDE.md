@@ -22,17 +22,29 @@
 | `tg` | 땡겨요 |
 
 ## 데이터 흐름
-1. 로컬 XLSX 업로드 **또는** 구글 드라이브에서 fetch
-2. `parseBM_xlsx/csv`, `parseCP_xlsx/csv`, `parseTG_sales_xlsx/parseTG_purchase_xlsx/parseTG` 로 파싱
-3. `storeData(pf, data, filename)` 로 `DB[pf][ym-key]` 에 저장 (땡겨요 매입은 `mergeTG_purchase`로 병합)
+1. 로컬 XLSX 업로드
+2. 파싱 함수:
+   - 배민 매출: `parseBM_xlsx` (행11 헤더, 서비스거래번호별 합산)
+   - 배민 매입: `parseBM_purchase_xlsx` (서비스별/주문번호별 상세 저장)
+   - 쿠팡이츠: `parseCP_xlsx` (매출+매입 통합, 다단헤더)
+   - 땡겨요: `parseTG_xlsx` (정산내역 건별, 행38 헤더, 다중월 자동분리)
+   - 요기요: `parseYG_xlsx` (요약형 데이터)
+3. `storeData(pf, data, filename)` 로 `DB[pf][ym-key]` 에 저장
 4. `renderAll()` 로 전체 UI 갱신
+
+## 파일명 패턴
+- 배민: `매출상세내역_YYYY년MM월DD일(요일)_...xlsx` / `매입상세내역_...xlsx`
+- 쿠팡: `coupang_eats_YYYY-MM.xlsx`
+- 땡겨요: `땡겨요 정산내역(건별).xls`
+- 요기요: `요기요 YYYY년 MM월 매출.xlsx`
 
 ## 주요 설정값 (S 객체 기본값)
 - 고정비: 임대료 80만, 관리비 10만, 공과금 15만, 포장재 10만, 기타 5만, 생활비 200만
 - 원가율(cogs): 35%
 - 배민 수수료: 6.8% + PG 1.3% + 부가세 0.68%
 - 쿠팡이츠 수수료: 7.8% + PG 2.8% + 부가세 2.5%
-- 땡겨요 수수료: 매입 파일에서 실제 수수료 사용 (없으면 추정 12.3%), 파일명: `땡겨요 YYYY년 MM월 매출/매입`
+- 땡겨요 수수료: 건별 정산내역에서 실제 수수료 사용 (주문중개+결제정산이용료)
+- 요기요 수수료: 월별 요약에서 주문중개+배달대행+외부결제 이용료
 
 ## GitHub
 - 레포지토리: https://github.com/CAIDUYUAN/ai_project
