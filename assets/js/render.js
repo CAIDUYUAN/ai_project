@@ -203,17 +203,14 @@ function aggregate() {
 // ==============================================
 // [N] 월 선택 버튼
 // ==============================================
-function selectMonth(mo, e) {
+function selectMonth(mo) {
   if (mo === 'all') {
     SEL = new Set(['all']);
-  } else if (e && (e.ctrlKey || e.metaKey)) {
-    // Ctrl 클릭: 다중 선택 토글
+  } else {
     SEL.delete('all');
     if (SEL.has(mo)) SEL.delete(mo);
     else SEL.add(mo);
     if (SEL.size === 0) SEL = new Set(['all']);
-  } else {
-    SEL = new Set([mo]);
   }
   // 달력 동기화
   if (!SEL.has('all') && SEL.size === 1) {
@@ -261,15 +258,14 @@ function renderMonthBtns(containerId) {
   const allBtn = document.createElement('button');
   allBtn.className = 'mbtn' + (SEL.has('all')?' active':'');
   allBtn.textContent = '전체';
-  allBtn.onclick = (e) => selectMonth('all', e);
+  allBtn.onclick = () => selectMonth('all');
   monthBar.appendChild(allBtn);
 
   allMonths().forEach(mo => {
     const btn = document.createElement('button');
     btn.className = 'mbtn' + (SEL.has(mo)?' active':'');
     btn.textContent = mo.replace('-','년 ')+'월';
-    btn.onclick = (e) => selectMonth(mo, e);
-    btn.title = 'Ctrl+클릭으로 다중 선택';
+    btn.onclick = () => selectMonth(mo);
     monthBar.appendChild(btn);
   });
   el.appendChild(monthBar);
