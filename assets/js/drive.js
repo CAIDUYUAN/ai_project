@@ -72,7 +72,11 @@ function loadXlsx2(files, pf) {
     const reader = new FileReader();
     reader.onload = e => {
       try {
+        // xlsx 라이브러리의 Bad uncompressed size 경고 억제
+        const _ce = console.error;
+        console.error = (...args) => { if (!(args[0]||'').toString().includes('uncompressed')) _ce.apply(console, args); };
         const wb = XLSX.read(e.target.result, {type:'array', cellDates:true, WTF:false});
+        console.error = _ce;
         let data;
         if      (pf === 'bm') data = /매입상세내역/.test(file.name) ? parseBM_purchase_xlsx(wb, file.name) : parseBM_xlsx(wb, file.name);
         else if (pf === 'cp') data = parseCP_xlsx(wb, file.name);
