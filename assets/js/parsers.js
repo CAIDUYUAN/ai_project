@@ -225,7 +225,7 @@ function parseBM_purchase_xlsx(wb, filename) {
 
   // 서비스별 집계
   Object.values(orderDetails).forEach(od => {
-    const sn = od.service || '기타';
+    const sn = od.service === '픽업' ? '포장' : (od.service || '기타');
     if (!services[sn]) services[sn] = {count:0, orderAmt:0, fee:0, delivery:0, ad:0, total:0};
     services[sn].count++;
     services[sn].orderAmt += od.orderAmt;
