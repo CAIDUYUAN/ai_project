@@ -1,6 +1,6 @@
 // [I] DB 저장 공통 (땡겨요 다중 월 배열 + 매입 병합 지원)
 // ==============================================
-function storeData(pf, data, filename) {
+async function storeData(pf, data, filename) {
   // 매입 데이터는 별도 처리 (bm, tg, yg 공통)
   if (data && data.type === 'purchase' && ['bm','tg','yg'].includes(pf)) {
     mergePurchase(pf, data);
@@ -13,7 +13,7 @@ function storeData(pf, data, filename) {
     if (DB[pf][key]) {
       DB[pf][key]._purchaseFilename = filename;
       DB[pf][key]._purchasePeriod = data.period + ' 매입';
-      saveToSupabase(pf, key, DB[pf][key], filename).catch(e => console.warn(e));
+      await saveToSupabase(pf, key, DB[pf][key], filename).catch(e => console.warn(e));
     }
     updateUploadUI(pf);
     updateFileList();
@@ -52,8 +52,8 @@ function storeData(pf, data, filename) {
     FILES[pf] = FILES[pf].filter(f => f.key !== key);
     FILES[pf].push({key, period:d.period, filename});
     FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
-    // Supabase에 비동기 저장
-    saveToSupabase(pf, key, d, filename).catch(e => console.warn(e));
+    // Supabase에 순차 저장
+    await saveToSupabase(pf, key, d, filename).catch(e => console.warn(e));
   });
   updateUploadUI(pf);
   updateFileList();
@@ -67,29 +67,46 @@ function onDrag(e, id)  { e.preventDefault(); document.getElementById(id).classL
 function offDrag(id)    { document.getElementById(id).classList.remove('drag'); }
 function onDrop(e, pf)  { e.preventDefault(); offDrag('box-'+pf); loadXlsx2(e.dataTransfer.files, pf); }
 function loadXlsx(inp, pf) { loadXlsx2(inp.files, pf); }
-function loadXlsx2(files, pf) {
-  Array.from(files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        // xlsx 라이브러리의 Bad uncompressed size 경고 억제
-        const _ce = console.error;
-        console.error = (...args) => { if (!(args[0]||'').toString().includes('uncompressed')) _ce.apply(console, args); };
-        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true, WTF:false});
-        console.error = _ce;
-        let data;
-        if      (pf === 'bm') data = /매입상세내역/.test(file.name) ? parseBM_purchase_xlsx(wb, file.name) : parseBM_xlsx(wb, file.name);
-        else if (pf === 'cp') data = parseCP_xlsx(wb, file.name);
-        else if (pf === 'yg') data = parseYG_xlsx(wb, file.name);
-        else                  data = parseTG_xlsx(wb, file.name);
-        storeData(pf, data, file.name);
-        const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':'땡겨요';
-        const first = Array.isArray(data) ? data[0] : data;
-        toast(`${label} ${first.period} 로드 완료!`);
-      } catch(err) { alert(`파일 오류(${file.name}): ${err.message}`); }
-    };
-    reader.readAsArrayBuffer(file);
-  });
+async function loadXlsx2(files, pf) {
+  const fileArr = Array.from(files);
+  const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':'땡겨요';
+  let loaded = 0, failed = 0;
+
+  for (const file of fileArr) {
+    try {
+      const buf = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+
+      // xlsx 경고 억제
+      const _ce = console.error;
+      console.error = (...args) => { if (!(args[0]||'').toString().includes('uncompressed')) _ce.apply(console, args); };
+      const wb = XLSX.read(buf, {type:'array', cellDates:true, WTF:false});
+      console.error = _ce;
+
+      let data;
+      if      (pf === 'bm') data = /매입상세내역/.test(file.name) ? parseBM_purchase_xlsx(wb, file.name) : parseBM_xlsx(wb, file.name);
+      else if (pf === 'cp') data = parseCP_xlsx(wb, file.name);
+      else if (pf === 'yg') data = parseYG_xlsx(wb, file.name);
+      else                  data = parseTG_xlsx(wb, file.name);
+
+      await storeData(pf, data, file.name);
+      loaded++;
+      const first = Array.isArray(data) ? data[0] : data;
+      toast(`${label} ${first.period} 로드 완료! (${loaded}/${fileArr.length})`);
+    } catch(err) {
+      failed++;
+      console.warn(`파일 오류(${file.name}):`, err.message);
+      toast(`⚠️ ${file.name} 오류: ${err.message}`);
+    }
+  }
+
+  if (fileArr.length > 1) {
+    toast(`${label} ${loaded}개 로드 완료${failed ? ` (${failed}개 실패)` : ''}`);
+  }
 }
 
 // ==============================================
