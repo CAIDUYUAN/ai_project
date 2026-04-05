@@ -60,8 +60,9 @@ document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', (
 // ==============================================
 // [D] 배민 재계산 (설정 수수료 기반 - 매입 데이터 없을 때)
 // ==============================================
+// 배민 매출만 있고 매입 없을 때 설정값으로 추정
 function recalcBM(d) {
-  if (d._hasPurchaseData) return; // 매입 데이터가 있으면 그것 사용
+  if (d._hasPurchase) return; // 매입 데이터가 있으면 recalcMerged 사용
   const fr   = bmFeeRate();
   d.fee      = d.totalRev * fr;
   d.feeRate  = fr;
@@ -242,34 +243,116 @@ function parseBM_purchase_xlsx(wb, filename) {
 }
 
 // ==============================================
-// [E3] 매입 데이터 병합
+// [E3] DB 구조 통합 관리
+// DB[pf][month] = {
+//   _files: 1 or 2,        // 파일 수
+//   _hasSales: bool,        // 매출 데이터 유무
+//   _hasPurchase: bool,     // 매입 데이터 유무
+//   period, ym,             // 기본 정보
+//   sales: {...},           // 매출 원본 데이터
+//   purchase: {...},        // 매입 원본 데이터
+//   // 합산 데이터 (화면 표시용)
+//   totalRev, orders, daily, fee, delivery, ad, coupon, feeRate, services, ...
+// }
 // ==============================================
+
+// 매출+매입 합산 계산
+function recalcMerged(entry) {
+  const s = entry.sales || {};
+  const p = entry.purchase || {};
+  // 매출 데이터
+  entry.totalRev = s.totalRev || 0;
+  entry.orders = s.orders || 0;
+  entry.daily = s.daily || {};
+  entry.coupon = s.coupon || 0;
+  // 매입 데이터 (매입 있으면 매입 우선, 없으면 매출 파일의 값 사용)
+  if (entry._hasPurchase) {
+    entry.fee = p.fee || 0;
+    entry.delivery = p.delivery || 0;
+    entry.ad = p.ad || 0;
+    entry.feeRate = entry.totalRev ? entry.fee / entry.totalRev : 0;
+    entry.services = p.services || {};
+    entry.orderDetails = p.orderDetails || [];
+  } else if (entry._hasSales) {
+    // 매출만 있을 때 - 매출 파일에 fee가 있으면 사용 (쿠팡/땡겨요/요기요)
+    entry.fee = s.fee || 0;
+    entry.delivery = s.delivery || 0;
+    entry.ad = s.ad || 0;
+    entry.coupon = s.coupon || 0;
+    entry.feeRate = s.feeRate || 0;
+    entry.services = s.services || {};
+    entry.orderDetails = s.orderDetails || [];
+  }
+  entry._hasPurchaseData = entry._hasPurchase || (s._hasPurchaseData || false);
+}
+
+// 매입 데이터 저장
 function mergePurchase(pf, purchaseData) {
   const key = purchaseData.ym[0] + '-' + String(purchaseData.ym[1]).padStart(2,'0');
   const existing = DB[pf][key];
   if (existing) {
-    existing.fee = purchaseData.fee;
-    existing.delivery = purchaseData.delivery || 0;
-    existing.feeRate = existing.totalRev ? purchaseData.fee / existing.totalRev : 0;
-    existing._hasPurchaseData = true;
-    if (purchaseData.services) existing.services = purchaseData.services;
-    if (purchaseData.ad !== undefined) existing.ad = purchaseData.ad;
-    if (purchaseData.orderDetails) existing.orderDetails = purchaseData.orderDetails;
-    if (purchaseData.details) existing.purchaseDetails = purchaseData.details;
-    if (purchaseData.summary) existing.purchaseSummary = purchaseData.summary;
+    existing.purchase = {
+      fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
+      ad: purchaseData.ad || 0, services: purchaseData.services || {},
+      orderDetails: purchaseData.orderDetails || [],
+      details: purchaseData.details || [],
+      summary: purchaseData.summary || null,
+    };
+    existing._hasPurchase = true;
+    existing._files = (existing._hasSales ? 1 : 0) + 1;
+    recalcMerged(existing);
   } else {
     DB[pf][key] = {
       period: purchaseData.period, ym: purchaseData.ym,
-      totalRev:0, orders:0, daily:{},
-      fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
-      feeRate:0, coupon:0,
+      _files: 1, _hasSales: false, _hasPurchase: true,
+      sales: {},
+      purchase: {
+        fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
+        ad: purchaseData.ad || 0, services: purchaseData.services || {},
+        orderDetails: purchaseData.orderDetails || [],
+        details: purchaseData.details || [],
+        summary: purchaseData.summary || null,
+      },
+      totalRev:0, orders:0, daily:{}, fee:purchaseData.fee,
+      delivery:purchaseData.delivery||0, ad:purchaseData.ad||0,
+      feeRate:0, coupon:0, services:purchaseData.services||{},
       _hasPurchaseData: true,
-      services: purchaseData.services || {},
-      ad: purchaseData.ad || 0,
-      orderDetails: purchaseData.orderDetails || [],
-      purchaseDetails: purchaseData.details || [],
-      purchaseSummary: purchaseData.summary || null,
     };
+  }
+}
+
+// 매출 데이터 저장
+function mergeSales(pf, salesData) {
+  const key = salesData.ym[0] + '-' + String(salesData.ym[1]).padStart(2,'0');
+  const existing = DB[pf][key];
+  if (existing) {
+    existing.sales = { ...salesData };
+    existing._hasSales = true;
+    existing._files = 1 + (existing._hasPurchase ? 1 : 0);
+    existing.period = salesData.period;
+    existing.ym = salesData.ym;
+    recalcMerged(existing);
+  } else {
+    const entry = {
+      period: salesData.period, ym: salesData.ym,
+      _files: 1, _hasSales: true, _hasPurchase: false,
+      sales: { ...salesData },
+      purchase: {},
+    };
+    // 쿠팡/땡겨요/요기요는 매출 파일에 수수료 포함
+    if (salesData._hasPurchaseData) {
+      entry._hasPurchase = true;
+      entry._files = 1;
+      entry.purchase = {
+        fee: salesData.fee || 0, delivery: salesData.delivery || 0,
+        ad: salesData.ad || 0, coupon: salesData.coupon || 0,
+        services: salesData.services || {},
+        orderDetails: salesData.orderDetails || [],
+        summary: salesData.purchaseSummary || null,
+      };
+    }
+    DB[pf][key] = entry;
+    recalcMerged(entry);
   }
 }
 

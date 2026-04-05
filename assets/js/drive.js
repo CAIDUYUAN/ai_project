@@ -1,15 +1,14 @@
-// [I] DB 저장 공통 (땡겨요 다중 월 배열 + 매입 병합 지원)
+// [I] DB 저장 공통 (새 구조: sales/purchase 분리)
 // ==============================================
 async function storeData(pf, data, filename) {
-  // 매입 데이터는 별도 처리 (bm, tg, yg 공통)
-  if (data && data.type === 'purchase' && ['bm','tg','yg'].includes(pf)) {
+  // 매입 데이터 처리
+  if (data && data.type === 'purchase') {
     mergePurchase(pf, data);
     const key = data.ym[0] + '-' + String(data.ym[1]).padStart(2,'0');
     const fnKey = key + '_purchase';
     FILES[pf] = FILES[pf].filter(f => f.key !== fnKey);
     FILES[pf].push({key:fnKey, period:data.period+' 매입', filename});
     FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
-    // 매입 파일 정보를 DB 데이터에 저장 (Supabase 복원용)
     if (DB[pf][key]) {
       DB[pf][key]._purchaseFilename = filename;
       DB[pf][key]._purchasePeriod = data.period + ' 매입';
@@ -21,27 +20,18 @@ async function storeData(pf, data, filename) {
     return;
   }
 
+  // 매출 데이터 처리 (배열 지원 - 땡겨요 다중 월)
   const items = Array.isArray(data) ? data : [data];
   for (const d of items) {
+    mergeSales(pf, d);
     const key = d.ym[0] + '-' + String(d.ym[1]).padStart(2,'0');
-    // 매입 데이터가 먼저 로드된 경우 병합
-    if (['bm','yg','tg'].includes(pf) && DB[pf][key] && DB[pf][key]._hasPurchaseData) {
-      const prev = DB[pf][key];
-      d.fee = prev.fee;
-      d.delivery = prev.delivery;
-      d.ad = prev.ad || 0;
-      d.feeRate = d.totalRev ? prev.fee / d.totalRev : 0;
-      d._hasPurchaseData = true;
-      if (prev.services) d.services = prev.services;
-      if (prev.orderDetails) d.orderDetails = prev.orderDetails;
-      if (prev.purchaseDetails) d.purchaseDetails = prev.purchaseDetails;
-      if (prev.purchaseSummary) d.purchaseSummary = prev.purchaseSummary;
-    }
-    DB[pf][key] = d;
     FILES[pf] = FILES[pf].filter(f => f.key !== key);
     FILES[pf].push({key, period:d.period, filename});
     FILES[pf].sort((a,b) => a.key.localeCompare(b.key));
-    await saveToSupabase(pf, key, d, filename).catch(e => console.warn(e));
+    if (DB[pf][key]) {
+      DB[pf][key]._salesFilename = filename;
+      await saveToSupabase(pf, key, DB[pf][key], filename).catch(e => console.warn(e));
+    }
   }
   updateUploadUI(pf);
   updateFileList();

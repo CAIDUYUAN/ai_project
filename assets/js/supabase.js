@@ -84,15 +84,21 @@ async function loadFromSupabase() {
       if (!DB[pf]) return;
 
       DB[pf][key] = row.data;
+      // 새 구조에서 합산 데이터가 없으면 recalcMerged 실행
+      if (row.data && row.data.sales && typeof recalcMerged === 'function') {
+        recalcMerged(row.data);
+      }
       // FILES 복원 (매출)
       FILES[pf] = FILES[pf].filter(f => f.key !== key && f.key !== key+'_purchase');
-      FILES[pf].push({ key, period: row.period, filename: row.filename || '' });
+      if (row.data && (row.data._hasSales !== false)) {
+        FILES[pf].push({ key, period: row.period, filename: row.data._salesFilename || row.filename || '' });
+      }
       // 매입 파일 정보도 복원
-      if (row.data && row.data._purchaseFilename) {
+      if (row.data && (row.data._hasPurchase || row.data._purchaseFilename)) {
         FILES[pf].push({
           key: key + '_purchase',
           period: row.data._purchasePeriod || row.period + ' 매입',
-          filename: row.data._purchaseFilename
+          filename: row.data._purchaseFilename || ''
         });
       }
       count++;
