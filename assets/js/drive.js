@@ -29,8 +29,13 @@ async function storeData(pf, data, filename) {
       const prev = DB[pf][key];
       d.fee = prev.fee;
       d.delivery = prev.delivery;
+      d.ad = prev.ad || 0;
       d.feeRate = d.totalRev ? prev.fee / d.totalRev : 0;
       d._hasPurchaseData = true;
+      if (prev.services) d.services = prev.services;
+      if (prev.orderDetails) d.orderDetails = prev.orderDetails;
+      if (prev.purchaseDetails) d.purchaseDetails = prev.purchaseDetails;
+      if (prev.purchaseSummary) d.purchaseSummary = prev.purchaseSummary;
     }
     DB[pf][key] = d;
     FILES[pf] = FILES[pf].filter(f => f.key !== key);
