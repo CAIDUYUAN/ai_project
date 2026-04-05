@@ -161,27 +161,22 @@
     </div>
   </div>
 
-  <!-- KPI 2행 - 4개 상세 KPI -->
-  <div class="kpi-grid">
-    <div class="kpi green">
+  <!-- KPI 2행 - 3개 상세 KPI -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi" style="border:1.5px solid var(--grn)">
       <div class="kpi-label">💰 입금예정금액</div>
       <div class="kpi-value pos" id="k-deposit">₩0</div>
       <div class="kpi-sub" id="k-deposit-sub"></div>
     </div>
-    <div class="kpi amber">
+    <div class="kpi" style="border:1.5px solid var(--danger)">
       <div class="kpi-label">총 차감금액</div>
       <div class="kpi-value" id="k-deduct">₩0</div>
       <div class="kpi-sub" id="k-deduct-sub"></div>
     </div>
-    <div class="kpi blue">
-      <div class="kpi-label">일평균 매출</div>
-      <div class="kpi-value" id="k-avg">₩0</div>
-      <div class="kpi-sub" id="k-days">0일 영업</div>
-    </div>
-    <div class="kpi">
+    <div class="kpi" style="border:1.5px solid var(--or)">
       <div class="kpi-label">건당 평균 매출</div>
       <div class="kpi-value" id="k-per-order">₩0</div>
-      <div class="kpi-sub">건당</div>
+      <div class="kpi-sub" id="k-orders-sub">건당</div>
     </div>
   </div>
 

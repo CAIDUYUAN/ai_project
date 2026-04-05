@@ -331,8 +331,8 @@ function renderOverview() {
   set('k-deduct', W(ag.tDeduct));
   const fP = ag.tR ? (v => (v/ag.tR*100).toFixed(1)+'%') : ()=>'0%';
   set('k-deduct-sub', `수수료 ${W(ag.tFee)} (${fP(ag.tFee)}) | 배달 ${W(ag.tDel)} (${fP(ag.tDel)}) | 쿠폰 ${W(ag.tCpn)} (${fP(ag.tCpn)})${ag.tAd ? ' | 광고 '+W(ag.tAd)+' ('+fP(ag.tAd)+')' : ''}`);
-  set('k-avg', W(ag.days ? ag.tR/ag.days : 0)); set('k-days', `${ag.days}일 영업`);
   set('k-per-order', W(ag.tOrd ? ag.tR/ag.tOrd : 0));
+  set('k-orders-sub', `${ag.tOrd.toLocaleString()}건 · ${ag.days}일 영업`);
 
   // 일별 막대 차트
   const allDays = [...new Set([...Object.keys(ag.dailyBM), ...Object.keys(ag.dailyCP), ...Object.keys(ag.dailyTG), ...Object.keys(ag.dailyYG)])].sort();
