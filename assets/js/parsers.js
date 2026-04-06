@@ -721,12 +721,12 @@ function parseYG_xlsx(wb, filename) {
   const coupon = (summary.shopCoupon||0) + (summary.selfDiscount||0) + (summary.timeDealDisc||0);
   const ad = summary.adFee || 0;
 
-  // 주문 건수 추정: 배달대행이용료가 있으면 건당 평균 배달비로 역산, 없으면 건당 평균 주문액으로 추정
+  // 주문 건수 추정: 배달대행이용료 ÷ 건당 ~3000원(요기요 기본 2900+추가)
   let estOrders = 1;
-  if (delivery > 0 && S.ygDel > 0) {
-    estOrders = Math.round(delivery / S.ygDel) || 1;
+  if (delivery > 0) {
+    estOrders = Math.max(1, Math.round(delivery / 3000));
   } else if (totalRev > 0) {
-    estOrders = Math.max(1, Math.round(totalRev / 22000)); // 평균 건당 ~22000원 추정
+    estOrders = Math.max(1, Math.round(totalRev / 22000));
   }
 
   // 일별 데이터 없으므로 월 1일에 총액 할당
