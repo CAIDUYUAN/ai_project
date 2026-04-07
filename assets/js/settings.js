@@ -261,5 +261,5 @@ function updateCouponPreview() {
     {min:g('s-cp1-min'), amt:g('s-cp1-amt')},
     {min:g('s-cp2-min'), amt:g('s-cp2-amt')},
     {min:g('s-cp3-min'), amt:g('s-cp3-amt')},
-  ].map(t => `<span style="margin-right:16px">₩${t.min.toLocaleString()} 이상 → <strong style="color:#f87171">-₩${t.amt.toLocaleString()}</strong></span>`).join('');
+  ].map(t => `<span style="margin-right:16px">₩${t.min.toLocaleString()} 이상 → <strong style="color:var(--red)">-₩${t.amt.toLocaleString()}</strong></span>`).join('');
 }

@@ -17,7 +17,27 @@
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<div class="wrap">
+
+<!-- =============================================
+     로그인 화면
+============================================= -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-icon">🌶️</div>
+    <h2 class="login-title">빨마라 대시보드</h2>
+    <p class="login-subtitle">접근하려면 비밀번호를 입력하세요</p>
+    <div class="login-form">
+      <input type="password" id="login-pw" inputmode="numeric" pattern="[0-9]*"
+        maxlength="20" placeholder="숫자 비밀번호 입력"
+        autocomplete="off" autofocus>
+      <div id="login-error" class="login-error"></div>
+      <button id="login-btn" class="login-btn" onclick="attemptLogin()">확인</button>
+    </div>
+    <p class="login-footer">숫자만 입력 가능 · 5회 실패 시 60초 잠금</p>
+  </div>
+</div>
+
+<div class="wrap" id="app-wrap" style="display:none">
 
 <!-- =============================================
      헤더

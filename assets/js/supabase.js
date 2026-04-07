@@ -14,12 +14,108 @@ function getSb() {
   return _sb;
 }
 
-// ── 비밀번호 관리 ──
+// ── 접근 인증 ──
+async function sha256(text) {
+  const data = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+let _loginAttempts = 0;
+let _lockUntil = 0;
+
+async function attemptLogin() {
+  const input = document.getElementById('login-pw');
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+  const pw    = input.value.trim();
+
+  // 클라이언트 잠금 확인
+  if (Date.now() < _lockUntil) {
+    const sec = Math.ceil((_lockUntil - Date.now()) / 1000);
+    errEl.textContent = `${sec}초 후 다시 시도해주세요`;
+    return;
+  }
+
+  if (!pw) { errEl.textContent = '비밀번호를 입력하세요'; return; }
+  if (!/^\d+$/.test(pw)) { errEl.textContent = '숫자만 입력 가능합니다'; input.value = ''; return; }
+
+  btn.disabled = true;
+  btn.textContent = '확인 중...';
+  errEl.textContent = '';
+
+  try {
+    const sb = getSb();
+    if (!sb) throw new Error('DB 연결 실패');
+
+    const hash = await sha256(pw);
+    const { data, error } = await sb.rpc('verify_access', { p_hash: hash });
+
+    if (error) {
+      _loginAttempts++;
+      if (/locked|Too many/i.test(error.message)) {
+        _lockUntil = Date.now() + 60000;
+        errEl.textContent = '시도 횟수 초과 — 60초 후 다시 시도';
+      } else if (_loginAttempts >= 5) {
+        _lockUntil = Date.now() + 60000;
+        errEl.textContent = '5회 실패 — 60초 잠금';
+      } else {
+        errEl.textContent = `비밀번호가 틀렸습니다 (${_loginAttempts}/5)`;
+      }
+      input.value = '';
+      input.focus();
+    } else {
+      // 성공 — 로그인 비밀번호를 DB 작업에도 자동 사용
+      sessionStorage.setItem('bbalgan_auth', Date.now().toString());
+      sessionStorage.setItem('bbalgan_sb_pw', pw);
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('app-wrap').style.display = '';
+      _loginAttempts = 0;
+    }
+  } catch(e) {
+    errEl.textContent = '서버 연결 오류: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '확인';
+}
+
+// 페이지 로드 시 세션 확인
+function checkAuth() {
+  const auth = sessionStorage.getItem('bbalgan_auth');
+  if (auth) {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('app-wrap').style.display = '';
+  }
+}
+
+// 숫자만 입력 + Enter 키
+document.addEventListener('DOMContentLoaded', () => {
+  const pwInput = document.getElementById('login-pw');
+  if (pwInput) {
+    pwInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { attemptLogin(); return; }
+      // 숫자, Backspace, Delete, Tab, 방향키만 허용
+      if (!/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight'].includes(e.key) && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+      }
+    });
+    // 붙여넣기 시 숫자만 필터링
+    pwInput.addEventListener('paste', e => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+      pwInput.value = text;
+    });
+  }
+  checkAuth();
+});
+
+// ── Supabase 데이터 비밀번호 (로그인 비밀번호 자동 사용) ──
 function getSbPassword() {
-  let pw = localStorage.getItem('bbalgan_sb_pw');
+  let pw = sessionStorage.getItem('bbalgan_sb_pw') || localStorage.getItem('bbalgan_sb_pw') || '';
   if (!pw) {
-    pw = prompt('Supabase 저장 비밀번호를 입력하세요:');
-    if (pw) localStorage.setItem('bbalgan_sb_pw', pw);
+    pw = prompt('데이터 비밀번호를 입력하세요:');
+    if (pw) sessionStorage.setItem('bbalgan_sb_pw', pw);
   }
   return pw || '';
 }
@@ -138,14 +234,24 @@ async function deleteFromSupabase(pf, key) {
 // ── Supabase 전체 삭제 ──
 async function clearAllSupabase() {
   const sb = getSb();
-  if (!sb) return;
+  if (!sb) { toast('⚠️ DB 연결 없음'); return false; }
 
   const pw = getSbPassword();
-  if (!pw) return;
+  if (!pw) { toast('⚠️ DB 비밀번호가 필요합니다'); return false; }
 
   const { error } = await sb.rpc('clear_all_sales', {
     p_password: pw
   });
 
-  if (error) console.warn('[Supabase] 전체 삭제 실패:', error.message);
+  if (error) {
+    console.warn('[Supabase] 전체 삭제 실패:', error.message);
+    if (/password|Invalid/i.test(error.message)) {
+      localStorage.removeItem('bbalgan_sb_pw');
+      toast('⚠️ DB 비밀번호 오류 — 다시 시도해주세요');
+    } else {
+      toast('⚠️ DB 삭제 실패: ' + error.message);
+    }
+    return false;
+  }
+  return true;
 }

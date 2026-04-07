@@ -113,7 +113,12 @@ function removeFile(pf, key) {
   deleteFromSupabase(pf, key).catch(e => console.warn(e));
   updateUploadUI(pf); updateFileList(); renderAll();
 }
-function clearAll() {
+async function clearAll() {
+  // 1. DB에서 먼저 삭제
+  const dbOk = await clearAllSupabase().catch(() => false);
+  if (dbOk === false) return; // DB 삭제 실패 시 중단
+
+  // 2. 로컬 메모리 삭제
   ['bm','cp','tg','yg'].forEach(pf => {
     Object.keys(DB[pf]).forEach(k => delete DB[pf][k]);
     FILES[pf] = [];
@@ -122,9 +127,18 @@ function clearAll() {
       if(el){ if(pre==='tags-') el.innerHTML=''; else el.classList.remove('loaded'); }
     });
   });
-  clearAllSupabase().catch(e => console.warn(e));
   updateFileList();
-  renderAll();
+
+  // 3. UI 완전 초기화
+  document.querySelectorAll('.kpi-value').forEach(el => el.textContent = '₩0');
+  document.querySelectorAll('.kpi-sub').forEach(el => el.textContent = '');
+  ['bar-chart','monthly-tbody','cmp-tbody','cal-tbody','cal-grid','pcard-container'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.innerHTML = '';
+  });
+  const bepFill = document.getElementById('bep-fill'); if(bepFill) bepFill.style.width = '0%';
+  document.getElementById('hd-period').textContent = '파일을 업로드해주세요';
+  const flc = document.getElementById('file-list-card'); if(flc) flc.style.display = 'none';
+  toast('전체 데이터가 삭제되었습니다');
 }
 function updateHeaderPeriod() {
   const months = allMonths();

@@ -44,12 +44,61 @@ INSERT INTO app_config (key, value)
 VALUES ('store_password', '여기에비밀번호입력')  -- ⚠️ 실행 전 원하는 비밀번호로 변경!
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
+-- 접근 비밀번호 (SHA-256 해시로 저장)
+INSERT INTO app_config (key, value)
+VALUES ('access_password_hash', '9b351ca0387a027c8a45d16d76d3b45911fdbb654a26b0873f5981d932274941')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+-- 로그인 실패 카운터 (브루트포스 방지)
+INSERT INTO app_config (key, value)
+VALUES ('login_fail_count', '0'), ('login_locked_until', '0')
+ON CONFLICT (key) DO NOTHING;
+
 -- app_config RLS (읽기 차단)
 ALTER TABLE app_config ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "No public access" ON app_config
   FOR SELECT USING (false);
 
--- 4. UPSERT RPC 함수
+-- 4. 접근 비밀번호 검증 RPC (브루트포스 방지 포함)
+CREATE OR REPLACE FUNCTION verify_access(p_hash TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
+DECLARE
+  stored_hash TEXT;
+  fail_count INT;
+  locked TEXT;
+BEGIN
+  -- 잠금 확인 (5회 실패 시 60초 잠금)
+  SELECT value INTO locked FROM app_config WHERE key = 'login_locked_until';
+  IF locked IS NOT NULL AND locked::BIGINT > EXTRACT(EPOCH FROM NOW())::BIGINT THEN
+    RAISE EXCEPTION 'Too many attempts. Try again later.';
+  END IF;
+
+  -- 해시 비교
+  SELECT value INTO stored_hash FROM app_config WHERE key = 'access_password_hash';
+  IF stored_hash IS NOT NULL AND p_hash = stored_hash THEN
+    -- 성공: 카운터 리셋
+    UPDATE app_config SET value = '0' WHERE key = 'login_fail_count';
+    RETURN true;
+  END IF;
+
+  -- 실패: 카운터 증가
+  SELECT COALESCE(value, '0')::INT INTO fail_count FROM app_config WHERE key = 'login_fail_count';
+  fail_count := fail_count + 1;
+  UPDATE app_config SET value = fail_count::TEXT WHERE key = 'login_fail_count';
+
+  -- 5회 실패 시 60초 잠금
+  IF fail_count >= 5 THEN
+    UPDATE app_config SET value = (EXTRACT(EPOCH FROM NOW())::BIGINT + 60)::TEXT WHERE key = 'login_locked_until';
+    RAISE EXCEPTION 'Account locked for 60 seconds';
+  END IF;
+
+  RAISE EXCEPTION 'Invalid password';
+END;
+$$;
+
+-- 5. UPSERT RPC 함수
 CREATE OR REPLACE FUNCTION upsert_sales(
   p_password TEXT,
   p_platform TEXT,

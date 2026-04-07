@@ -2,34 +2,52 @@
    1. CSS 변수 & 리셋 (Apple Dark Design System)
 ============================================= */
 :root {
-  --bg:    #000000;
-  --bg2:   #1c1c1e;
-  --bg3:   #2c2c2e;
+  /* Apple Design System — DESIGN.md 기준 */
+  --bg:       #000000;
+  --bg2:      #1c1c1e;
+  --bg3:      #2c2c2e;
   --surface1: #1c1c1e;
   --surface2: #2c2c2e;
   --surface3: #3a3a3c;
-  --red:   #ff453a;
-  --red2:  rgba(255,69,58,0.12);
-  --grn:   #30d158;
-  --or:    #ff9f0a;
-  --blue:  #0a84ff;
-  --danger:#ff453a;
-  --bd:    #38383a;
-  --bd2:   #2c2c2e;
-  --tx:    #f5f5f7;
-  --tx2:   rgba(255,255,255,0.6);
-  --muted: rgba(255,255,255,0.35);
-  --accent:#0a84ff;
-  --mono:  'SF Mono', 'JetBrains Mono', ui-monospace, monospace;
-  --font:  -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Pretendard', 'Helvetica Neue', sans-serif;
+  --surface-light: #f5f5f7;
+
+  /* Semantic Colors */
+  --red:    #ff453a;
+  --red2:   rgba(255,69,58,0.12);
+  --grn:    #30d158;
+  --or:     #ff9f0a;
+  --danger: #ff453a;
+
+  /* Interactive — Apple Blue #0071e3 */
+  --accent: #0071e3;
+  --blue:   #0071e3;
+  --link:   #2997ff;
+  --focus:  #0071e3;
+
+  /* Borders */
+  --bd:     #38383a;
+  --bd2:    #2c2c2e;
+
+  /* Text */
+  --tx:     #f5f5f7;
+  --tx2:    rgba(255,255,255,0.6);
+  --muted:  rgba(255,255,255,0.48);
+
+  /* Shadow — Apple single soft shadow */
+  --shadow: 3px 5px 30px rgba(0,0,0,0.22);
+
+  /* Typography */
+  --mono:   'SF Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --font:   -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Pretendard', 'Helvetica Neue', sans-serif;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   font-family:var(--font);
   background:var(--bg); color:var(--tx);
-  font-size:15px; font-weight:400; line-height:1.47;
-  letter-spacing:-0.2px;
+  font-size:17px; font-weight:400; line-height:1.47;
+  letter-spacing:-0.374px;
   -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
   min-height:100vh;
 }
 
@@ -61,14 +79,14 @@ header {
 }
 .logo { display:flex; align-items:center; gap:10px; }
 .logo-icon {
-  width:36px; height:36px; background:var(--red);
+  width:36px; height:36px; background:var(--accent);
   border-radius:8px; display:flex; align-items:center;
   justify-content:center; font-size:18px;
 }
-.logo h1 { font-size:15px; font-weight:600; color:#f5f5f7; letter-spacing:-0.3px; }
-.logo p  { font-size:11px; color:rgba(255,255,255,0.5); letter-spacing:-0.1px; }
-.header-info { text-align:right; font-size:11px; color:rgba(255,255,255,0.5); }
-.header-info strong { color:#f5f5f7; }
+.logo h1 { font-size:17px; font-weight:600; color:#f5f5f7; letter-spacing:-0.374px; }
+.logo p  { font-size:12px; color:rgba(255,255,255,0.48); letter-spacing:-0.12px; }
+.header-info { text-align:right; font-size:12px; color:rgba(255,255,255,0.48); letter-spacing:-0.12px; }
+.header-info strong { color:#f5f5f7; font-weight:600; }
 
 /* =============================================
    4. 탭
@@ -82,12 +100,12 @@ header {
 .tab, .dtab {
   flex:1; min-width:52px; padding:8px 6px; border:none;
   background:transparent; color:var(--tx2); font-family:var(--font);
-  font-size:13px; font-weight:400; border-radius:8px;
+  font-size:14px; font-weight:400; border-radius:8px;
+  letter-spacing:-0.224px;
   cursor:pointer; transition:all .2s; white-space:nowrap;
 }
 .tab.active, .dtab.active {
-  background:var(--surface2); color:#f5f5f7; font-weight:600;
-  box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  background:var(--accent); color:#fff; font-weight:600;
 }
 .tab:hover, .dtab:hover { color:#f5f5f7; }
 .panel { display:none; }
@@ -105,7 +123,7 @@ header {
   border:none; border-radius:12px;
   padding:20px; margin-bottom:12px;
 }
-.card-title { font-size:15px; font-weight:600; margin-bottom:12px; color:#f5f5f7; letter-spacing:-0.2px; }
+.card-title { font-size:17px; font-weight:600; margin-bottom:16px; color:#f5f5f7; letter-spacing:-0.374px; }
 
 /* =============================================
    6. KPI
@@ -116,9 +134,9 @@ header {
   background:var(--surface1);
   border-radius:12px; padding:16px; position:relative; overflow:hidden;
 }
-.kpi-label { font-size:13px; color:var(--tx2); margin-bottom:6px; font-weight:400; }
-.kpi-value { font-family:var(--mono); font-size:26px; font-weight:600; line-height:1.2; color:#f5f5f7; }
-.kpi-sub   { font-size:11px; color:var(--muted); margin-top:4px; line-height:1.5; }
+.kpi-label { font-size:14px; color:var(--tx2); margin-bottom:6px; font-weight:400; letter-spacing:-0.224px; }
+.kpi-value { font-family:var(--font); font-size:28px; font-weight:600; line-height:1.14; letter-spacing:0.007em; color:#f5f5f7; }
+.kpi-sub   { font-size:12px; color:var(--muted); margin-top:4px; line-height:1.5; letter-spacing:-0.12px; }
 .pos { color:var(--grn); }
 .neg { color:var(--danger); }
 
@@ -201,21 +219,21 @@ tr:hover td { background:rgba(255,255,255,0.03); }
 ============================================= */
 .platform-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 @media(max-width:560px) { .platform-grid { grid-template-columns:1fr; } }
-.pcard { background:var(--surface1); border:none; border-radius:12px; padding:16px; }
-.pcard-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-.pcard-dot  { width:9px; height:9px; border-radius:50%; }
-.pcard-name { font-size:14px; font-weight:600; color:#f5f5f7; letter-spacing:-0.2px; }
-.pcard-row  { display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; }
+.pcard { background:var(--surface1); border:none; border-radius:12px; padding:20px; box-shadow:var(--shadow); }
+.pcard-head { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+.pcard-dot  { width:8px; height:8px; border-radius:50%; }
+.pcard-name { font-size:17px; font-weight:600; color:#f5f5f7; letter-spacing:-0.374px; }
+.pcard-row  { display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px; letter-spacing:-0.224px; }
 .pcard-row .l { color:var(--tx2); }
 .pcard-row .v { font-family:var(--mono); font-weight:600; color:#f5f5f7; }
 .pcard-divider { border:none; border-top:1px solid rgba(255,255,255,0.08); margin:7px 0; }
 .deposit-box {
-  background:rgba(48,209,88,0.06);
-  border-radius:8px; padding:8px 10px; margin-bottom:6px;
+  background:rgba(0,113,227,0.1);
+  border-radius:8px; padding:10px 14px; margin-bottom:10px;
   display:flex; justify-content:space-between; align-items:center;
 }
-.deposit-box .l { font-size:12px; color:var(--grn); font-weight:600; }
-.deposit-box .v { font-family:var(--mono); font-size:15px; font-weight:700; color:var(--grn); }
+.deposit-box .l { font-size:14px; color:var(--link); font-weight:600; letter-spacing:-0.224px; }
+.deposit-box .v { font-family:var(--mono); font-size:17px; font-weight:600; color:var(--link); }
 
 /* =============================================
    12. 달력
@@ -248,9 +266,10 @@ tr:hover td { background:rgba(255,255,255,0.03); }
 .cal-bar-cp { background:var(--danger); border-radius:2px; }
 .tooltip {
   position:absolute; background:var(--surface2);
-  border-radius:10px; padding:12px 14px; font-size:11px; z-index:999;
-  min-width:175px; pointer-events:none; display:none;
-  white-space:nowrap; box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  border-radius:12px; padding:14px 16px; font-size:14px; z-index:999;
+  min-width:185px; pointer-events:none; display:none;
+  white-space:nowrap; box-shadow:var(--shadow);
+  letter-spacing:-0.224px;
 }
 .tt-row     { display:flex; justify-content:space-between; gap:12px; margin-bottom:4px; align-items:center; }
 .tt-label   { display:flex; align-items:center; gap:4px; color:var(--tx2); }
@@ -297,14 +316,14 @@ tr:hover td { background:rgba(255,255,255,0.03); }
    14. 버튼 & 공통
 ============================================= */
 .btn-primary {
-  width:100%; padding:12px; background:var(--accent); border:none;
-  border-radius:980px; color:#fff; font-family:var(--font); font-size:15px;
-  font-weight:600; cursor:pointer; transition:opacity .15s;
-  margin-top:4px; letter-spacing:-0.2px;
+  width:100%; padding:12px 15px; background:var(--accent); border:none;
+  border-radius:8px; color:#fff; font-family:var(--font); font-size:17px;
+  font-weight:400; cursor:pointer; transition:all .2s;
+  margin-top:4px; letter-spacing:-0.374px;
 }
-.btn-primary:hover    { opacity:0.88; }
-.btn-primary:active   { opacity:0.7; }
-.btn-primary:disabled { background:var(--surface3); color:var(--muted); cursor:not-allowed; }
+.btn-primary:hover    { background:#0077ed; }
+.btn-primary:active   { background:#006edb; }
+.btn-primary:disabled { background:rgba(0,113,227,0.3); color:rgba(255,255,255,0.5); cursor:not-allowed; }
 .btn-sm {
   background:transparent; border:1px solid var(--bd);
   border-radius:980px; color:var(--tx2); font-family:var(--font);
@@ -328,11 +347,11 @@ tr:hover td { background:rgba(255,255,255,0.03); }
   position:fixed; bottom:24px; left:50%;
   transform:translateX(-50%) translateY(70px);
   background:var(--surface2);
-  border-radius:980px; padding:10px 24px; font-size:13px; color:#f5f5f7;
+  border-radius:980px; padding:12px 24px; font-size:14px; color:#f5f5f7;
   transition:transform .35s cubic-bezier(0.34,1.56,0.64,1), opacity .35s;
   z-index:9999; opacity:0;
-  box-shadow:0 8px 30px rgba(0,0,0,0.4);
-  letter-spacing:-0.2px;
+  box-shadow:var(--shadow);
+  letter-spacing:-0.224px;
 }
 #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 
@@ -356,3 +375,68 @@ input[type="range"]::-webkit-slider-thumb {
   cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.3);
 }
 input[type="range"]:active::-webkit-slider-thumb { transform:scale(1.1); }
+
+/* =============================================
+   16. 로그인 화면 (Apple Style)
+============================================= */
+#login-overlay {
+  position:fixed; inset:0; z-index:10000;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+}
+.login-card {
+  text-align:center; padding:40px 32px;
+  width:100%; max-width:360px;
+}
+.login-icon {
+  width:64px; height:64px; margin:0 auto 20px;
+  background:var(--accent); border-radius:16px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:32px;
+  box-shadow:var(--shadow);
+}
+.login-title {
+  font-size:28px; font-weight:600;
+  line-height:1.14; letter-spacing:0.007em;
+  color:#f5f5f7; margin-bottom:8px;
+}
+.login-subtitle {
+  font-size:17px; color:var(--tx2);
+  letter-spacing:-0.374px; margin-bottom:32px;
+}
+.login-form { margin-bottom:20px; }
+#login-pw {
+  width:100%; padding:14px 16px;
+  background:var(--surface1); border:1px solid var(--bd);
+  border-radius:12px; color:#f5f5f7;
+  font-family:var(--font); font-size:21px;
+  font-weight:600; text-align:center;
+  letter-spacing:8px; outline:none;
+  transition:border-color 0.2s;
+  -webkit-text-security:disc;
+}
+#login-pw:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,113,227,0.25); }
+#login-pw::placeholder {
+  font-size:14px; font-weight:400;
+  letter-spacing:-0.224px; color:var(--muted);
+}
+.login-error {
+  min-height:20px; margin:12px 0;
+  font-size:14px; color:var(--red);
+  letter-spacing:-0.224px;
+}
+.login-btn {
+  width:100%; padding:14px;
+  background:var(--accent); border:none;
+  border-radius:12px; color:#fff;
+  font-family:var(--font); font-size:17px;
+  font-weight:600; letter-spacing:-0.374px;
+  cursor:pointer; transition:all 0.2s;
+}
+.login-btn:hover { background:#0077ed; }
+.login-btn:active { background:#006edb; }
+.login-btn:disabled { background:rgba(0,113,227,0.3); cursor:not-allowed; }
+.login-footer {
+  font-size:12px; color:var(--muted);
+  letter-spacing:-0.12px;
+}

@@ -50,6 +50,20 @@
 - 레포지토리: https://github.com/CAIDUYUAN/ai_project
 - 브랜치: main
 
+## 디자인 시스템
+- **모든 UI 디자인은 Apple DESIGN.md를 참조**
+- 참조 파일: `C:\Users\coehd\Downloads\awesome-design-md-main\design-md\apple\DESIGN.md`
+- 핵심 규칙:
+  - 액센트 컬러: Apple Blue `#0071e3` — 인터랙티브 요소에만 사용
+  - 다크 배경: `#000000` (hero), `#1c1c1e` (카드), `#2c2c2e` (elevated)
+  - 폰트: SF Pro Display (20px+) / SF Pro Text (19px-), 시스템 폰트 폴백
+  - Letter-spacing: 56px→-0.28px, 17px→-0.374px, 14px→-0.224px, 12px→-0.12px
+  - 그림자: `rgba(0,0,0,0.22) 3px 5px 30px` 단일 소프트 그림자만 사용
+  - 네비게이션: 반투명 글래스 (`rgba(0,0,0,0.8)` + `blur(20px)`)
+  - 버튼: 8px radius (기본), 980px radius (pill CTA)
+  - 카드: border 없음, 12px radius
+  - 추가 액센트 색상 금지 — 시맨틱(red/green/orange)만 데이터 표시용으로 허용
+
 ## 협업 규칙
 - 모든 답변은 **한국어**로
 - 코드 수정 시 기존 구조(순수 JS, 프레임워크 없음) 유지
