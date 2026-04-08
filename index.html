@@ -1058,8 +1058,8 @@ function updatePlatformGrid(data) {
       <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span></div>
       <div class="platform-stat"><span class="platform-stat-label">매출</span><span class="platform-stat-value">${fmtW(ps.totalRev)}원</span></div>
       <div class="platform-stat"><span class="platform-stat-label">주문수</span><span class="platform-stat-value">${fmt(ps.orders)}건</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">수수료</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.fee)}원</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">배달비</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.delivery)}원</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">수수료</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.fee)}원 <span style="font-size:11px;color:var(--text-tertiary);">${fmtPct(ps.totalRev>0?ps.fee/ps.totalRev*100:0)}</span></span></div>
+      <div class="platform-stat"><span class="platform-stat-label">배달비</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.delivery)}원 <span style="font-size:11px;color:var(--text-tertiary);">${fmtPct(ps.totalRev>0?ps.delivery/ps.totalRev*100:0)}</span></span></div>
       <div class="platform-stat"><span class="platform-stat-label">건당 순수익</span><span class="platform-stat-value" style="color:${perOrd>=0?'var(--green)':'var(--red)'};">${fmt(Math.round(perOrd))}원</span></div>
       <div class="platform-stat"><span class="platform-stat-label">마진율</span><span class="platform-stat-value" style="color:${margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)'};">${fmtPct(margin)}</span></div>
     </div>`;
