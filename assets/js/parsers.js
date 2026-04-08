@@ -1,7 +1,7 @@
 // [B] 데이터 저장소
 // ==============================================
-const DB    = { bm:{}, cp:{}, tg:{}, yg:{} };
-const FILES = { bm:[], cp:[], tg:[], yg:[] };
+const DB    = { bm:{}, cp:{}, tg:{}, yg:{}, ts:{} };
+const FILES = { bm:[], cp:[], tg:[], yg:[], ts:[] };
 
 // ==============================================
 // [C] 헬퍼 유틸
@@ -10,7 +10,7 @@ const W         = n  => '₩' + Math.round(n||0).toLocaleString('ko-KR');
 const Pct       = (a,b) => b ? (a/b*100).toFixed(1)+'%' : '0%';
 const fixedCost = () => S.rent + S.mgmt + S.util + S.pack + S.etc;
 const bmFeeRate = () => (S.bmComm + S.bmPg + S.bmVat + S.bmExtra) / 100;
-const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg), ...Object.keys(DB.yg)])].sort();
+const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg), ...Object.keys(DB.yg), ...Object.keys(DB.ts)])].sort();
 const toNum     = v => parseFloat(String(v||'').replace(/[,₩"원]/g,''))||0;
 
 function couponAmt(orderAmt) {
@@ -756,4 +756,104 @@ function parseYG_xlsx(wb, filename) {
     _hasPurchaseData: true,
     purchaseSummary: summary, services,
   };
+}
+
+// ==============================================
+// [TS] 파싱 - 토스포스 매출리포트 (XLSX)
+// ==============================================
+function parseTS_xlsx(wb, filename) {
+  // "결제 상세내역" 시트 찾기
+  const sheetName = wb.SheetNames.find(s => s.includes('결제') && s.includes('상세')) || wb.SheetNames[3];
+  if (!sheetName) throw new Error('결제 상세내역 시트를 찾을 수 없습니다');
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, cellDates:true});
+
+  // 헤더 찾기 (결제기준일자 + 주문채널 포함 행)
+  let hi = -1;
+  for (let i=0; i<Math.min(rows.length, 10); i++) {
+    const row = (rows[i]||[]).map(v => String(v||''));
+    if (row.some(c => c.includes('결제기준일자')) && row.some(c => c.includes('주문채널'))) { hi = i; break; }
+  }
+  if (hi < 0) throw new Error('토스포스 헤더를 찾을 수 없습니다');
+
+  const headers = rows[hi].map(v => String(v||'').trim());
+  const ci = {
+    date:    headers.findIndex(h => h.includes('결제기준일자')),
+    time:    headers.findIndex(h => h.includes('결제시각')),
+    channel: headers.findIndex(h => h.includes('주문채널')),
+    orderId: headers.findIndex(h => h.includes('주문번호')),
+    count:   headers.findIndex(h => h.includes('결제건수')),
+    amount:  headers.findIndex(h => h.includes('결제금액')),
+    method:  headers.findIndex(h => h.includes('결제수단')),
+    acquirer:headers.findIndex(h => h.includes('매입사')),
+    status:  headers.findIndex(h => h.includes('결제상태')),
+  };
+
+  // 1단계: 취소 건의 (날짜+주문번호) 쌍 수집
+  const cancelPairs = new Set();
+  for (let i = hi+1; i < rows.length; i++) {
+    const r = rows[i]; if (!r) continue;
+    const status = String(r[ci.status]||'').trim();
+    if (status === '취소') {
+      const dateVal = r[ci.date];
+      const ds = fmtDate(dateVal);
+      const orderId = String(r[ci.orderId]||'');
+      if (ds && orderId) cancelPairs.add(ds + '|' + orderId);
+    }
+  }
+
+  // 2단계: 데이터 수집 (배달 제외 + 취소 쌍 제외)
+  const monthData = {};
+  for (let i = hi+1; i < rows.length; i++) {
+    const r = rows[i]; if (!r) continue;
+
+    // 설명 행 스킵
+    if (r[ci.date] === null || r[ci.date] === '') continue;
+
+    // 주문채널: 배달 제외
+    const channel = String(r[ci.channel]||'').trim();
+    if (channel === '배달') continue;
+
+    // 결제상태: 취소 제외
+    const status = String(r[ci.status]||'').trim();
+    if (status === '취소') continue;
+
+    // 같은 날짜+주문번호에 취소가 있으면 승인도 제외
+    const dateVal = r[ci.date];
+    const ds = fmtDate(dateVal);
+    if (!ds) continue;
+    const orderId = String(r[ci.orderId]||'');
+    if (cancelPairs.has(ds + '|' + orderId)) continue;
+
+    const amount = Math.abs(Number(r[ci.amount])||0);
+    if (amount <= 0) continue;
+
+    // 월 키 생성
+    const dateMatch = ds.match(/(\d{4})-(\d{2})/);
+    if (!dateMatch) continue;
+    const ymKey = dateMatch[1] + '-' + dateMatch[2];
+
+    if (!monthData[ymKey]) monthData[ymKey] = { daily:{}, totalRev:0, orders:0 };
+    monthData[ymKey].totalRev += amount;
+    monthData[ymKey].orders++;
+    if (!monthData[ymKey].daily[ds]) monthData[ymKey].daily[ds] = { rev:0, orders:0 };
+    monthData[ymKey].daily[ds].rev += amount;
+    monthData[ymKey].daily[ds].orders++;
+  }
+
+  // 월별 결과 배열 생성
+  const results = Object.entries(monthData).map(([ymKey, data]) => {
+    const [y, m] = ymKey.split('-').map(Number);
+    const period = y + '년 ' + m + '월';
+    return {
+      period, ym: [y, m],
+      totalRev: data.totalRev,
+      orders: data.orders,
+      daily: data.daily,
+      fee: 0, feeRate: 0, delivery: 0, coupon: 0, ad: 0,
+    };
+  });
+
+  if (!results.length) throw new Error('유효한 가게 매출 데이터가 없습니다 (배달 제외)');
+  return results.length === 1 ? results[0] : results;
 }

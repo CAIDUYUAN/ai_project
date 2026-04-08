@@ -47,7 +47,7 @@ function onDrop(e, pf)  { e.preventDefault(); offDrag('box-'+pf); loadXlsx2(e.da
 function loadXlsx(inp, pf) { loadXlsx2(inp.files, pf); }
 async function loadXlsx2(files, pf) {
   const fileArr = Array.from(files);
-  const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':'땡겨요';
+  const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':pf==='ts'?'가게(토스)':'땡겨요';
   let loaded = 0, failed = 0;
 
   for (const file of fileArr) {
@@ -69,6 +69,7 @@ async function loadXlsx2(files, pf) {
       if      (pf === 'bm') data = /매입상세내역/.test(file.name) ? parseBM_purchase_xlsx(wb, file.name) : parseBM_xlsx(wb, file.name);
       else if (pf === 'cp') data = parseCP_xlsx(wb, file.name);
       else if (pf === 'yg') data = parseYG_xlsx(wb, file.name);
+      else if (pf === 'ts') data = parseTS_xlsx(wb, file.name);
       else                  data = parseTG_xlsx(wb, file.name);
 
       await storeData(pf, data, file.name);

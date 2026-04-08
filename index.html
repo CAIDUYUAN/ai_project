@@ -41,6 +41,7 @@
   --cp-color: #ff453a;
   --tg-color: #2D9E6B;
   --yg-color: #E5302A;
+  --ts-color: #6366f1;
   --font: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --radius: 12px;
   --radius-sm: 8px;
@@ -263,6 +264,7 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 .file-icon.cp { background: rgba(255,69,58,0.15); }
 .file-icon.tg { background: rgba(45,158,107,0.15); }
 .file-icon.yg { background: rgba(229,48,42,0.15); }
+.file-icon.ts { background: rgba(99,102,241,0.15); }
 .file-info { flex: 1; min-width: 0; }
 .file-name { font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; display: flex; gap: 8px; }
@@ -294,6 +296,7 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 .platform-card.cp { border-top-color: var(--cp-color); }
 .platform-card.tg { border-top-color: var(--tg-color); }
 .platform-card.yg { border-top-color: var(--yg-color); }
+.platform-card.ts { border-top-color: var(--ts-color); }
 .platform-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .platform-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
 .platform-name { font-size: 15px; font-weight: 600; }
@@ -314,6 +317,7 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 .bar-segment.cp { background: var(--cp-color); }
 .bar-segment.tg { background: var(--tg-color); }
 .bar-segment.yg { background: var(--yg-color); }
+.bar-segment.ts { background: var(--ts-color); }
 .bar-label { font-size: 10px; color: var(--text-quaternary); text-align: center; }
 
 /* ─── TABLES ─── */
@@ -569,6 +573,7 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
     <button class="pill" data-p="cp" onclick="togglePlatform('cp')">🧡 쿠팡</button>
     <button class="pill" data-p="tg" onclick="togglePlatform('tg')">🟢 땡겨요</button>
     <button class="pill" data-p="yg" onclick="togglePlatform('yg')">🟠 요기요</button>
+    <button class="pill" data-p="ts" onclick="togglePlatform('ts')">🏪 가게</button>
   </div>
   <div id="diagnosisBanner"></div>
   <div class="kpi-grid" id="kpiGrid">
@@ -610,7 +615,7 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
     <div class="section-header"><span class="section-title">월별 요약</span></div>
     <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>월</th><th class="num">배민</th><th class="num">쿠팡</th><th class="num">땡겨요</th><th class="num">요기요</th><th class="num">합계</th><th class="num">차감</th><th class="num">입금</th><th class="num">순수익</th></tr></thead>
+        <thead><tr><th>월</th><th class="num">배민</th><th class="num">쿠팡</th><th class="num">땡겨요</th><th class="num">요기요</th><th class="num">가게</th><th class="num">합계</th><th class="num">차감</th><th class="num">입금</th><th class="num">순수익</th></tr></thead>
         <tbody id="monthlySummaryBody"></tbody>
       </table>
     </div>
@@ -829,7 +834,8 @@ const PLATFORMS = {
   bm: { name: '배민', icon: '🛵', color: '#30d158' },
   cp: { name: '쿠팡이츠', icon: '🧡', color: '#ff453a' },
   tg: { name: '땡겨요', icon: '🟢', color: '#2D9E6B' },
-  yg: { name: '요기요', icon: '🟠', color: '#E5302A' }
+  yg: { name: '요기요', icon: '🟠', color: '#E5302A' },
+  ts: { name: '가게', icon: '🏪', color: '#6366f1' }
 };
 let selectedMonths = [];
 let selectedPlatform = 'all';
@@ -894,7 +900,8 @@ function handleFiles(files) {
   Array.from(files).forEach(file => {
     const fn = file.name;
     let pf = null;
-    if (/매출상세내역|매입상세내역|배민/.test(fn)) pf = 'bm';
+    if (/매출리포트/.test(fn)) pf = 'ts';
+    else if (/매출상세내역|매입상세내역|배민/.test(fn)) pf = 'bm';
     else if (/coupang|쿠팡/.test(fn)) pf = 'cp';
     else if (/땡겨요|정산내역/.test(fn)) pf = 'tg';
     else if (/요기요/.test(fn)) pf = 'yg';
@@ -942,7 +949,7 @@ function getAllMonths() { return allMonths(); }
 
 function getFilteredData() {
   const months = selectedMonths.length > 0 ? selectedMonths : getAllMonths().slice(0, 1);
-  const platforms = selectedPlatform === 'all' ? ['bm','cp','tg','yg'] : [selectedPlatform];
+  const platforms = selectedPlatform === 'all' ? ['bm','cp','tg','yg','ts'] : [selectedPlatform];
   let tR=0, tOrd=0, tFee=0, tDel=0, tCpn=0, tAd=0;
   const dailyAll = {};
   const platformSummary = {};
@@ -1044,14 +1051,14 @@ function updateDailyChart(data) {
   const maxRev = Math.max(...days.map(d => Object.values(data.dailyAll[d]).reduce((s,v) => s + v.rev, 0)), 1);
   chart.innerHTML = days.map(d => {
     const dd = data.dailyAll[d];
-    const segs = ['bm','cp','tg','yg'].map(p => dd[p] ? `<div class="bar-segment ${p}" style="height:${Math.max(0,(dd[p].rev/maxRev)*180)}px;" title="${PLATFORMS[p].name}: ${fmt(dd[p].rev)}원"></div>` : '').join('');
+    const segs = ['bm','cp','tg','yg','ts'].map(p => dd[p] ? `<div class="bar-segment ${p}" style="height:${Math.max(0,(dd[p].rev/maxRev)*180)}px;" title="${PLATFORMS[p].name}: ${fmt(dd[p].rev)}원"></div>` : '').join('');
     return `<div class="bar-group"><div class="bar-stack">${segs}</div><div class="bar-label">${parseInt(d.split('-')[2])}</div></div>`;
   }).join('');
 }
 
 function updatePlatformGrid(data) {
   const grid = document.getElementById('platformGrid');
-  grid.innerHTML = ['bm','cp','tg','yg'].map(p => {
+  grid.innerHTML = ['bm','cp','tg','yg','ts'].map(p => {
     const ps = data.platformSummary[p]; if (!ps || !ps.totalRev) return '';
     const dep = ps.totalRev - ps.fee - ps.delivery - ps.coupon - ps.ad;
     const net = dep - ps.totalRev * (S.cogs/100);
@@ -1080,7 +1087,7 @@ function updateCalendar(data) {
   for (let d=1; d<=dim; d++) {
     const dk = `${ym}-${String(d).padStart(2,'0')}`;
     const dd = data.dailyAll[dk]; let rev = 0, bars = '';
-    if (dd) { rev = Object.values(dd).reduce((s,v)=>s+v.rev,0); bars = ['bm','cp','tg','yg'].map(p => dd[p]?`<div class="cal-bar" style="background:${PLATFORMS[p].color};"></div>`:'').join(''); }
+    if (dd) { rev = Object.values(dd).reduce((s,v)=>s+v.rev,0); bars = ['bm','cp','tg','yg','ts'].map(p => dd[p]?`<div class="cal-bar" style="background:${PLATFORMS[p].color};"></div>`:'').join(''); }
     html += `<div class="cal-cell"><div class="cal-day">${d}</div><div class="cal-rev">${rev>0?fmtW(rev):''}</div><div class="cal-bars">${bars}</div></div>`;
   }
   grid.innerHTML = html;
@@ -1090,14 +1097,14 @@ function updateMonthlySummary() {
   const am = getAllMonths(); const body = document.getElementById('monthlySummaryBody');
   if (!am.length) { body.innerHTML = ''; return; }
   body.innerHTML = am.map(m => {
-    const [y,mo] = m.split('-'); let bm=0,cp=0,tg=0,yg=0,ded=0;
-    ['bm','cp','tg','yg'].forEach(p => {
+    const [y,mo] = m.split('-'); let bm=0,cp=0,tg=0,yg=0,ts=0,ded=0;
+    ['bm','cp','tg','yg','ts'].forEach(p => {
       const d = DB[p]?.[m]; if (!d) return;
-      if(p==='bm')bm=d.totalRev||0; else if(p==='cp')cp=d.totalRev||0; else if(p==='tg')tg=d.totalRev||0; else yg=d.totalRev||0;
+      if(p==='bm')bm=d.totalRev||0; else if(p==='cp')cp=d.totalRev||0; else if(p==='tg')tg=d.totalRev||0; else if(p==='yg')yg=d.totalRev||0; else if(p==='ts')ts=d.totalRev||0;
       ded += (d.fee||0)+(d.delivery||0)+(d.coupon||0)+(d.ad||0);
     });
-    const tot=bm+cp+tg+yg; const dep=tot-ded; const net=dep-tot*(S.cogs/100)-fixedCost();
-    return `<tr><td>${parseInt(mo)}월</td><td class="num">${fmtW(bm)}</td><td class="num">${fmtW(cp)}</td><td class="num">${fmtW(tg)}</td><td class="num">${fmtW(yg)}</td><td class="num total">${fmtW(tot)}</td><td class="num" style="color:var(--red);">${fmtW(ded)}</td><td class="num">${fmtW(dep)}</td><td class="num total" style="color:${net>=0?'var(--green)':'var(--red)'};">${fmtW(net)}</td></tr>`;
+    const tot=bm+cp+tg+yg+ts; const dep=tot-ded; const net=dep-tot*(S.cogs/100)-fixedCost();
+    return `<tr><td>${parseInt(mo)}월</td><td class="num">${fmtW(bm)}</td><td class="num">${fmtW(cp)}</td><td class="num">${fmtW(tg)}</td><td class="num">${fmtW(yg)}</td><td class="num">${fmtW(ts)}</td><td class="num total">${fmtW(tot)}</td><td class="num" style="color:var(--red);">${fmtW(ded)}</td><td class="num">${fmtW(dep)}</td><td class="num total" style="color:${net>=0?'var(--green)':'var(--red)'};">${fmtW(net)}</td></tr>`;
   }).join('');
 }
 

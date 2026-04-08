@@ -119,7 +119,7 @@ async function clearAll() {
   if (dbOk === false) return; // DB 삭제 실패 시 중단
 
   // 2. 로컬 메모리 삭제
-  ['bm','cp','tg','yg'].forEach(pf => {
+  ['bm','cp','tg','yg','ts'].forEach(pf => {
     Object.keys(DB[pf]).forEach(k => delete DB[pf][k]);
     FILES[pf] = [];
     ['tags-','box-'].forEach(pre => {
@@ -151,7 +151,7 @@ function updateHeaderPeriod() {
 // [M] 데이터 집계
 // ==============================================
 let SEL = new Set(['all']); // 다중 월 선택 (Set)
-let SEL_PF = new Set(['bm','cp','tg','yg']); // 플랫폼 필터
+let SEL_PF = new Set(['bm','cp','tg','yg','ts']); // 플랫폼 필터
 
 function getFilteredMonths() {
   const months = allMonths();
@@ -236,7 +236,7 @@ function selectMonth(mo) {
 function togglePlatform(pf) {
   if (SEL_PF.has(pf)) SEL_PF.delete(pf);
   else SEL_PF.add(pf);
-  if (SEL_PF.size === 0) SEL_PF = new Set(['bm','cp','tg','yg']); // 전부 해제 시 전체 선택
+  if (SEL_PF.size === 0) SEL_PF = new Set(['bm','cp','tg','yg','ts']); // 전부 해제 시 전체 선택
   renderOverview(); renderCompare(); renderCalendar(); renderDiagnosis();
 }
 function renderMonthBtns(containerId) {
@@ -369,7 +369,7 @@ function renderOverview() {
       warnings.push({icon:'🟡', msg:'건당 평균 ' + W(avgOrder) + ' (단가가 낮음)', tab:'overview', target:'k-per-order', level:'warn'});
 
     // 플랫폼별 수수료율 비교
-    ['bm','cp','tg','yg'].forEach(pf => {
+    ['bm','cp','tg','yg','ts'].forEach(pf => {
       const p = ag[pf];
       if (p.r > 0 && p.fee / p.r > 0.15) {
         const name = {bm:'배민',cp:'쿠팡',tg:'땡겨요',yg:'요기요'}[pf];
@@ -463,7 +463,7 @@ function renderServiceDetail(filteredMonths) {
   let hasData = false;
   let html = '';
 
-  ['bm','cp','tg','yg'].forEach(pf => {
+  ['bm','cp','tg','yg','ts'].forEach(pf => {
     // 선택된 월들의 서비스별 데이터 집계 + 월별 상세
     const svcTotals = {};
     const svcMonthly = {}; // {서비스명: [{month, count, fee, delivery, ad, total}]}
