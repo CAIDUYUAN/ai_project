@@ -482,6 +482,20 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 }
 
 select option { background: var(--bg-secondary); color: var(--text-primary); }
+
+/* ─── TOAST ─── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(70px);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-pill);
+  padding: 12px 28px; font-size: 14px; color: var(--text-primary);
+  letter-spacing: -0.224px;
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s;
+  z-index: 9999; opacity: 0;
+  box-shadow: var(--shadow-card);
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
@@ -797,6 +811,7 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
   </div>
 </div>
 
+<div id="toast"></div>
 </div><!-- end app -->
 
 <!-- ═══════════════════════════════════════════
@@ -885,19 +900,11 @@ function handleFiles(files) {
   });
 }
 
-// drive.js의 renderAll 호출 시 새 UI도 갱신되도록 패치
-(function patchRenderAll() {
-  const origRenderAll = window.renderAll;
-  if (typeof origRenderAll === 'function') {
-    window.renderAll = function() {
-      try { origRenderAll(); } catch(e) {}
-      renderFileList();
-      refreshAll();
-    };
-  } else {
-    setTimeout(patchRenderAll, 50);
-  }
-})();
+// render.js/drive.js의 함수를 새 UI에 맞게 오버라이드
+window.renderAll = function() { renderFileList(); refreshAll(); };
+window.updateFileList = function() { renderFileList(); };
+window.updateUploadUI = function() {};
+window.updateHeaderPeriod = function() {};
 
 function renderFileList() {
   const container = document.getElementById('fileListContainer');
