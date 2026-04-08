@@ -2,613 +2,1243 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>빨마라 대시보드</title>
 <link rel="icon" href="data:,">
-<!-- 폰트 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<!-- 외부 라이브러리 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- 스타일 -->
-<link rel="stylesheet" href="assets/css/style.css?v=20260407">
+<style>
+/* ═══════════════════════════════════════════
+   APPLE DARK DESIGN SYSTEM
+   ═══════════════════════════════════════════ */
+:root {
+  --bg-main: #000000;
+  --bg-secondary: #1c1c1e;
+  --bg-card: #272729;
+  --bg-elevated: #28282a;
+  --bg-nav: rgba(0,0,0,0.88);
+  --accent: #2997ff;
+  --accent-hover: rgba(41,151,255,0.15);
+  --accent-glow: rgba(41,151,255,0.25);
+  --text-primary: #f5f5f7;
+  --text-secondary: rgba(255,255,255,0.8);
+  --text-tertiary: rgba(255,255,255,0.48);
+  --text-quaternary: rgba(255,255,255,0.32);
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.15);
+  --shadow-card: rgba(0,0,0,0.5) 0px 3px 30px;
+  --green: #30d158;
+  --red: #ff453a;
+  --orange: #ff9f0a;
+  --yellow: #ffd60a;
+  --purple: #bf5af2;
+  --pink: #ff375f;
+  --teal: #2D9E6B;
+  --bm-color: #30d158;
+  --cp-color: #ff453a;
+  --tg-color: #2D9E6B;
+  --yg-color: #E5302A;
+  --font: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-pill: 980px;
+  --nav-h: 48px;
+  --transition: 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  font-family: var(--font);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.28px; }
+h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.22px; }
+h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
+.text-sm { font-size: 14px; letter-spacing: -0.224px; }
+.text-xs { font-size: 12px; letter-spacing: -0.12px; }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+
+/* ─── NAVIGATION ─── */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--nav-h);
+  background: var(--bg-nav);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  display: flex; align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-size: 17px; font-weight: 700; letter-spacing: -0.374px;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo span { color: var(--accent); }
+.nav-tabs {
+  display: flex; align-items: center; gap: 2px;
+  margin-left: auto;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+}
+.nav-tab {
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px; font-weight: 500;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition);
+  border: none; background: none;
+  white-space: nowrap;
+  letter-spacing: -0.12px;
+  font-family: var(--font);
+}
+.nav-tab:hover { color: var(--text-secondary); }
+.nav-tab.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* ─── LAYOUT ─── */
+.app { padding-top: var(--nav-h); min-height: 100vh; }
+.page {
+  display: none;
+  padding: 24px 20px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease;
+}
+.page.active { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: box-shadow var(--transition);
+}
+.card:hover { box-shadow: var(--shadow-card); }
+.card-title {
+  font-size: 14px; font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  letter-spacing: -0.224px;
+}
+
+/* ─── KPI CARDS ─── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  transition: all var(--transition);
+}
+.kpi-card:hover { box-shadow: var(--shadow-card); transform: translateY(-1px); }
+.kpi-label {
+  font-size: 12px; font-weight: 500;
+  color: var(--text-tertiary);
+  letter-spacing: -0.12px;
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-size: 24px; font-weight: 700;
+  letter-spacing: -0.28px;
+  color: var(--text-primary);
+}
+.kpi-sub {
+  font-size: 12px; font-weight: 500;
+  margin-top: 4px;
+  letter-spacing: -0.12px;
+}
+.kpi-sub.up { color: var(--green); }
+.kpi-sub.down { color: var(--red); }
+.kpi-sub.neutral { color: var(--text-tertiary); }
+
+/* ─── BUTTONS ─── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 14px; font-weight: 500;
+  border: none; cursor: pointer;
+  transition: all var(--transition);
+  letter-spacing: -0.224px;
+  font-family: var(--font);
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--border-hover); color: var(--text-primary); }
+.btn-danger { background: rgba(255,69,58,0.15); color: var(--red); }
+.btn-danger:hover { background: rgba(255,69,58,0.25); }
+
+/* ─── PILLS ─── */
+.pill-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.pill {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px; font-weight: 500;
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+.pill:hover { border-color: var(--border-hover); color: var(--text-secondary); }
+.pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ─── ALERTS ─── */
+.alert {
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  font-size: 14px;
+  display: flex; align-items: flex-start; gap: 10px;
+  letter-spacing: -0.224px;
+  cursor: pointer;
+}
+.alert-danger { background: rgba(255,69,58,0.1); border: 1px solid rgba(255,69,58,0.2); color: var(--red); }
+.alert-warning { background: rgba(255,159,10,0.1); border: 1px solid rgba(255,159,10,0.2); color: var(--orange); }
+.alert-success { background: rgba(48,209,88,0.1); border: 1px solid rgba(48,209,88,0.2); color: var(--green); }
+.alert-info { background: rgba(41,151,255,0.1); border: 1px solid rgba(41,151,255,0.2); color: var(--accent); }
+
+/* ─── UPLOAD ─── */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  transition: all var(--transition);
+  cursor: pointer;
+  position: relative;
+}
+.dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-hover); }
+.dropzone-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.6; }
+.dropzone-text { font-size: 15px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; }
+.dropzone-sub { font-size: 13px; color: var(--text-tertiary); }
+.dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* ─── FILE LIST ─── */
+.file-list { margin-top: 20px; }
+.file-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  transition: all var(--transition);
+}
+.file-item:hover { background: var(--bg-card); }
+.file-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.file-icon.bm { background: rgba(48,209,88,0.15); }
+.file-icon.cp { background: rgba(255,69,58,0.15); }
+.file-icon.tg { background: rgba(45,158,107,0.15); }
+.file-icon.yg { background: rgba(229,48,42,0.15); }
+.file-info { flex: 1; min-width: 0; }
+.file-name { font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; display: flex; gap: 8px; }
+.file-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-pill); letter-spacing: 0.2px; }
+.file-tag.sales { background: rgba(41,151,255,0.15); color: var(--accent); }
+.file-tag.purchase { background: rgba(191,90,242,0.15); color: var(--purple); }
+.file-tag.complete { background: rgba(48,209,88,0.15); color: var(--green); }
+.file-delete {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: none; border: none; color: var(--text-tertiary);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); font-size: 16px;
+}
+.file-delete:hover { background: rgba(255,69,58,0.15); color: var(--red); }
+
+/* ─── PLATFORM CARDS ─── */
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.platform-card {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 18px; border-top: 3px solid transparent;
+  transition: all var(--transition);
+}
+.platform-card:hover { box-shadow: var(--shadow-card); transform: translateY(-1px); }
+.platform-card.bm { border-top-color: var(--bm-color); }
+.platform-card.cp { border-top-color: var(--cp-color); }
+.platform-card.tg { border-top-color: var(--tg-color); }
+.platform-card.yg { border-top-color: var(--yg-color); }
+.platform-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.platform-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.platform-name { font-size: 15px; font-weight: 600; }
+.platform-stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.platform-stat:last-child { border-bottom: none; }
+.platform-stat-label { color: var(--text-tertiary); }
+.platform-stat-value { font-weight: 600; }
+
+/* ─── CHARTS ─── */
+.chart-container { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; overflow-x: auto; }
+.chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.chart-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+.bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 200px; min-width: max-content; padding: 0 4px; }
+.bar-group { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 28px; }
+.bar-stack { display: flex; flex-direction: column-reverse; width: 24px; border-radius: 4px 4px 0 0; overflow: hidden; }
+.bar-segment { width: 100%; transition: all 0.4s ease; min-height: 0; }
+.bar-segment.bm { background: var(--bm-color); }
+.bar-segment.cp { background: var(--cp-color); }
+.bar-segment.tg { background: var(--tg-color); }
+.bar-segment.yg { background: var(--yg-color); }
+.bar-label { font-size: 10px; color: var(--text-quaternary); text-align: center; }
+
+/* ─── TABLES ─── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); background: var(--bg-card); }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th { padding: 10px 14px; text-align: left; font-weight: 600; color: var(--text-tertiary); font-size: 12px; background: var(--bg-elevated); border-bottom: 1px solid var(--border); white-space: nowrap; letter-spacing: -0.12px; }
+.table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text-secondary); white-space: nowrap; }
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: rgba(255,255,255,0.02); }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+.table .total { font-weight: 700; color: var(--text-primary); }
+
+/* ─── HEALTH SCORE ─── */
+.health-score { display: flex; align-items: center; gap: 24px; background: var(--bg-card); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+.health-ring { width: 100px; height: 100px; position: relative; flex-shrink: 0; }
+.health-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.health-ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.health-ring-value { font-size: 28px; font-weight: 700; }
+.health-ring-label { font-size: 11px; color: var(--text-tertiary); }
+.health-details { flex: 1; }
+.health-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
+.health-item-label { color: var(--text-tertiary); }
+.health-item-value { font-weight: 600; }
+.health-bar { width: 80px; height: 4px; background: var(--bg-secondary); border-radius: 2px; overflow: hidden; margin-left: 12px; }
+.health-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+/* ─── COLLAPSIBLE ─── */
+.collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-card); border-radius: var(--radius); cursor: pointer; transition: all var(--transition); margin-bottom: 4px; }
+.collapse-header:hover { background: var(--bg-elevated); }
+.collapse-arrow { transition: transform var(--transition); color: var(--text-tertiary); font-size: 12px; }
+.collapse-header.open .collapse-arrow { transform: rotate(180deg); }
+.collapse-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.collapse-body.open { max-height: 2000px; }
+
+/* ─── SETTINGS ─── */
+.setting-group { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: 14px; color: var(--text-secondary); }
+.setting-input {
+  width: 120px; padding: 7px 12px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-primary);
+  font-size: 14px; font-family: var(--font); text-align: right;
+  transition: all var(--transition); font-variant-numeric: tabular-nums;
+}
+.setting-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+/* ─── SIMULATOR ─── */
+.sim-card { background: var(--bg-card); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+.sim-row { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+.sim-label { font-size: 14px; color: var(--text-tertiary); min-width: 80px; }
+.sim-select {
+  padding: 8px 14px; background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-primary); font-size: 14px;
+  font-family: var(--font); cursor: pointer; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(255,255,255,0.48)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+}
+.sim-slider { flex: 1; min-width: 120px; -webkit-appearance: none; appearance: none; height: 4px; background: var(--bg-secondary); border-radius: 2px; outline: none; }
+.sim-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; cursor: pointer; }
+.sim-value { font-size: 15px; font-weight: 600; min-width: 80px; text-align: right; font-variant-numeric: tabular-nums; }
+.sim-result { background: var(--bg-elevated); border-radius: var(--radius-sm); padding: 16px 20px; display: flex; gap: 24px; flex-wrap: wrap; margin-top: 8px; }
+.sim-result-item { display: flex; flex-direction: column; gap: 4px; }
+.sim-result-label { font-size: 12px; color: var(--text-tertiary); }
+.sim-result-value { font-size: 20px; font-weight: 700; }
+
+/* ─── RECOMMENDATION CARDS ─── */
+.rec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.rec-card { background: var(--bg-card); border-radius: var(--radius); padding: 18px; border-left: 3px solid var(--accent); transition: all var(--transition); }
+.rec-card:hover { box-shadow: var(--shadow-card); }
+.rec-card.urgent { border-left-color: var(--red); }
+.rec-card.warn { border-left-color: var(--orange); }
+.rec-card.good { border-left-color: var(--green); }
+.rec-priority { font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+.rec-priority.urgent { color: var(--red); }
+.rec-priority.warn { color: var(--orange); }
+.rec-priority.good { color: var(--green); }
+.rec-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.rec-desc { font-size: 13px; color: var(--text-tertiary); line-height: 1.5; }
+
+/* ─── EMPTY STATE ─── */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-tertiary); }
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-title { font-size: 17px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-desc { font-size: 14px; line-height: 1.6; }
+
+/* ─── DONUT ─── */
+.donut-wrap { display: flex; align-items: center; gap: 20px; }
+.donut-chart { width: 140px; height: 140px; flex-shrink: 0; }
+.donut-legend { flex: 1; }
+.donut-legend-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+.donut-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── LOGIN ─── */
+.login-overlay { position: fixed; inset: 0; z-index: 200; background: var(--bg-main); display: flex; align-items: center; justify-content: center; }
+.login-box { width: 320px; text-align: center; }
+.login-logo { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+.login-logo span { color: var(--accent); }
+.login-sub { font-size: 14px; color: var(--text-tertiary); margin-bottom: 32px; }
+.login-input {
+  width: 100%; padding: 14px 18px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text-primary);
+  font-size: 18px; font-family: var(--font); text-align: center;
+  letter-spacing: 8px; transition: all var(--transition);
+}
+.login-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.login-input::placeholder { letter-spacing: 2px; }
+.login-btn {
+  width: 100%; padding: 14px; margin-top: 16px;
+  background: var(--accent); color: #fff; border: none;
+  border-radius: var(--radius); font-size: 16px; font-weight: 600;
+  cursor: pointer; font-family: var(--font); transition: opacity var(--transition);
+}
+.login-btn:hover { opacity: 0.88; }
+.login-error { color: var(--red); font-size: 13px; margin-top: 12px; min-height: 20px; }
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-quaternary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ─── SECTION HEADER ─── */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
+
+/* ─── CALENDAR ─── */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-header { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-tertiary); padding: 6px 0; }
+.cal-cell { aspect-ratio: 1; background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; transition: all var(--transition); min-height: 52px; }
+.cal-cell:hover { background: var(--bg-card); }
+.cal-cell.empty { background: transparent; cursor: default; }
+.cal-day { font-weight: 600; font-size: 12px; margin-bottom: 2px; }
+.cal-rev { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.cal-bars { display: flex; gap: 1px; height: 3px; margin-top: 2px; }
+.cal-bar { width: 8px; height: 3px; border-radius: 1px; }
+
+/* ─── MOBILE ─── */
+.nav-mobile-menu { display: none; background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; font-family: var(--font); }
+.mobile-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg-nav); backdrop-filter: blur(20px);
+  padding: 8px 4px; z-index: 100; border-top: 1px solid var(--border);
+}
+.mobile-nav-items { display: flex; justify-content: space-around; }
+.mobile-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 8px; font-size: 10px; color: var(--text-tertiary);
+  cursor: pointer; border: none; background: none; font-family: var(--font);
+  transition: color var(--transition);
+}
+.mobile-nav-item.active { color: var(--accent); }
+.mobile-nav-icon { font-size: 20px; }
+
+@media (max-width: 768px) {
+  .nav-tabs { display: none; }
+  .nav-mobile-menu { display: block; }
+  .mobile-nav { display: block; }
+  .app { padding-bottom: 70px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .platform-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 22px; }
+  .page { padding: 16px 12px 32px; }
+}
+
+select option { background: var(--bg-secondary); color: var(--text-primary); }
+</style>
 </head>
 <body>
 
-<!-- =============================================
-     로그인 화면
-============================================= -->
-<div id="login-overlay">
-  <div class="login-card">
-    <div class="login-icon">🌶️</div>
-    <h2 class="login-title">빨마라 대시보드</h2>
-    <p class="login-subtitle">접근하려면 비밀번호를 입력하세요</p>
-    <div class="login-form">
-      <input type="password" id="login-pw" inputmode="numeric" pattern="[0-9]*"
-        maxlength="20" placeholder="숫자 비밀번호 입력"
-        autocomplete="off" autofocus>
-      <div id="login-error" class="login-error"></div>
-      <button id="login-btn" class="login-btn" onclick="attemptLogin()">확인</button>
-    </div>
-    <p class="login-footer">숫자만 입력 가능 · 5회 실패 시 60초 잠금</p>
+<!-- ═══ LOGIN ═══ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">빨<span>마라</span></div>
+    <div class="login-sub">배달 플랫폼 수익 분석 대시보드</div>
+    <input type="password" class="login-input" id="loginPw" placeholder="비밀번호" inputmode="numeric" pattern="[0-9]*" maxlength="20" autocomplete="off">
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="loginError"></div>
   </div>
 </div>
 
-<div class="wrap" id="app-wrap" style="display:none">
-
-<!-- =============================================
-     헤더
-============================================= -->
-<header>
-  <div class="logo">
-    <div class="logo-icon">🌶️</div>
-    <div>
-      <h1>빨마라</h1>
-      <p>배민 · 쿠팡이츠 · 땡겨요 · 요기요 매출 대시보드</p>
-    </div>
-    <button class="refresh-btn" onclick="location.reload(true)" title="강제 새로고침">↻</button>
+<!-- ═══ NAV ═══ -->
+<nav class="nav" id="mainNav" style="display:none;">
+  <div class="nav-logo">빨<span>마라</span></div>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-tab="upload" onclick="switchTab('upload')">📁 데이터</button>
+    <button class="nav-tab" data-tab="dashboard" onclick="switchTab('dashboard')">📊 대시보드</button>
+    <button class="nav-tab" data-tab="menu" onclick="switchTab('menu')">🧾 메뉴·가격</button>
+    <button class="nav-tab" data-tab="diagnosis" onclick="switchTab('diagnosis')">🔴 돈새는곳</button>
+    <button class="nav-tab" data-tab="settings" onclick="switchTab('settings')">⚙️ 설정</button>
   </div>
-  <div class="header-info">
-    <div id="hd-period" style="font-weight:700;color:var(--tx);font-size:13px">파일을 업로드해주세요</div>
-    <div>배민 <strong id="hd-bm-del">3,100원</strong> / 쿠팡 <strong id="hd-cp-del">3,400원</strong></div>
-  </div>
-</header>
+  <button class="nav-mobile-menu" onclick="toggleMobileNav()">☰</button>
+</nav>
 
-<!-- =============================================
-     탭 네비게이션
-============================================= -->
-<div class="tabs">
-  <button class="tab active" data-tab="upload">📁 데이터</button>
-  <button class="tab" data-tab="overview">📊 종합현황</button>
-  <button class="tab" data-tab="compare">⚖️ 비교</button>
-  <button class="tab" data-tab="menucost">🧾 메뉴원가</button>
-  <button class="tab" data-tab="calendar">📅 달력</button>
-  <button class="tab" data-tab="diagnosis">🔴 진단센터</button>
-  <button class="tab" data-tab="settings">⚙️ 설정</button>
-</div>
-
-<!-- =============================================
-     패널 1: 데이터 입력
-============================================= -->
-<div id="panel-upload" class="panel active">
-
-  <!-- ── 파일 업로드 안내 ── -->
-  <div class="info-box" style="margin-bottom:14px">
-    각 플랫폼 사장님사이트에서 매출/매입 엑셀 파일을 다운받은 뒤, 아래 해당 박스에 드래그하거나 클릭하여 업로드하세요.<br>
-    <strong>여러 달 파일을 한번에</strong> 선택해도 됩니다. 파일명이 플랫폼 표준 형식이어야 자동 인식됩니다.
-  </div>
-
-  <div class="upload-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">
-        <div class="upload-box" id="box-bm"
-          ondragover="onDrag(event,'box-bm')" ondragleave="offDrag('box-bm')"
-          ondrop="onDrop(event,'bm')">
-          <input type="file" accept=".xlsx,.xls" multiple onchange="loadXlsx(this,'bm')">
-          <div style="font-size:26px;margin-bottom:8px">🛵</div>
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px">배달의민족</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.5">
-            매출상세내역 + 매입상세내역<br>함께 선택 가능
-          </div>
-          <div style="display:flex;gap:4px;margin-top:8px;position:relative;z-index:2">
-            <button onclick="event.stopPropagation();showGuide('bm')" class="pf-btn">📋 다운방법</button>
-            <a href="https://self.baemin.com" target="_blank" onclick="event.stopPropagation()" class="pf-btn">🔗 배민URL</a>
-          </div>
-          <div id="tags-bm" class="upload-tags"></div>
-        </div>
-        <div class="upload-box" id="box-cp"
-          ondragover="onDrag(event,'box-cp')" ondragleave="offDrag('box-cp')"
-          ondrop="onDrop(event,'cp')">
-          <input type="file" accept=".xlsx,.xls" multiple onchange="loadXlsx(this,'cp')">
-          <div style="font-size:26px;margin-bottom:8px">🧡</div>
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px">쿠팡이츠</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.5">
-            coupang_eats_YYYY-MM.xlsx<br>매출+매입 통합 파일
-          </div>
-          <div style="display:flex;gap:4px;margin-top:8px;position:relative;z-index:2">
-            <button onclick="event.stopPropagation();showGuide('cp')" class="pf-btn">📋 다운방법</button>
-            <a href="https://store.coupangeats.com" target="_blank" onclick="event.stopPropagation()" class="pf-btn">🔗 쿠팡URL</a>
-          </div>
-          <div id="tags-cp" class="upload-tags"></div>
-        </div>
-        <div class="upload-box" id="box-tg"
-          ondragover="onDrag(event,'box-tg')" ondragleave="offDrag('box-tg')"
-          ondrop="onDrop(event,'tg')">
-          <input type="file" accept=".xlsx,.xls" multiple onchange="loadXlsx(this,'tg')">
-          <div style="font-size:26px;margin-bottom:8px">🟢</div>
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#2D9E6B">땡겨요</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.5">
-            땡겨요 정산내역(건별).xls<br>다중 월 자동 분리
-          </div>
-          <div style="display:flex;gap:4px;margin-top:8px;position:relative;z-index:2">
-            <button onclick="event.stopPropagation();showGuide('tg')" class="pf-btn">📋 다운방법</button>
-            <a href="https://ceo.ddangyo.com" target="_blank" onclick="event.stopPropagation()" class="pf-btn">🔗 땡겨요URL</a>
-          </div>
-          <div id="tags-tg" class="upload-tags"></div>
-        </div>
-        <div class="upload-box" id="box-yg"
-          ondragover="onDrag(event,'box-yg')" ondragleave="offDrag('box-yg')"
-          ondrop="onDrop(event,'yg')">
-          <input type="file" accept=".xlsx,.xls" multiple onchange="loadXlsx(this,'yg')">
-          <div style="font-size:26px;margin-bottom:8px">🟠</div>
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:#E5302A">요기요</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.5">
-            요기요 YYYY년 MM월 매출.xlsx<br>월별 파일 선택
-          </div>
-          <div style="display:flex;gap:4px;margin-top:8px;position:relative;z-index:2">
-            <button onclick="event.stopPropagation();showGuide('yg')" class="pf-btn">📋 다운방법</button>
-            <a href="https://ceo.yogiyo.co.kr" target="_blank" onclick="event.stopPropagation()" class="pf-btn">🔗 요기요URL</a>
-          </div>
-          <div id="tags-yg" class="upload-tags"></div>
-        </div>
-      </div>
-
-  <!-- 로드된 파일 목록 -->
-  <div class="card" id="file-list-card" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div class="card-title" style="margin-bottom:0">
-        로드된 파일 <span id="file-count" style="color:var(--muted);font-size:11px;font-weight:400"></span>
-      </div>
-      <button class="btn-sm" onclick="clearAll()">전체 삭제</button>
-    </div>
-    <div class="file-grid" id="file-grid"></div>
-    <button class="btn-primary" onclick="goTab('overview')">📊 종합현황 보기 →</button>
+<!-- ═══ MOBILE NAV ═══ -->
+<div class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-items">
+    <button class="mobile-nav-item active" data-tab="upload" onclick="switchTab('upload')"><span class="mobile-nav-icon">📁</span>데이터</button>
+    <button class="mobile-nav-item" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="mobile-nav-icon">📊</span>대시보드</button>
+    <button class="mobile-nav-item" data-tab="menu" onclick="switchTab('menu')"><span class="mobile-nav-icon">🧾</span>메뉴</button>
+    <button class="mobile-nav-item" data-tab="diagnosis" onclick="switchTab('diagnosis')"><span class="mobile-nav-icon">🔴</span>진단</button>
+    <button class="mobile-nav-item" data-tab="settings" onclick="switchTab('settings')"><span class="mobile-nav-icon">⚙️</span>설정</button>
   </div>
 </div>
 
-<!-- =============================================
-     패널 2: 종합현황
-============================================= -->
-<div id="panel-overview" class="panel">
-  <div class="card"><div class="month-btns" id="ov-months"></div></div>
+<!-- ═══ APP ═══ -->
+<div class="app" id="appContainer" style="display:none;">
 
-  <!-- KPI 1행 - 3개 핵심 KPI -->
-  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="kpi" style="border:1.5px solid var(--red)">
-      <div class="kpi-label">이번달 총매출</div>
-      <div class="kpi-value" id="k-rev">₩0</div>
-      <div class="kpi-sub" id="k-orders">주문 0건</div>
-    </div>
-    <div class="kpi green" style="border:1.5px solid var(--grn)">
-      <div class="kpi-label" style="color:var(--grn);font-weight:700">💰 실제 순수익</div>
-      <div class="kpi-value pos" id="k-net">₩0</div>
-      <div class="kpi-sub" id="k-net-sub"></div>
-    </div>
-    <div class="kpi blue" style="border:1.5px solid #3b82f6">
-      <div class="kpi-label">⏰ 내 시급</div>
-      <div class="kpi-value" id="k-hourly">₩0</div>
-      <div class="kpi-sub">월 26일 × 10시간 기준</div>
-    </div>
+<!-- TAB 1: UPLOAD -->
+<div class="page active" id="page-upload">
+  <h2 style="margin-bottom:20px;">데이터 입력</h2>
+  <div class="dropzone" id="mainDropzone">
+    <div class="dropzone-icon">📂</div>
+    <div class="dropzone-text">파일을 여기에 드래그하거나 클릭하세요</div>
+    <div class="dropzone-sub">배민 · 쿠팡이츠 · 땡겨요 · 요기요 — 파일명으로 자동 감지</div>
+    <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv" onchange="handleFiles(this.files)">
   </div>
-
-  <!-- KPI 2행 - 3개 상세 KPI -->
-  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="kpi" style="border:1.5px solid var(--grn)">
-      <div class="kpi-label">💰 입금예정금액</div>
-      <div class="kpi-value pos" id="k-deposit">₩0</div>
-      <div class="kpi-sub" id="k-deposit-sub"></div>
-    </div>
-    <div class="kpi" style="border:1.5px solid var(--danger)">
-      <div class="kpi-label">총 차감금액</div>
-      <div class="kpi-value" id="k-deduct">₩0</div>
-      <div class="kpi-sub" id="k-deduct-sub"></div>
-    </div>
-    <div class="kpi" style="border:1.5px solid var(--or)">
-      <div class="kpi-label">건당 평균 매출</div>
-      <div class="kpi-value" id="k-per-order">₩0</div>
-      <div class="kpi-sub" id="k-orders-sub">건당</div>
-    </div>
+  <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="showGuide('bm')">🛵 배민 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('cp')">🧡 쿠팡 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('tg')">🟢 땡겨요 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('yg')">🟠 요기요 다운로드 가이드</button>
   </div>
-
-  <!-- 진단 경고 배너 -->
-  <div id="warning-banner" class="card" style="display:none;border-left:4px solid var(--danger);cursor:default">
-    <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--danger)">🔔 진단 알림</div>
-    <div id="warning-text" style="font-size:12px;line-height:2"></div>
+  <div id="fileListContainer" class="file-list"></div>
+  <div style="margin-top:20px;" id="dataActions">
+    <button class="btn btn-danger" onclick="clearAllData()">🗑️ 전체 삭제</button>
   </div>
+</div>
 
-  <!-- 일별 막대 차트 -->
-  <div class="card">
-    <div class="card-title">📈 일별 매출</div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--grn)"></div>배민</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>쿠팡</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#2D9E6B"></div>땡겨요</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#E5302A"></div>요기요</div>
-    </div>
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div class="bar-chart" id="bar-chart"></div></div>
+<!-- TAB 2: DASHBOARD -->
+<div class="page" id="page-dashboard">
+  <div class="section-header"><h2>대시보드</h2></div>
+  <div class="pill-group" id="monthPills"></div>
+  <div class="pill-group" id="platformPills">
+    <button class="pill active" data-p="all" onclick="togglePlatform('all')">전체</button>
+    <button class="pill" data-p="bm" onclick="togglePlatform('bm')">🛵 배민</button>
+    <button class="pill" data-p="cp" onclick="togglePlatform('cp')">🧡 쿠팡</button>
+    <button class="pill" data-p="tg" onclick="togglePlatform('tg')">🟢 땡겨요</button>
+    <button class="pill" data-p="yg" onclick="togglePlatform('yg')">🟠 요기요</button>
   </div>
-
-  <!-- 월별 요약 테이블 -->
-  <div class="card">
-    <div class="card-title">📅 월별 요약</div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th style="text-align:left">월</th>
-          <th style="color:var(--grn)">배민</th>
-          <th style="color:var(--danger)">쿠팡</th>
-          <th style="color:#2D9E6B">땡겨요</th>
-          <th style="color:#E5302A">요기요</th>
-          <th>합계</th><th>주문</th>
-          <th>차감합계</th><th>입금예정</th><th>순수익</th>
-        </tr></thead>
-        <tbody id="monthly-tbody"></tbody>
+  <div id="diagnosisBanner"></div>
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi-card"><div class="kpi-label">총매출</div><div class="kpi-value" id="kpiRevenue">-</div><div class="kpi-sub neutral" id="kpiRevSub">데이터 없음</div></div>
+    <div class="kpi-card"><div class="kpi-label">순수익</div><div class="kpi-value" id="kpiProfit">-</div><div class="kpi-sub neutral" id="kpiProfitSub">마진율 -%</div></div>
+    <div class="kpi-card"><div class="kpi-label">시급</div><div class="kpi-value" id="kpiHourly">-</div><div class="kpi-sub neutral">월 26일 × 10시간</div></div>
+    <div class="kpi-card"><div class="kpi-label">입금예정</div><div class="kpi-value" id="kpiDeposit">-</div><div class="kpi-sub neutral" id="kpiDepSub">실수령액</div></div>
+    <div class="kpi-card"><div class="kpi-label">차감합계</div><div class="kpi-value" id="kpiDeduction">-</div><div class="kpi-sub neutral" id="kpiDedSub">비용 이합</div></div>
+    <div class="kpi-card"><div class="kpi-label">건당평균</div><div class="kpi-value" id="kpiPerOrder">-</div><div class="kpi-sub neutral" id="kpiPerSub">주문 0건</div></div>
+  </div>
+  <div class="chart-container">
+    <div class="chart-header"><span class="chart-title">일별 매출 추이</span></div>
+    <div class="bar-chart" id="dailyChart"></div>
+  </div>
+  <div class="section-header"><span class="section-title">플랫폼 비교</span></div>
+  <div class="platform-grid" id="platformGrid"></div>
+  <div class="collapse-header" onclick="toggleCollapse('serviceDetail')">
+    <span style="font-size:14px;font-weight:600;">서비스별 수수료 상세</span>
+    <span class="collapse-arrow">▼</span>
+  </div>
+  <div class="collapse-body" id="serviceDetail">
+    <div class="table-wrap" style="margin-top:4px;">
+      <table class="table" id="serviceTable">
+        <thead><tr><th>서비스</th><th class="num">건수</th><th class="num">수수료</th><th class="num">배달비</th><th class="num">광고비</th><th class="num">합계</th></tr></thead>
+        <tbody id="serviceTableBody"></tbody>
       </table>
     </div>
   </div>
-
-  <!-- 서비스별 수수료 상세 -->
-  <div id="svc-detail-card" class="card" style="display:none">
-    <div class="card-title">📋 서비스별 수수료 상세 (매입 데이터 기준)</div>
-    <div id="svc-detail-content"></div>
+  <div class="collapse-header" onclick="toggleCollapse('calendarSection')" style="margin-top:12px;">
+    <span style="font-size:14px;font-weight:600;">월 캘린더</span>
+    <span class="collapse-arrow">▼</span>
   </div>
-</div>
-
-<!-- =============================================
-     패널 3: 플랫폼 비교
-============================================= -->
-<div id="panel-compare" class="panel">
-  <div class="card"><div class="month-btns" id="cmp-months"></div></div>
-  <div class="platform-grid" id="pcard-container"></div>
-  <div class="card" style="margin-top:12px">
-    <div class="card-title">⚖️ 플랫폼 비교표</div>
+  <div class="collapse-body" id="calendarSection">
+    <div style="padding:16px;background:var(--bg-card);border-radius:0 0 var(--radius) var(--radius);">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+  <div style="margin-top:20px;">
+    <div class="section-header"><span class="section-title">월별 요약</span></div>
     <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th style="text-align:left">항목</th>
-          <th style="color:var(--grn)">배달의민족</th>
-          <th style="color:var(--danger)">쿠팡이츠</th>
-          <th style="color:#2D9E6B">땡겨요</th>
-          <th style="color:#E5302A">요기요</th>
-          <th>합계</th>
-        </tr></thead>
-        <tbody id="cmp-tbody"></tbody>
+      <table class="table">
+        <thead><tr><th>월</th><th class="num">배민</th><th class="num">쿠팡</th><th class="num">땡겨요</th><th class="num">요기요</th><th class="num">합계</th><th class="num">차감</th><th class="num">입금</th><th class="num">순수익</th></tr></thead>
+        <tbody id="monthlySummaryBody"></tbody>
       </table>
     </div>
   </div>
+  <div class="empty-state" id="dashboardEmpty">
+    <div class="empty-icon">📊</div>
+    <div class="empty-title">데이터를 먼저 업로드해주세요</div>
+    <div class="empty-desc">데이터 탭에서 배달 플랫폼 매출 파일을 업로드하면<br>자동으로 분석 결과가 표시됩니다.</div>
+    <button class="btn btn-primary" style="margin-top:20px;" onclick="switchTab('upload')">📁 데이터 입력하기</button>
+  </div>
 </div>
 
-<!-- =============================================
-     패널: 메뉴원가분석
-============================================= -->
-<div id="panel-menucost" class="panel">
-  <!-- 상단: 샘플 다운로드 + 업로드 -->
-  <div class="card">
-    <div class="card-title">🧾 메뉴 원가 입력 파일</div>
-    <p style="font-size:13px;color:var(--tx2);margin-bottom:12px">판매가, 할인금액, 플랫폼별 가격, 원가항목을 입력하세요. 플랫폼 가격을 비워두면 가게 가격이 자동 적용됩니다.</p>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button class="btn-action" onclick="downloadMenuSample()" style="flex:none">📥 샘플 파일 다운로드</button>
-      <div id="box-menu" class="upload-box" style="flex:1;min-width:200px;padding:14px"
-        ondragover="onDrag(event,'box-menu')" ondragleave="offDrag('box-menu')"
-        ondrop="event.preventDefault();offDrag('box-menu');loadMenuXlsx(event.dataTransfer.files)">
-        <div style="font-size:13px;color:var(--muted)">📂 엑셀 파일 드래그 또는 클릭</div>
-        <input type="file" accept=".xlsx,.xls" onchange="loadMenuXlsx(this.files)">
+<!-- TAB 3: MENU -->
+<div class="page" id="page-menu">
+  <h2 style="margin-bottom:20px;">메뉴·가격 설계</h2>
+  <div class="pill-group" style="margin-top:8px;">
+    <button class="pill active" data-menutab="design" onclick="switchMenuTab('design')">🎯 가격 설계</button>
+    <button class="pill" data-menutab="simulator" onclick="switchMenuTab('simulator')">🎮 시뮬레이터</button>
+  </div>
+  <div id="menuDesign">
+    <div class="sim-card">
+      <h3 style="margin-bottom:16px;">쿠폰 계산기</h3>
+      <div class="sim-row">
+        <span class="sim-label">메뉴 원가</span>
+        <input type="number" class="setting-input" id="couponCost" value="5000" oninput="calcCoupon()">
+        <span class="sim-label">판매가</span>
+        <input type="number" class="setting-input" id="couponPrice" value="15000" oninput="calcCoupon()">
+      </div>
+      <div class="sim-row">
+        <span class="sim-label">쿠폰 금액</span>
+        <input type="range" class="sim-slider" id="couponAmount" min="0" max="5000" step="100" value="2000" oninput="calcCoupon()">
+        <span class="sim-value" id="couponAmountLabel">2,000원</span>
+      </div>
+      <div class="sim-row">
+        <span class="sim-label">플랫폼</span>
+        <select class="sim-select" id="couponPlatform" onchange="calcCoupon()">
+          <option value="bm">배민</option><option value="cp">쿠팡이츠</option><option value="tg">땡겨요</option><option value="yg">요기요</option>
+        </select>
+      </div>
+      <div class="sim-result">
+        <div class="sim-result-item"><span class="sim-result-label">건당 순수익</span><span class="sim-result-value" id="couponProfit">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">수수료</span><span class="sim-result-value" id="couponFee">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">배달비</span><span class="sim-result-value" id="couponDelivery">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">마진율</span><span class="sim-result-value" id="couponMargin">-</span></div>
       </div>
     </div>
-    <div id="menu-filename" style="margin-top:8px;font-size:12px;color:var(--grn);display:none"></div>
+    <div class="sim-card">
+      <h3 style="margin-bottom:16px;">적정가격 역산</h3>
+      <div class="sim-row">
+        <span class="sim-label">재료비</span>
+        <input type="number" class="setting-input" id="reverseMatCost" value="4000" oninput="calcReversePrice()">
+        <span class="sim-label">목표 순수익</span>
+        <input type="number" class="setting-input" id="reverseTarget" value="5000" oninput="calcReversePrice()">
+      </div>
+      <div class="sim-result">
+        <div class="sim-result-item"><span class="sim-result-label">배민 적정가</span><span class="sim-result-value" id="revBm">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">쿠팡 적정가</span><span class="sim-result-value" id="revCp">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">땡겨요 적정가</span><span class="sim-result-value" id="revTg">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">요기요 적정가</span><span class="sim-result-value" id="revYg">-</span></div>
+      </div>
+    </div>
   </div>
+  <div id="menuSimulator" style="display:none;">
+    <div class="sim-card">
+      <h3 style="margin-bottom:16px;">통합 시뮬레이터</h3>
+      <p class="text-sm text-tertiary" style="margin-bottom:16px;">메뉴, 플랫폼, 쿠폰을 조합해서 건당 순수익을 실시간으로 확인하세요.</p>
+      <div class="sim-row">
+        <span class="sim-label">플랫폼</span>
+        <select class="sim-select" id="simPlatform" onchange="runSimulator()">
+          <option value="bm">배민</option><option value="cp">쿠팡이츠</option><option value="tg">땡겨요</option><option value="yg">요기요</option>
+        </select>
+      </div>
+      <div class="sim-row">
+        <span class="sim-label">쿠폰</span>
+        <input type="range" class="sim-slider" id="simCoupon" min="0" max="5000" step="100" value="0" oninput="runSimulator()">
+        <span class="sim-value" id="simCouponLabel">0원</span>
+      </div>
+      <div class="sim-row">
+        <span class="sim-label">할인</span>
+        <input type="range" class="sim-slider" id="simDiscount" min="0" max="5000" step="100" value="0" oninput="runSimulator()">
+        <span class="sim-value" id="simDiscountLabel">0원</span>
+      </div>
+      <div class="sim-result">
+        <div class="sim-result-item"><span class="sim-result-label">실제 판매가</span><span class="sim-result-value" id="simActualPrice">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">건당 순수익</span><span class="sim-result-value" id="simNetProfit">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">수수료+배달비</span><span class="sim-result-value" id="simTotalFee">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">마진율</span><span class="sim-result-value" id="simMarginRate">-</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <!-- 요약 지표 -->
-  <div id="mc-summary" style="display:none">
+<!-- TAB 4: DIAGNOSIS -->
+<div class="page" id="page-diagnosis">
+  <h2 style="margin-bottom:20px;">돈 새는 곳</h2>
+  <div class="health-score" id="healthScoreSection">
+    <div class="health-ring">
+      <svg viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg-secondary)" stroke-width="8"/>
+        <circle cx="60" cy="60" r="52" fill="none" stroke="var(--green)" stroke-width="8" stroke-dasharray="327" stroke-dashoffset="327" stroke-linecap="round" id="healthRing"/>
+      </svg>
+      <div class="health-ring-text">
+        <div class="health-ring-value" id="healthValue">-</div>
+        <div class="health-ring-label">건강 점수</div>
+      </div>
+    </div>
+    <div class="health-details">
+      <div class="health-item"><span class="health-item-label">수익률</span><div style="display:flex;align-items:center;"><span class="health-item-value" id="healthProfit">-</span><div class="health-bar"><div class="health-bar-fill" id="healthProfitBar" style="width:0%;background:var(--green);"></div></div></div></div>
+      <div class="health-item"><span class="health-item-label">비용효율</span><div style="display:flex;align-items:center;"><span class="health-item-value" id="healthEfficiency">-</span><div class="health-bar"><div class="health-bar-fill" id="healthEffBar" style="width:0%;background:var(--accent);"></div></div></div></div>
+      <div class="health-item"><span class="health-item-label">가격적정성</span><div style="display:flex;align-items:center;"><span class="health-item-value" id="healthPrice">-</span><div class="health-bar"><div class="health-bar-fill" id="healthPriceBar" style="width:0%;background:var(--orange);"></div></div></div></div>
+    </div>
+  </div>
+  <div class="pill-group">
+    <button class="pill active" data-diagtab="leaks" onclick="switchDiagTab('leaks')">💸 핵심 진단</button>
+    <button class="pill" data-diagtab="costs" onclick="switchDiagTab('costs')">📊 비용 분석</button>
+    <button class="pill" data-diagtab="ads" onclick="switchDiagTab('ads')">📢 광고 수익</button>
+    <button class="pill" data-diagtab="hacks" onclick="switchDiagTab('hacks')">🎯 플랫폼 공략</button>
+  </div>
+  <div id="diagLeaks"><div id="leakCards"></div><div id="leakRecommendations" class="rec-grid" style="margin-top:16px;"></div></div>
+  <div id="diagCosts" style="display:none;">
+    <div class="card" style="margin-bottom:16px;"><div class="card-title">비용 구성</div><div class="donut-wrap" id="costDonut"></div></div>
+    <div id="costSavings"></div>
+  </div>
+  <div id="diagAds" style="display:none;">
+    <div class="sim-card">
+      <h3 style="margin-bottom:16px;">광고 ROI 시뮬레이션</h3>
+      <div class="sim-row">
+        <span class="sim-label">일 광고비</span>
+        <input type="range" class="sim-slider" id="adBudget" min="0" max="500000" step="10000" value="100000" oninput="calcAdROI()">
+        <span class="sim-value" id="adBudgetLabel">100,000원</span>
+      </div>
+      <div class="sim-row">
+        <span class="sim-label">건당 평균매출</span>
+        <input type="number" class="setting-input" id="adAvgRev" value="18000" oninput="calcAdROI()">
+        <span class="sim-label">건당 마진율</span>
+        <input type="number" class="setting-input" id="adMarginRate" value="25" oninput="calcAdROI()">
+        <span class="text-xs text-tertiary">%</span>
+      </div>
+      <div class="sim-result">
+        <div class="sim-result-item"><span class="sim-result-label">손익분기 주문수</span><span class="sim-result-value" id="adBEPOrders">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">추정 추가주문</span><span class="sim-result-value" id="adExtraOrders">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">광고 ROI</span><span class="sim-result-value" id="adROI">-</span></div>
+        <div class="sim-result-item"><span class="sim-result-label">순이익 변화</span><span class="sim-result-value" id="adProfitDelta">-</span></div>
+      </div>
+    </div>
+  </div>
+  <div id="diagHacks" style="display:none;"><div class="rec-grid" id="hackCards"></div></div>
+</div>
+
+<!-- TAB 5: SETTINGS -->
+<div class="page" id="page-settings">
+  <h2 style="margin-bottom:20px;">설정</h2>
+  <div class="setting-group">
+    <h3 style="margin-bottom:14px;">고정비 (월)</h3>
+    <div class="setting-row"><span class="setting-label">임대료</span><input class="setting-input" type="number" id="sRent" value="800000" onchange="saveSettings()"></div>
+    <div class="setting-row"><span class="setting-label">관리비</span><input class="setting-input" type="number" id="sMgmt" value="100000" onchange="saveSettings()"></div>
+    <div class="setting-row"><span class="setting-label">공과금</span><input class="setting-input" type="number" id="sUtil" value="150000" onchange="saveSettings()"></div>
+    <div class="setting-row"><span class="setting-label">포장재</span><input class="setting-input" type="number" id="sPack" value="100000" onchange="saveSettings()"></div>
+    <div class="setting-row"><span class="setting-label">기타</span><input class="setting-input" type="number" id="sEtc" value="50000" onchange="saveSettings()"></div>
+    <div class="setting-row"><span class="setting-label">생활비 목표</span><input class="setting-input" type="number" id="sLiving" value="2000000" onchange="saveSettings()"></div>
+  </div>
+  <div class="setting-group">
+    <h3 style="margin-bottom:14px;">원가율</h3>
+    <div class="setting-row"><span class="setting-label">재료 원가율</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sCostRate" value="35" min="0" max="100" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+  </div>
+  <div class="platform-grid">
+    <div class="setting-group" style="border-top:3px solid var(--bm-color);"><h3 style="margin-bottom:14px;">🛵 배민 수수료</h3>
+      <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sBmFee" value="6.8" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sBmPg" value="1.3" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">부가세</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sBmVat" value="0.68" step="0.01" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sBmDel" value="3100" onchange="saveSettings()"></div>
+    </div>
+    <div class="setting-group" style="border-top:3px solid var(--cp-color);"><h3 style="margin-bottom:14px;">🧡 쿠팡이츠 수수료</h3>
+      <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sCpFee" value="7.8" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sCpPg" value="2.8" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">부가세</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sCpVat" value="2.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sCpDel" value="3400" onchange="saveSettings()"></div>
+    </div>
+    <div class="setting-group" style="border-top:3px solid var(--tg-color);"><h3 style="margin-bottom:14px;">🟢 땡겨요 수수료</h3>
+      <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sTgFee" value="9" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sTgPg" value="3.3" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sTgDel" value="2500" onchange="saveSettings()"></div>
+    </div>
+    <div class="setting-group" style="border-top:3px solid var(--yg-color);"><h3 style="margin-bottom:14px;">🟠 요기요 수수료</h3>
+      <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sYgFee" value="12.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sYgPg" value="3.3" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sYgDel" value="3000" onchange="saveSettings()"></div>
+    </div>
+  </div>
+  <div class="setting-group" style="margin-top:16px;">
+    <h3 style="margin-bottom:14px;">손익분기점 (BEP)</h3>
     <div class="kpi-grid">
-      <div class="kpi"><div class="kpi-label">전체 메뉴 수</div><div class="kpi-value" id="mc-count">0</div></div>
-      <div class="kpi"><div class="kpi-label">평균 원가율</div><div class="kpi-value" id="mc-avg-cost">0%</div></div>
-      <div class="kpi"><div class="kpi-label">마진 최고 메뉴</div><div class="kpi-value" id="mc-best" style="font-size:16px">-</div><div class="kpi-sub" id="mc-best-sub"></div></div>
-      <div class="kpi"><div class="kpi-label">마진 위험 메뉴</div><div class="kpi-value" id="mc-worst" style="font-size:16px">-</div><div class="kpi-sub" id="mc-worst-sub"></div></div>
-    </div>
-  </div>
-
-  <!-- 메뉴별 카드 리스트 -->
-  <div id="mc-cards"></div>
-
-  <!-- 전체 비교 테이블 -->
-  <div id="mc-table-card" class="card" style="display:none">
-    <div class="card-title">📊 전체 비교 테이블</div>
-    <div class="table-wrap">
-      <table id="mc-table">
-        <thead><tr>
-          <th style="text-align:left;cursor:pointer" onclick="sortMenuTable('name')">메뉴명 ↕</th>
-          <th style="cursor:pointer" onclick="sortMenuTable('price')">실제판매가 ↕</th>
-          <th style="cursor:pointer" onclick="sortMenuTable('costTotal')">원가합계 ↕</th>
-          <th style="cursor:pointer" onclick="sortMenuTable('costRate')">원가율 ↕</th>
-          <th style="cursor:pointer" onclick="sortMenuTable('bmProfit')">배민 순수익 ↕</th>
-          <th style="cursor:pointer" onclick="sortMenuTable('cpProfit')">쿠팡 순수익 ↕</th>
-          <th style="cursor:pointer" onclick="sortMenuTable('tgProfit')">땡겨요 순수익 ↕</th>
-          <th style="cursor:pointer" onclick="sortMenuTable('ygProfit')">요기요 순수익 ↕</th>
-          <th>최고플랫폼</th>
-        </tr></thead>
-        <tbody id="mc-tbody"></tbody>
-      </table>
+      <div class="kpi-card"><div class="kpi-label">고정비 합계</div><div class="kpi-value" id="bepFixed">-</div></div>
+      <div class="kpi-card"><div class="kpi-label">손익분기 매출</div><div class="kpi-value" id="bepRevenue">-</div></div>
+      <div class="kpi-card"><div class="kpi-label">일 목표 매출</div><div class="kpi-value" id="bepDaily">-</div></div>
+      <div class="kpi-card"><div class="kpi-label">생활비 포함 BEP</div><div class="kpi-value" id="bepLiving">-</div></div>
     </div>
   </div>
 </div>
 
-<!-- =============================================
-     패널 4: 달력
-============================================= -->
-<div id="panel-calendar" class="panel">
-  <div class="card">
-    <div class="cal-header">
-      <div class="cal-nav">
-        <button class="cal-nav-btn" onclick="moveMonth(-1)">← 이전</button>
-        <button class="cal-nav-btn" onclick="moveMonth(1)">다음 →</button>
-      </div>
-      <div style="font-size:14px;font-weight:700" id="cal-title"></div>
-    </div>
-    <div style="position:relative">
-      <div class="cal-grid" id="cal-grid"></div>
-      <div class="tooltip"  id="cal-tooltip"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title" id="cal-month-title">월 요약</div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th style="text-align:left">플랫폼</th>
-          <th>주문</th><th>총매출</th><th>수수료</th><th>배달비</th><th>쿠폰</th><th>건당</th>
-        </tr></thead>
-        <tbody id="cal-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+</div><!-- end app -->
 
-<!-- =============================================
-     패널 5: 진단센터
-============================================= -->
-<div id="panel-diagnosis" class="panel">
-  <div class="tabs" style="margin-bottom:12px;background:var(--bg2)">
-    <button class="dtab active" data-dtab="coupon" onclick="switchDiag('coupon')">🎟️ 쿠폰계산기</button>
-    <button class="dtab" data-dtab="diagnosis1" onclick="switchDiag('diagnosis1')">💊 헛돈진단</button>
-    <button class="dtab" data-dtab="leaks" onclick="switchDiag('leaks')">🔍 돈새는곳</button>
-    <button class="dtab" data-dtab="pricing" onclick="switchDiag('pricing')">💰 가격설계</button>
-    <button class="dtab" data-dtab="adcalc" onclick="switchDiag('adcalc')">📢 광고손익</button>
-  </div>
-  <div id="diag-coupon" class="diag-panel active">
-    <div class="card">
-      <div class="card-title">🎟️ 쿠폰 역이용 계산기</div>
-      <!-- 플랫폼 탭 -->
-      <div style="display:flex;gap:4px;margin-bottom:14px">
-        <button class="mbtn active" data-cpf="bm" onclick="setCouponPlatform('bm')">🛵 배민</button>
-        <button class="mbtn" data-cpf="cp" onclick="setCouponPlatform('cp')">🧡 쿠팡</button>
-        <button class="mbtn" data-cpf="tg" onclick="setCouponPlatform('tg')">🟢 땡겨요</button>
-        <button class="mbtn" data-cpf="yg" onclick="setCouponPlatform('yg')">🟠 요기요</button>
-      </div>
-      <!-- 슬라이더 + 숫자 입력 -->
-      <div style="display:grid;gap:14px">
-        <div>
-          <label style="font-size:13px;color:var(--tx2);display:block;margin-bottom:6px">메뉴 원가 (원)</label>
-          <div style="display:flex;gap:10px;align-items:center">
-            <input type="range" id="dc-cost-slider" min="0" max="20000" step="100" value="5250" oninput="syncCoupon('cost')" style="flex:1">
-            <input type="number" id="dc-cost" value="5250" oninput="syncCoupon('cost-num')" style="width:90px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--mono);font-size:13px;text-align:right">
-          </div>
-        </div>
-        <div>
-          <label style="font-size:13px;color:var(--tx2);display:block;margin-bottom:6px">현재 판매가 (원)</label>
-          <div style="display:flex;gap:10px;align-items:center">
-            <input type="range" id="dc-price-slider" min="5000" max="50000" step="500" value="15000" oninput="syncCoupon('price')" style="flex:1">
-            <input type="number" id="dc-price" value="15000" oninput="syncCoupon('price-num')" style="width:90px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--mono);font-size:13px;text-align:right">
-          </div>
-        </div>
-        <div>
-          <label style="font-size:13px;color:var(--tx2);display:block;margin-bottom:6px">쿠폰 할인액 (원)</label>
-          <div style="display:flex;gap:10px;align-items:center">
-            <input type="range" id="dc-discount-slider" min="0" max="10000" step="500" value="3000" oninput="syncCoupon('discount')" style="flex:1">
-            <input type="number" id="dc-discount" value="3000" oninput="syncCoupon('discount-num')" style="width:90px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--mono);font-size:13px;text-align:right">
-          </div>
-        </div>
-        <div>
-          <label style="font-size:13px;color:var(--tx2);display:block;margin-bottom:6px">건당 배달비 (원)</label>
-          <div style="display:flex;gap:10px;align-items:center">
-            <input type="range" id="dc-del-slider" min="0" max="5000" step="100" value="3100" oninput="syncCoupon('del')" style="flex:1">
-            <input type="number" id="dc-del" value="3100" oninput="syncCoupon('del-num')" style="width:90px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px;color:var(--tx);font-family:var(--mono);font-size:13px;text-align:right">
-          </div>
-        </div>
-      </div>
-      <input type="hidden" id="dc-margin" value="15">
-      <input type="hidden" id="dc-platform" value="bm">
-    </div>
-    <!-- 판정 배지 + 결과 -->
-    <div class="card" id="dc-result"></div>
-    <div class="card" id="dc-reverse"></div>
-  </div>
-  <div id="diag-diagnosis1" class="diag-panel">
-    <div class="card" id="diag1-result"></div>
-  </div>
-  <div id="diag-leaks" class="diag-panel">
-    <div class="card" id="leaks-result"></div>
-  </div>
-  <div id="diag-pricing" class="diag-panel">
-    <div class="card">
-      <div class="card-title">💰 적정 가격 설계기</div>
-      <div class="settings-grid" style="grid-template-columns:1fr 1fr 1fr">
-        <div class="field"><label>재료비 (원)</label><input id="dp-material" type="number" value="5000" oninput="calcPricing()"></div>
-        <div class="field"><label>인건비 배분 (원)</label><input id="dp-labor" type="number" value="2000" oninput="calcPricing()"></div>
-        <div class="field"><label>포장재 (원)</label><input id="dp-packing" type="number" value="500" oninput="calcPricing()"></div>
-      </div>
-      <div class="settings-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
-        <div class="field"><label>목표 마진율 (%)</label><input id="dp-margin" type="number" value="20" oninput="calcPricing()"></div>
-        <div class="field"><label>경쟁사 할인액 시뮬 (원)</label><input id="dp-competitor" type="number" value="2000" oninput="calcPricing()"></div>
-      </div>
-    </div>
-    <div class="card" id="dp-result"></div>
-  </div>
-  <div id="diag-adcalc" class="diag-panel">
-    <div class="card">
-      <div class="card-title">📢 플랫폼 광고 손익 계산기</div>
-      <div class="settings-grid" style="grid-template-columns:1fr 1fr 1fr">
-        <div class="field"><label>하루 광고비 (원)</label><input id="da-budget" type="number" value="10000" oninput="calcAd()"></div>
-        <div class="field"><label>광고 추가 주문수 (건/일)</label><input id="da-orders" type="number" value="3" oninput="calcAd()"></div>
-        <div class="field"><label>플랫폼</label><select id="da-platform" style="background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;color:var(--tx);font-family:inherit;font-size:13px;width:100%" onchange="calcAd()"><option value="bm">배달의민족</option><option value="cp">쿠팡이츠</option></select></div>
-      </div>
-    </div>
-    <div class="card" id="da-result"></div>
-  </div>
-</div>
-
-<!-- =============================================
-     패널 6: 설정
-============================================= -->
-<div id="panel-settings" class="panel">
-  <!-- 고정비 -->
-  <div class="card">
-    <div class="card-title">🏠 고정비 (월)</div>
-    <div class="settings-grid">
-      <div class="field"><label>임대료</label>    <input id="s-rent"   type="number" value="800000"></div>
-      <div class="field"><label>관리비</label>    <input id="s-mgmt"   type="number" value="100000"></div>
-      <div class="field"><label>공과금</label>    <input id="s-util"   type="number" value="150000"></div>
-      <div class="field"><label>포장재</label>    <input id="s-pack"   type="number" value="100000"></div>
-      <div class="field"><label>기타고정</label>  <input id="s-etc"    type="number" value="50000"></div>
-      <div class="field"><label>생활비목표</label><input id="s-living" type="number" value="2000000"></div>
-    </div>
-  </div>
-
-  <!-- 원가율 -->
-  <div class="card">
-    <div class="card-title">📊 수익 설정</div>
-    <div class="settings-grid">
-      <div class="field"><label>원가율 (%)</label><input id="s-cogs" type="number" value="35"></div>
-    </div>
-  </div>
-
-  <!-- 수수료 설정 -->
-  <div class="fee-cards" style="grid-template-columns:1fr 1fr 1fr 1fr">
-    <div class="fee-card bm">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <span style="font-weight:700;color:var(--grn)">🛵 배달의민족</span>
-        <div style="display:flex;gap:3px">
-          <button id="fee-mode-bm-db" class="fee-mode-btn active" onclick="setFeeMode('bm','db')">📊 파일평균</button>
-          <button id="fee-mode-bm-manual" class="fee-mode-btn" onclick="setFeeMode('bm','manual')">✏️ 직접입력</button>
-        </div>
-      </div>
-      <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-bm-comm"  type="number" step="0.1"  value="6.8"  oninput="updateFeeTotal('bm')"></div>
-      <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-bm-pg"    type="number" step="0.1"  value="1.3"  oninput="updateFeeTotal('bm')"></div>
-      <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-bm-vat"   type="number" step="0.01" value="0.68" oninput="updateFeeTotal('bm')"></div>
-      <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-bm-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('bm')"></div>
-      <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-bm-del"   type="number" value="3100"></div>
-      <div class="fee-total bm">
-        <span style="font-size:12px;color:var(--grn)">총 수수료율</span>
-        <span id="bm-fee-total" style="font-weight:700;color:var(--grn)">8.78%</span>
-      </div>
-      <div id="svc-fee-bm" style="display:none;margin-top:8px"></div>
-    </div>
-    <div class="fee-card cp">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <span style="font-weight:700;color:var(--danger)">🧡 쿠팡이츠</span>
-        <div style="display:flex;gap:3px">
-          <button id="fee-mode-cp-db" class="fee-mode-btn active" onclick="setFeeMode('cp','db')">📊 파일평균</button>
-          <button id="fee-mode-cp-manual" class="fee-mode-btn" onclick="setFeeMode('cp','manual')">✏️ 직접입력</button>
-        </div>
-      </div>
-      <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-cp-comm"  type="number" step="0.1"  value="7.8"  oninput="updateFeeTotal('cp')"></div>
-      <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-cp-pg"    type="number" step="0.1"  value="2.8"  oninput="updateFeeTotal('cp')"></div>
-      <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-cp-vat"   type="number" step="0.01" value="2.5"  oninput="updateFeeTotal('cp')"></div>
-      <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-cp-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('cp')"></div>
-      <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-cp-del"   type="number" value="3400"></div>
-      <div class="fee-total cp">
-        <span style="font-size:12px;color:var(--danger)">총 수수료율</span>
-        <span id="cp-fee-total" style="font-weight:700;color:var(--danger)">13.10%</span>
-      </div>
-      <div id="svc-fee-cp" style="display:none;margin-top:8px"></div>
-    </div>
-    <div class="fee-card" style="border:1px solid var(--bd);border-top:3px solid #2D9E6B">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <span style="font-weight:700;color:#2D9E6B">🟢 땡겨요</span>
-        <div style="display:flex;gap:3px">
-          <button id="fee-mode-tg-db" class="fee-mode-btn active" onclick="setFeeMode('tg','db')">📊 파일평균</button>
-          <button id="fee-mode-tg-manual" class="fee-mode-btn" onclick="setFeeMode('tg','manual')">✏️ 직접입력</button>
-        </div>
-      </div>
-      <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-tg-comm"  type="number" step="0.1"  value="9.0"  oninput="updateFeeTotal('tg')"></div>
-      <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-tg-pg"    type="number" step="0.1"  value="3.3"  oninput="updateFeeTotal('tg')"></div>
-      <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-tg-vat"   type="number" step="0.01" value="0"    oninput="updateFeeTotal('tg')"></div>
-      <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-tg-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('tg')"></div>
-      <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-tg-del"   type="number" value="0"></div>
-      <div class="fee-total" style="background:rgba(45,158,107,0.1);border:1px solid rgba(45,158,107,0.3)">
-        <span style="font-size:12px;color:#2D9E6B">총 수수료율</span>
-        <span id="tg-fee-total" style="font-weight:700;color:#2D9E6B">12.30%</span>
-      </div>
-      <div id="svc-fee-tg" style="display:none;margin-top:8px"></div>
-    </div>
-    <div class="fee-card" style="border:1px solid var(--bd);border-top:3px solid #E5302A">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <span style="font-weight:700;color:#E5302A">🟠 요기요</span>
-        <div style="display:flex;gap:3px">
-          <button id="fee-mode-yg-db" class="fee-mode-btn active" onclick="setFeeMode('yg','db')">📊 파일평균</button>
-          <button id="fee-mode-yg-manual" class="fee-mode-btn" onclick="setFeeMode('yg','manual')">✏️ 직접입력</button>
-        </div>
-      </div>
-      <div class="field" style="margin-bottom:6px"><label>중개수수료 (%)</label>   <input id="s-yg-comm"  type="number" step="0.1"  value="12.5" oninput="updateFeeTotal('yg')"></div>
-      <div class="field" style="margin-bottom:6px"><label>PG수수료 (%)</label>     <input id="s-yg-pg"    type="number" step="0.1"  value="3.3"  oninput="updateFeeTotal('yg')"></div>
-      <div class="field" style="margin-bottom:6px"><label>부가세 (%)</label>       <input id="s-yg-vat"   type="number" step="0.01" value="0"    oninput="updateFeeTotal('yg')"></div>
-      <div class="field" style="margin-bottom:6px"><label>기타 (%)</label>         <input id="s-yg-extra" type="number" step="0.1"  value="0"    oninput="updateFeeTotal('yg')"></div>
-      <div class="field" style="margin-bottom:6px"><label>건당 배달비 (원)</label> <input id="s-yg-del"   type="number" value="3000"></div>
-      <div class="fee-total" style="background:rgba(229,48,42,0.1);border:1px solid rgba(229,48,42,0.3)">
-        <span style="font-size:12px;color:#E5302A">총 수수료율</span>
-        <span id="yg-fee-total" style="font-weight:700;color:#E5302A">0.00%</span>
-      </div>
-      <div id="svc-fee-yg" style="display:none;margin-top:8px"></div>
-    </div>
-  </div>
-
-  <!-- 쿠폰 구간 -->
-  <div class="card">
-    <div class="card-title">🎟️ 쿠팡 쿠폰 구간 (상점부담)</div>
-    <div class="coupon-preview" id="coupon-preview"></div>
-    <div class="settings-grid">
-      <div class="field"><label>구간1 최소주문 (원)</label><input id="s-cp1-min" type="number" value="14900" oninput="updateCouponPreview()"></div>
-      <div class="field"><label>구간1 할인액 (원)</label>  <input id="s-cp1-amt" type="number" value="1000"  oninput="updateCouponPreview()"></div>
-    </div>
-    <div class="settings-grid">
-      <div class="field"><label>구간2 최소주문 (원)</label><input id="s-cp2-min" type="number" value="25000" oninput="updateCouponPreview()"></div>
-      <div class="field"><label>구간2 할인액 (원)</label>  <input id="s-cp2-amt" type="number" value="2000"  oninput="updateCouponPreview()"></div>
-    </div>
-    <div class="settings-grid">
-      <div class="field"><label>구간3 최소주문 (원)</label><input id="s-cp3-min" type="number" value="35000" oninput="updateCouponPreview()"></div>
-      <div class="field"><label>구간3 할인액 (원)</label>  <input id="s-cp3-amt" type="number" value="3000"  oninput="updateCouponPreview()"></div>
-    </div>
-  </div>
-
-  <!-- BEP 요약 -->
-  <div class="kpi-grid" style="margin-top:6px">
-    <div class="kpi">
-      <div class="kpi-label">월 고정비 합계</div>
-      <div class="kpi-value" id="s-fixed-total">₩0</div>
-    </div>
-    <div class="kpi green">
-      <div class="kpi-label">손익분기점</div>
-      <div class="kpi-value" id="s-bep">₩0</div>
-      <div class="kpi-sub">원가·수수료 반영</div>
-    </div>
-    <div class="kpi amber">
-      <div class="kpi-label">일 목표 매출</div>
-      <div class="kpi-value" id="s-daily-bep">₩0</div>
-      <div class="kpi-sub">월 26일 기준</div>
-    </div>
-    <div class="kpi blue">
-      <div class="kpi-label">생활비 포함 BEP</div>
-      <div class="kpi-value" id="s-bep2">₩0</div>
-    </div>
-  </div>
-
-  <div style="display:flex;gap:8px">
-    <button class="btn-primary" onclick="saveSettings()" style="flex:1">💾 설정 저장</button>
-    <button class="btn-sm" onclick="resetSettings()" style="padding:12px 16px;font-size:12px">초기화</button>
-  </div>
-</div>
-
-<div id="toast"></div>
-</div><!-- /wrap -->
-
-<!-- =============================================
-     JavaScript
-============================================= -->
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT — 기존 파서 + Supabase 연동 유지
+     ═══════════════════════════════════════════ -->
 <script src="assets/js/settings.js"></script>
-<script src="assets/js/supabase.js"></script>
 <script src="assets/js/parsers.js"></script>
-<script src="assets/js/drive.js"></script>
+<script src="assets/js/supabase.js"></script>
 <script src="assets/js/menucost.js"></script>
-<script src="assets/js/render.js"></script>
+<script>
+/* ═══ CORE STATE ═══ */
+const PLATFORMS = {
+  bm: { name: '배민', icon: '🛵', color: '#30d158' },
+  cp: { name: '쿠팡이츠', icon: '🧡', color: '#ff453a' },
+  tg: { name: '땡겨요', icon: '🟢', color: '#2D9E6B' },
+  yg: { name: '요기요', icon: '🟠', color: '#E5302A' }
+};
+let selectedMonths = [];
+let selectedPlatform = 'all';
+let fileList = [];
+
+/* ═══ FORMATTING ═══ */
+function fmt(n) { return n == null || isNaN(n) ? '-' : Math.round(n).toLocaleString('ko-KR'); }
+function fmtW(n) { if (n == null || isNaN(n)) return '-'; return Math.abs(n) >= 10000 ? (n/10000).toFixed(1)+'만' : fmt(n); }
+function fmtPct(n) { return n == null || isNaN(n) ? '-' : n.toFixed(1)+'%'; }
+
+/* ═══ LOGIN (Supabase 연동) ═══ */
+// supabase.js의 attemptLogin/checkAuth 사용
+function doLogin() { attemptLogin(); }
+document.getElementById('loginPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function showApp() {
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('mainNav').style.display = 'flex';
+  document.getElementById('appContainer').style.display = 'block';
+  if (window.innerWidth <= 768) document.getElementById('mobileNav').style.display = 'block';
+  initApp();
+}
+
+async function initApp() {
+  loadSettings(); applySettingsToUI();
+  await loadFromSupabase().catch(()=>{});
+  renderFileList();
+  updateBEP();
+  refreshAll();
+}
+
+// checkAuth override - supabase.js에서 호출
+const _origCheckAuth = typeof checkAuth === 'function' ? checkAuth : null;
+
+/* ═══ TAB NAVIGATION ═══ */
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab)?.classList.add('active');
+  document.querySelectorAll(`[data-tab="${tab}"]`).forEach(t => t.classList.add('active'));
+  if (tab === 'dashboard') refreshDashboard();
+  if (tab === 'diagnosis') refreshDiagnosis();
+  if (tab === 'settings') { loadSettings(); applySettingsToUI(); updateBEP(); }
+}
+
+function toggleMobileNav() {
+  const nav = document.getElementById('mobileNav');
+  nav.style.display = nav.style.display === 'block' ? 'none' : 'block';
+}
+
+/* ═══ FILE HANDLING (기존 파서 사용) ═══ */
+const dropzone = document.getElementById('mainDropzone');
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    const fn = file.name;
+    let pf = null;
+    if (/매출상세내역|매입상세내역|배민/.test(fn)) pf = 'bm';
+    else if (/coupang|쿠팡/.test(fn)) pf = 'cp';
+    else if (/땡겨요|정산내역/.test(fn)) pf = 'tg';
+    else if (/요기요/.test(fn)) pf = 'yg';
+    if (!pf) { alert(`"${fn}" — 플랫폼을 인식할 수 없습니다.`); return; }
+    loadXlsx2([file], pf);
+  });
+}
+
+function renderFileList() {
+  const container = document.getElementById('fileListContainer');
+  const allFiles = [...FILES.bm, ...FILES.cp, ...FILES.tg, ...FILES.yg].map(f => {
+    const pf = FILES.bm.includes(f) ? 'bm' : FILES.cp.includes(f) ? 'cp' : FILES.tg.includes(f) ? 'tg' : 'yg';
+    return { ...f, pf };
+  }).sort((a,b) => a.key.localeCompare(b.key));
+
+  if (!allFiles.length) { container.innerHTML = ''; return; }
+  container.innerHTML = allFiles.map(f => {
+    const p = PLATFORMS[f.pf];
+    return `<div class="file-item">
+      <div class="file-icon ${f.pf}">${p.icon}</div>
+      <div class="file-info">
+        <div class="file-name">${f.filename}</div>
+        <div class="file-meta"><span>${p.name}</span><span>${f.period}</span><span class="file-tag sales">매출</span></div>
+      </div>
+      <button class="file-delete" onclick="removeFile('${f.pf}','${f.key}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function clearAllData() {
+  if (!confirm('모든 데이터를 삭제하시겠습니까?')) return;
+  await clearAll();
+  renderFileList();
+  refreshAll();
+}
+
+/* ═══ DASHBOARD ═══ */
+function getAllMonths() { return allMonths(); }
+
+function getFilteredData() {
+  const months = selectedMonths.length > 0 ? selectedMonths : getAllMonths().slice(0, 1);
+  const platforms = selectedPlatform === 'all' ? ['bm','cp','tg','yg'] : [selectedPlatform];
+  let tR=0, tOrd=0, tFee=0, tDel=0, tCpn=0, tAd=0;
+  const dailyAll = {};
+  const platformSummary = {};
+
+  platforms.forEach(p => {
+    platformSummary[p] = { totalRev:0, orders:0, fee:0, delivery:0, coupon:0, ad:0 };
+    months.forEach(m => {
+      const d = DB[p]?.[m]; if (!d) return;
+      platformSummary[p].totalRev += d.totalRev||0;
+      platformSummary[p].orders += d.orders||0;
+      platformSummary[p].fee += d.fee||0;
+      platformSummary[p].delivery += d.delivery||0;
+      platformSummary[p].coupon += d.coupon||0;
+      platformSummary[p].ad += d.ad||0;
+      tR += d.totalRev||0; tOrd += d.orders||0; tFee += d.fee||0; tDel += d.delivery||0; tCpn += d.coupon||0; tAd += d.ad||0;
+      if (d.daily) Object.entries(d.daily).forEach(([day, dd]) => {
+        if (!dailyAll[day]) dailyAll[day] = {};
+        if (!dailyAll[day][p]) dailyAll[day][p] = { rev:0, orders:0 };
+        dailyAll[day][p].rev += dd.rev||0; dailyAll[day][p].orders += dd.orders||0;
+      });
+    });
+  });
+
+  const totalDeductions = tFee + tDel + tCpn + tAd;
+  const matCost = tR * (S.cogs / 100);
+  const fixedCosts = fixedCost() * months.length;
+  const netProfit = tR - matCost - totalDeductions - fixedCosts;
+  const deposit = tR - totalDeductions;
+  const marginRate = tR > 0 ? (netProfit / tR * 100) : 0;
+  const hourly = netProfit / (26 * 10 * Math.max(1, months.length));
+  const perOrder = tOrd > 0 ? netProfit / tOrd : 0;
+
+  return { totalRev: tR, totalOrders: tOrd, totalFee: tFee, totalDelivery: tDel, totalCoupon: tCpn, totalAd: tAd, totalDeductions, matCost, fixedCosts, netProfit, deposit, marginRate, hourly, perOrder, dailyAll, platformSummary, months };
+}
+
+function refreshDashboard() {
+  const am = getAllMonths();
+  const hasData = am.length > 0;
+  document.getElementById('dashboardEmpty').style.display = hasData ? 'none' : 'block';
+  if (!hasData) return;
+  if (selectedMonths.length === 0) selectedMonths = [am[0]];
+
+  document.getElementById('monthPills').innerHTML = am.map(m => {
+    const [y,mo] = m.split('-');
+    return `<button class="pill ${selectedMonths.includes(m)?'active':''}" onclick="toggleMonth('${m}')">${y}년 ${parseInt(mo)}월</button>`;
+  }).join('');
+
+  const data = getFilteredData();
+  updateKPIs(data);
+  updateDiagnosisBanner(data);
+  updateDailyChart(data);
+  updatePlatformGrid(data);
+  updateCalendar(data);
+  updateMonthlySummary();
+}
+
+function toggleMonth(m) {
+  const idx = selectedMonths.indexOf(m);
+  if (idx >= 0) { if (selectedMonths.length > 1) selectedMonths.splice(idx, 1); }
+  else selectedMonths.push(m);
+  refreshDashboard();
+}
+function togglePlatform(p) {
+  selectedPlatform = p;
+  document.querySelectorAll('#platformPills .pill').forEach(btn => btn.classList.toggle('active', btn.dataset.p === p));
+  refreshDashboard();
+}
+
+function updateKPIs(data) {
+  document.getElementById('kpiRevenue').textContent = fmtW(data.totalRev) + '원';
+  document.getElementById('kpiProfit').textContent = fmtW(data.netProfit) + '원';
+  document.getElementById('kpiProfit').style.color = data.netProfit >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('kpiProfitSub').textContent = `마진율 ${fmtPct(data.marginRate)}`;
+  document.getElementById('kpiProfitSub').className = `kpi-sub ${data.marginRate >= 15 ? 'up' : 'down'}`;
+  document.getElementById('kpiHourly').textContent = fmt(Math.round(data.hourly)) + '원';
+  document.getElementById('kpiHourly').style.color = data.hourly >= 9860 ? 'var(--green)' : data.hourly >= 7000 ? 'var(--orange)' : 'var(--red)';
+  document.getElementById('kpiDeposit').textContent = fmtW(data.deposit) + '원';
+  document.getElementById('kpiDeduction').textContent = fmtW(data.totalDeductions) + '원';
+  document.getElementById('kpiDeduction').style.color = 'var(--red)';
+  document.getElementById('kpiDedSub').textContent = `매출 대비 ${fmtPct(data.totalRev > 0 ? data.totalDeductions/data.totalRev*100 : 0)}`;
+  document.getElementById('kpiPerOrder').textContent = fmt(Math.round(data.perOrder)) + '원';
+  document.getElementById('kpiPerSub').textContent = `주문 ${fmt(data.totalOrders)}건`;
+}
+
+function updateDiagnosisBanner(data) {
+  const alerts = [];
+  if (data.marginRate < 10) alerts.push({ type:'danger', text:`⚠️ 마진율 ${fmtPct(data.marginRate)} — 심각하게 낮습니다!` });
+  else if (data.marginRate < 20) alerts.push({ type:'warning', text:`⚡ 마진율 ${fmtPct(data.marginRate)} — 개선이 필요합니다.` });
+  if (data.hourly < 9860) alerts.push({ type:'warning', text:`💰 시급 ${fmt(Math.round(data.hourly))}원 — 최저시급(9,860원) 미만입니다.` });
+  if (data.netProfit < 0) alerts.push({ type:'danger', text:`🚨 순수익 적자 ${fmtW(data.netProfit)}원 — 즉시 원인 분석 필요!` });
+  if (!alerts.length) alerts.push({ type:'success', text:'✅ 전체적으로 양호합니다. 계속 이 페이스를 유지하세요!' });
+  document.getElementById('diagnosisBanner').innerHTML = alerts.map(a => `<div class="alert alert-${a.type}" onclick="switchTab('diagnosis')">${a.text}</div>`).join('');
+}
+
+function updateDailyChart(data) {
+  const chart = document.getElementById('dailyChart');
+  const days = Object.keys(data.dailyAll).sort();
+  if (!days.length) { chart.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-desc">일별 데이터가 없습니다</div></div>'; return; }
+  const maxRev = Math.max(...days.map(d => Object.values(data.dailyAll[d]).reduce((s,v) => s + v.rev, 0)), 1);
+  chart.innerHTML = days.map(d => {
+    const dd = data.dailyAll[d];
+    const segs = ['bm','cp','tg','yg'].map(p => dd[p] ? `<div class="bar-segment ${p}" style="height:${Math.max(0,(dd[p].rev/maxRev)*180)}px;" title="${PLATFORMS[p].name}: ${fmt(dd[p].rev)}원"></div>` : '').join('');
+    return `<div class="bar-group"><div class="bar-stack">${segs}</div><div class="bar-label">${parseInt(d.split('-')[2])}</div></div>`;
+  }).join('');
+}
+
+function updatePlatformGrid(data) {
+  const grid = document.getElementById('platformGrid');
+  grid.innerHTML = ['bm','cp','tg','yg'].map(p => {
+    const ps = data.platformSummary[p]; if (!ps || !ps.totalRev) return '';
+    const dep = ps.totalRev - ps.fee - ps.delivery - ps.coupon - ps.ad;
+    const net = dep - ps.totalRev * (S.cogs/100);
+    const margin = ps.totalRev > 0 ? (net/ps.totalRev*100) : 0;
+    const perOrd = ps.orders > 0 ? net / ps.orders : 0;
+    return `<div class="platform-card ${p}">
+      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">매출</span><span class="platform-stat-value">${fmtW(ps.totalRev)}원</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">주문수</span><span class="platform-stat-value">${fmt(ps.orders)}건</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">수수료</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.fee)}원</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">배달비</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.delivery)}원</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">건당 순수익</span><span class="platform-stat-value" style="color:${perOrd>=0?'var(--green)':'var(--red)'};">${fmt(Math.round(perOrd))}원</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">마진율</span><span class="platform-stat-value" style="color:${margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)'};">${fmtPct(margin)}</span></div>
+    </div>`;
+  }).join('') || '<div class="empty-state"><div class="empty-desc">데이터가 없습니다</div></div>';
+}
+
+function updateCalendar(data) {
+  const grid = document.getElementById('calGrid');
+  const ms = selectedMonths.length > 0 ? selectedMonths : getAllMonths().slice(0,1);
+  if (!ms.length) { grid.innerHTML = ''; return; }
+  const ym = ms[0]; const [y,m] = ym.split('-').map(Number);
+  const fd = new Date(y,m-1,1).getDay(); const dim = new Date(y,m,0).getDate();
+  let html = ['일','월','화','수','목','금','토'].map(d => `<div class="cal-header">${d}</div>`).join('');
+  for (let i=0; i<fd; i++) html += '<div class="cal-cell empty"></div>';
+  for (let d=1; d<=dim; d++) {
+    const dk = `${ym}-${String(d).padStart(2,'0')}`;
+    const dd = data.dailyAll[dk]; let rev = 0, bars = '';
+    if (dd) { rev = Object.values(dd).reduce((s,v)=>s+v.rev,0); bars = ['bm','cp','tg','yg'].map(p => dd[p]?`<div class="cal-bar" style="background:${PLATFORMS[p].color};"></div>`:'').join(''); }
+    html += `<div class="cal-cell"><div class="cal-day">${d}</div><div class="cal-rev">${rev>0?fmtW(rev):''}</div><div class="cal-bars">${bars}</div></div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function updateMonthlySummary() {
+  const am = getAllMonths(); const body = document.getElementById('monthlySummaryBody');
+  if (!am.length) { body.innerHTML = ''; return; }
+  body.innerHTML = am.map(m => {
+    const [y,mo] = m.split('-'); let bm=0,cp=0,tg=0,yg=0,ded=0;
+    ['bm','cp','tg','yg'].forEach(p => {
+      const d = DB[p]?.[m]; if (!d) return;
+      if(p==='bm')bm=d.totalRev||0; else if(p==='cp')cp=d.totalRev||0; else if(p==='tg')tg=d.totalRev||0; else yg=d.totalRev||0;
+      ded += (d.fee||0)+(d.delivery||0)+(d.coupon||0)+(d.ad||0);
+    });
+    const tot=bm+cp+tg+yg; const dep=tot-ded; const net=dep-tot*(S.cogs/100)-fixedCost();
+    return `<tr><td>${parseInt(mo)}월</td><td class="num">${fmtW(bm)}</td><td class="num">${fmtW(cp)}</td><td class="num">${fmtW(tg)}</td><td class="num">${fmtW(yg)}</td><td class="num total">${fmtW(tot)}</td><td class="num" style="color:var(--red);">${fmtW(ded)}</td><td class="num">${fmtW(dep)}</td><td class="num total" style="color:${net>=0?'var(--green)':'var(--red)'};">${fmtW(net)}</td></tr>`;
+  }).join('');
+}
+
+/* ═══ COLLAPSIBLE ═══ */
+function toggleCollapse(id) { const b = document.getElementById(id); const h = b.previousElementSibling; b.classList.toggle('open'); h.classList.toggle('open'); }
+
+/* ═══ BEP ═══ */
+function updateBEP() {
+  const fixed = fixedCost();
+  const mr = (100 - S.cogs - 10) / 100;
+  const bep = mr > 0 ? fixed / mr : 0;
+  document.getElementById('bepFixed').textContent = fmtW(fixed) + '원';
+  document.getElementById('bepRevenue').textContent = fmtW(bep) + '원';
+  document.getElementById('bepDaily').textContent = fmtW(bep/26) + '원';
+  document.getElementById('bepLiving').textContent = fmtW(mr > 0 ? (fixed+S.living)/mr : 0) + '원';
+}
+
+/* ═══ DIAGNOSIS ═══ */
+function refreshDiagnosis() {
+  const data = getFilteredData();
+  // Health Score
+  const profitScore = Math.min(40, Math.max(0, data.marginRate * 2));
+  const dedRate = data.totalRev > 0 ? data.totalDeductions/data.totalRev*100 : 50;
+  const effScore = Math.min(30, Math.max(0, 50 - dedRate));
+  const priceScore = data.perOrder >= 3000 ? 30 : data.perOrder >= 1000 ? 20 : data.perOrder >= 0 ? 10 : 0;
+  const total = Math.round(profitScore + effScore + priceScore);
+  const color = total >= 70 ? 'var(--green)' : total >= 40 ? 'var(--orange)' : 'var(--red)';
+  const ring = document.getElementById('healthRing');
+  const circ = 2 * Math.PI * 52;
+  ring.style.stroke = color;
+  ring.setAttribute('stroke-dashoffset', circ - (circ * total / 100));
+  document.getElementById('healthValue').textContent = total;
+  document.getElementById('healthValue').style.color = color;
+  document.getElementById('healthProfit').textContent = fmtPct(data.marginRate);
+  document.getElementById('healthEfficiency').textContent = fmtPct(100 - dedRate);
+  document.getElementById('healthPrice').textContent = data.perOrder >= 3000 ? '양호' : data.perOrder >= 0 ? '주의' : '위험';
+  document.getElementById('healthProfitBar').style.width = Math.min(100,profitScore/40*100)+'%';
+  document.getElementById('healthEffBar').style.width = Math.min(100,effScore/30*100)+'%';
+  document.getElementById('healthPriceBar').style.width = Math.min(100,priceScore/30*100)+'%';
+
+  // Leak cards
+  const lc = document.getElementById('leakCards');
+  const leaks = Object.entries(data.platformSummary).filter(([,ps])=>ps.totalRev>0).map(([p,ps])=>{
+    const net = ps.totalRev - ps.fee - ps.delivery - ps.coupon - ps.ad - ps.totalRev*(S.cogs/100);
+    const margin = ps.totalRev > 0 ? net/ps.totalRev*100 : 0;
+    return { p, margin, net, feeRate: ps.fee/ps.totalRev*100, delRate: ps.delivery/ps.totalRev*100, ad: ps.ad, ...ps };
+  });
+  lc.innerHTML = `<div class="platform-grid">${leaks.map(l=>`<div class="platform-card ${l.p}">
+    <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[l.p].color}22;">${PLATFORMS[l.p].icon}</div><span class="platform-name">${PLATFORMS[l.p].name}</span><span style="margin-left:auto;font-size:14px;font-weight:600;">${l.margin>=25?'🟢 양호':l.margin>=10?'🟡 주의':'🔴 위험'}</span></div>
+    <div class="platform-stat"><span class="platform-stat-label">순수익률</span><span class="platform-stat-value" style="color:${l.margin>=15?'var(--green)':'var(--red)'};">${fmtPct(l.margin)}</span></div>
+    <div class="platform-stat"><span class="platform-stat-label">수수료율</span><span class="platform-stat-value">${fmtPct(l.feeRate)}</span></div>
+    <div class="platform-stat"><span class="platform-stat-label">배달비율</span><span class="platform-stat-value">${fmtPct(l.delRate)}</span></div>
+    <div class="platform-stat"><span class="platform-stat-label">순수익</span><span class="platform-stat-value" style="color:${l.net>=0?'var(--green)':'var(--red)'};">${fmtW(l.net)}원</span></div>
+  </div>`).join('')}</div>`;
+
+  // Platform hacks
+  document.getElementById('hackCards').innerHTML = [
+    { p:'good', t:'쿠팡 쿠폰 3구간 활용법', d:'쿠팡은 쿠폰을 3구간으로 나눕니다. 각 구간의 경계 금액 바로 위로 가격을 설정하면 쿠폰 부담을 최소화하면서 노출을 극대화할 수 있습니다.' },
+    { p:'good', t:'배민 배달비 최적화', d:'배민은 건당 배달비가 고정(~3,100원)입니다. 세트메뉴나 추가 사이드로 객단가를 올리면 배달비 비율이 자동으로 줄어듭니다.' },
+    { p:'warn', t:'요기요 수수료 주의', d:'요기요는 중개 수수료 12.5%로 가장 높습니다. 이 플랫폼에서는 프리미엄 메뉴(고객단가)를 밀어야 수수료 부담을 상쇄할 수 있습니다.' },
+  ].map(h=>`<div class="rec-card ${h.p}"><div class="rec-priority ${h.p}">${h.p==='warn'?'주의':'전략'}</div><div class="rec-title">${h.t}</div><div class="rec-desc">${h.d}</div></div>`).join('');
+}
+
+function switchDiagTab(tab) {
+  document.querySelectorAll('[data-diagtab]').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`[data-diagtab="${tab}"]`).classList.add('active');
+  ['diagLeaks','diagCosts','diagAds','diagHacks'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById({leaks:'diagLeaks',costs:'diagCosts',ads:'diagAds',hacks:'diagHacks'}[tab]).style.display='block';
+}
+
+/* ═══ MENU TABS ═══ */
+function switchMenuTab(tab) {
+  document.querySelectorAll('[data-menutab]').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`[data-menutab="${tab}"]`).classList.add('active');
+  ['menuDesign','menuSimulator'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById({design:'menuDesign',simulator:'menuSimulator'}[tab]).style.display='block';
+}
+
+/* ═══ CALCULATORS ═══ */
+function calcCoupon() {
+  const cost = +document.getElementById('couponCost').value||0;
+  const price = +document.getElementById('couponPrice').value||0;
+  const cpn = +document.getElementById('couponAmount').value||0;
+  const pf = document.getElementById('couponPlatform').value;
+  document.getElementById('couponAmountLabel').textContent = fmt(cpn)+'원';
+  const actual = price - cpn;
+  const fr = (S[pf+'Comm']||S[pf+'Fee']||8 + (S[pf+'Pg']||2) + (S[pf+'Vat']||0)) / 100;
+  const fee = actual * fr;
+  const del = S[pf+'Del']||3000;
+  const net = actual - cost - fee - del;
+  const margin = actual > 0 ? (net/actual*100) : 0;
+  document.getElementById('couponFee').textContent = fmt(Math.round(fee))+'원';
+  document.getElementById('couponDelivery').textContent = fmt(del)+'원';
+  document.getElementById('couponProfit').textContent = fmt(Math.round(net))+'원';
+  document.getElementById('couponProfit').style.color = net>=0?'var(--green)':'var(--red)';
+  document.getElementById('couponMargin').textContent = fmtPct(margin);
+  document.getElementById('couponMargin').style.color = margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)';
+}
+
+function calcReversePrice() {
+  const mc = +document.getElementById('reverseMatCost').value||0;
+  const target = +document.getElementById('reverseTarget').value||0;
+  [['bm','Bm'],['cp','Cp'],['tg','Tg'],['yg','Yg']].forEach(([p,cap])=>{
+    const fr = ((S[p+'Comm']||S[p+'Fee']||8)+(S[p+'Pg']||2)+(S[p+'Vat']||0))/100;
+    const del = S[p+'Del']||3000;
+    const price = (1-fr)>0 ? (target+mc+del)/(1-fr) : 0;
+    document.getElementById('rev'+cap).textContent = fmt(Math.round(price))+'원';
+  });
+}
+
+function calcAdROI() {
+  const budget = +document.getElementById('adBudget').value||0;
+  const avgRev = +document.getElementById('adAvgRev').value||18000;
+  const mr = (+document.getElementById('adMarginRate').value||25)/100;
+  document.getElementById('adBudgetLabel').textContent = fmt(budget)+'원';
+  const ppo = avgRev*mr;
+  const bep = ppo>0?Math.ceil(budget/ppo):0;
+  const est = Math.round(bep*1.5);
+  const roi = budget>0?((est*ppo-budget)/budget*100):0;
+  const delta = est*ppo-budget;
+  document.getElementById('adBEPOrders').textContent = fmt(bep)+'건';
+  document.getElementById('adExtraOrders').textContent = '~'+fmt(est)+'건';
+  document.getElementById('adROI').textContent = fmtPct(roi);
+  document.getElementById('adROI').style.color = roi>=0?'var(--green)':'var(--red)';
+  document.getElementById('adProfitDelta').textContent = (delta>=0?'+':'')+fmtW(delta)+'원';
+  document.getElementById('adProfitDelta').style.color = delta>=0?'var(--green)':'var(--red)';
+}
+
+function runSimulator() {
+  const cpn = +document.getElementById('simCoupon').value||0;
+  const disc = +document.getElementById('simDiscount').value||0;
+  document.getElementById('simCouponLabel').textContent = fmt(cpn)+'원';
+  document.getElementById('simDiscountLabel').textContent = fmt(disc)+'원';
+  const pf = document.getElementById('simPlatform').value;
+  const fr = ((S[pf+'Comm']||S[pf+'Fee']||8)+(S[pf+'Pg']||2)+(S[pf+'Vat']||0))/100;
+  const del = S[pf+'Del']||3000;
+  const base = 16000; const mc = base*(S.cogs/100);
+  const actual = base-cpn-disc; const fee = actual*fr; const net = actual-mc-fee-del;
+  const margin = actual>0?(net/actual*100):0;
+  document.getElementById('simActualPrice').textContent = fmt(actual)+'원';
+  document.getElementById('simNetProfit').textContent = fmt(Math.round(net))+'원';
+  document.getElementById('simNetProfit').style.color = net>=0?'var(--green)':'var(--red)';
+  document.getElementById('simTotalFee').textContent = fmt(Math.round(fee+del))+'원';
+  document.getElementById('simMarginRate').textContent = fmtPct(margin);
+  document.getElementById('simMarginRate').style.color = margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)';
+}
+
+/* ═══ GUIDE ═══ */
+function showGuide(pf) {
+  const g = { bm:'배달의민족 → 셀프서비스 → 정산관리 → 매출상세내역 / 매입상세내역 다운로드\nhttps://ceo.baemin.com', cp:'쿠팡이츠 → 정산 → 정산내역 → 엑셀 다운로드\nhttps://store.coupangeats.com', tg:'땡겨요 → 정산관리 → 정산내역(건별) 다운로드\nhttps://partner.ttanggeyeo.com', yg:'요기요 → 사장님 광장 → 정산 → 매출내역 다운로드\nhttps://ceo.yogiyo.co.kr' };
+  alert(g[pf]);
+}
+
+/* ═══ REFRESH ═══ */
+function refreshAll() {
+  const ct = document.querySelector('.page.active')?.id;
+  if (ct === 'page-dashboard') refreshDashboard();
+  if (ct === 'page-diagnosis') refreshDiagnosis();
+  calcCoupon(); calcReversePrice(); calcAdROI(); runSimulator();
+}
+
+/* ═══ INIT (supabase.js의 checkAuth가 showApp 호출) ═══ */
+// supabase.js의 checkAuth에서 로그인 확인 후 showApp 호출하도록 연결
+window.addEventListener('DOMContentLoaded', () => {
+  const auth = sessionStorage.getItem('bbalgan_auth');
+  if (auth) showApp();
+});
+</script>
+</body>
 </html>

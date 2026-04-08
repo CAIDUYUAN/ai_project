@@ -25,9 +25,9 @@ let _loginAttempts = 0;
 let _lockUntil = 0;
 
 async function attemptLogin() {
-  const input = document.getElementById('login-pw');
-  const errEl = document.getElementById('login-error');
-  const btn   = document.getElementById('login-btn');
+  const input = document.getElementById('loginPw') || document.getElementById('login-pw');
+  const errEl = document.getElementById('loginError') || document.getElementById('login-error');
+  const btn   = document.getElementById('loginBtn') || document.getElementById('login-btn');
   const pw    = input.value.trim();
 
   // 클라이언트 잠금 확인
@@ -68,9 +68,14 @@ async function attemptLogin() {
       // 성공 — 로그인 비밀번호를 DB 작업에도 자동 사용
       sessionStorage.setItem('bbalgan_auth', Date.now().toString());
       sessionStorage.setItem('bbalgan_sb_pw', pw);
-      document.getElementById('login-overlay').style.display = 'none';
-      document.getElementById('app-wrap').style.display = '';
       _loginAttempts = 0;
+      if (typeof showApp === 'function') showApp();
+      else {
+        const lo = document.getElementById('loginOverlay') || document.getElementById('login-overlay');
+        if (lo) lo.style.display = 'none';
+        const aw = document.getElementById('app-wrap') || document.getElementById('appContainer');
+        if (aw) aw.style.display = '';
+      }
     }
   } catch(e) {
     errEl.textContent = '서버 연결 오류: ' + e.message;
@@ -84,14 +89,19 @@ async function attemptLogin() {
 function checkAuth() {
   const auth = sessionStorage.getItem('bbalgan_auth');
   if (auth) {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('app-wrap').style.display = '';
+    if (typeof showApp === 'function') showApp();
+    else {
+      const lo = document.getElementById('loginOverlay') || document.getElementById('login-overlay');
+      if (lo) lo.style.display = 'none';
+      const aw = document.getElementById('app-wrap') || document.getElementById('appContainer');
+      if (aw) aw.style.display = '';
+    }
   }
 }
 
 // 숫자만 입력 + Enter 키
 document.addEventListener('DOMContentLoaded', () => {
-  const pwInput = document.getElementById('login-pw');
+  const pwInput = document.getElementById('loginPw') || document.getElementById('login-pw');
   if (pwInput) {
     pwInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') { attemptLogin(); return; }
