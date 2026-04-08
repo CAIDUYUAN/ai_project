@@ -854,11 +854,14 @@ function showApp() {
 }
 
 async function initApp() {
-  loadSettings(); applySettingsToUI();
-  await loadFromSupabase().catch(()=>{});
+  loadSettings();
+  try { applySettingsToUI(); } catch(e) {}
+  try { await loadFromSupabase(); } catch(e) { console.warn('Supabase 로드:', e.message); }
+  try { if (typeof applyFeeModes === 'function') applyFeeModes(); } catch(e) {}
   renderFileList();
   updateBEP();
   refreshAll();
+  console.log('[initApp] DB 상태:', Object.keys(DB.bm).length + Object.keys(DB.cp).length + Object.keys(DB.tg).length + Object.keys(DB.yg).length, '개 월');
 }
 
 // checkAuth override - supabase.js에서 호출

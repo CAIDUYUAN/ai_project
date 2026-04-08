@@ -90,19 +90,5 @@ async function loadXlsx2(files, pf) {
 // ==============================================
 // [K] 페이지 로드 초기화
 // ==============================================
-window.addEventListener('load', () => {
-  try {
-    loadSettings(); applySettingsToUI();
-    const bmDel = document.getElementById('hd-bm-del');
-    const cpDel = document.getElementById('hd-cp-del');
-    if (bmDel) bmDel.textContent = S.bmDel.toLocaleString() + '원';
-    if (cpDel) cpDel.textContent = S.cpDel.toLocaleString() + '원';
-    if (typeof calcBEPSummary === 'function') calcBEPSummary();
-  } catch(e) { console.warn('[drive.js init]', e.message); }
-  // Supabase에서 저장된 데이터 복원
-  loadFromSupabase().then(() => {
-    if (typeof applyFeeModes === 'function') applyFeeModes();
-  }).catch(() => {
-    if (typeof applyFeeModes === 'function') applyFeeModes();
-  });
-});
+// 초기화는 index.html의 initApp()에서 처리
+// drive.js는 파서/업로드 함수만 제공
