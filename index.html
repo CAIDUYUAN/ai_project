@@ -804,6 +804,8 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
      ═══════════════════════════════════════════ -->
 <script src="assets/js/settings.js"></script>
 <script src="assets/js/parsers.js"></script>
+<script src="assets/js/drive.js"></script>
+<script src="assets/js/render.js"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/menucost.js"></script>
 <script>
@@ -882,6 +884,20 @@ function handleFiles(files) {
     loadXlsx2([file], pf);
   });
 }
+
+// drive.js의 renderAll 호출 시 새 UI도 갱신되도록 패치
+(function patchRenderAll() {
+  const origRenderAll = window.renderAll;
+  if (typeof origRenderAll === 'function') {
+    window.renderAll = function() {
+      try { origRenderAll(); } catch(e) {}
+      renderFileList();
+      refreshAll();
+    };
+  } else {
+    setTimeout(patchRenderAll, 50);
+  }
+})();
 
 function renderFileList() {
   const container = document.getElementById('fileListContainer');
