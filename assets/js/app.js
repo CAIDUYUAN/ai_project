@@ -515,7 +515,9 @@ function updatePlatformGrid(data) {
       ${row('결제대행사 수수료', neg(pgFee), negColor(pgFee))}
       ${isDeliveryPf(p) ? row('배달비', neg(delFee), negColor(delFee)) : ''}
       ${row('광고비', neg(adSupply), negColor(adSupply))}
-      ${row('부가세', neg(vat), negColor(vat))}
+      <div class="platform-stat vat-tip-wrap"><span class="platform-stat-label">부가세 <span style="cursor:help;color:var(--accent);font-size:11px;">ⓘ</span></span><span class="platform-stat-value" style="color:${negColor(vat)};">${neg(vat)}</span>
+        <div class="vat-tooltip">부가세 = 광고비 VAT + 서비스이용료<br>(중개이용료 + 결제수수료 + 배달비) VAT</div>
+      </div>
       ${row('즉시할인금액', neg(instantDisc), negColor(instantDisc))}
       ${sep}
       ${row('정산금액', fmtW(settle)+'원', 'var(--accent)')}
