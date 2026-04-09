@@ -280,6 +280,7 @@ function refreshDashboard() {
   updateDailyChart(data);
   updateMonthlyTrend();
   updatePlatformGrid(data);
+  updateServiceTable(data);
   updateCalendar(data);
   updateMonthlySummary();
 }
@@ -351,6 +352,58 @@ function updateDailyChart(data) {
     const ymMarker = ymInfo ? `<div class="bar-ym-marker">${ymInfo.label}</div>` : '';
     return `<div class="bar-group${ymInfo ? ' ym-start' : ''}"><div class="bar-stack">${segs}</div><div class="bar-label">${parseInt(dy)}일</div>${ymMarker}</div>`;
   }).join('');
+}
+
+function updateServiceTable(data) {
+  const tbody = document.getElementById('serviceTableBody');
+  if (!tbody) return;
+
+  // 선택된 월의 모든 플랫폼에서 서비스 데이터를 합산
+  const merged = {};
+  const months = data.months || [];
+  const platforms = selectedPlatform === 'all' ? PF_LIST : [selectedPlatform];
+
+  platforms.forEach(pf => {
+    months.forEach(m => {
+      const d = DB[pf]?.[m];
+      if (!d || !d.services) return;
+      Object.entries(d.services).forEach(([sn, sv]) => {
+        if (!merged[sn]) merged[sn] = { count:0, fee:0, delivery:0, ad:0, total:0, pf };
+        merged[sn].count += sv.count||0;
+        merged[sn].fee += sv.fee||0;
+        merged[sn].delivery += sv.delivery||0;
+        merged[sn].ad += sv.ad||0;
+        merged[sn].total += sv.total||0;
+        // 플랫폼 색상 (첫 매칭)
+        if (!merged[sn].pfColor) merged[sn].pfColor = PLATFORMS[pf]?.color || '#888';
+      });
+    });
+  });
+
+  const entries = Object.entries(merged).sort((a,b) => b[1].total - a[1].total);
+  if (!entries.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:20px;">서비스 데이터가 없습니다</td></tr>'; return; }
+
+  let tCount=0, tFee=0, tDel=0, tAd=0, tTotal=0;
+  const rows = entries.map(([name, s]) => {
+    tCount += s.count; tFee += s.fee; tDel += s.delivery; tAd += s.ad; tTotal += s.total;
+    return `<tr>
+      <td><span class="pf-dot" style="background:${s.pfColor}"></span> ${name}</td>
+      <td class="num">${fmt(s.count)}건</td>
+      <td class="num" style="color:var(--red);">${fmtW(s.fee)}원</td>
+      <td class="num" style="color:var(--red);">${fmtW(s.delivery)}원</td>
+      <td class="num" style="color:var(--red);">${fmtW(s.ad)}원</td>
+      <td class="num" style="color:var(--red);">${fmtW(s.total)}원</td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML = rows + `<tr style="font-weight:700;border-top:1px solid var(--border);">
+    <td>합계</td>
+    <td class="num">${fmt(tCount)}건</td>
+    <td class="num" style="color:var(--red);">${fmtW(tFee)}원</td>
+    <td class="num" style="color:var(--red);">${fmtW(tDel)}원</td>
+    <td class="num" style="color:var(--red);">${fmtW(tAd)}원</td>
+    <td class="num" style="color:var(--red);">${fmtW(tTotal)}원</td>
+  </tr>`;
 }
 
 function updatePlatformGrid(data) {
