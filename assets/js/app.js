@@ -302,11 +302,28 @@ function updateDailyChart(data) {
   const days = Object.keys(data.dailyAll).sort();
   if (!days.length) { chart.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-desc">일별 데이터가 없습니다</div></div>'; return; }
   const maxRev = Math.max(...days.map(d => Object.values(data.dailyAll[d]).reduce((s,v) => s + v.rev, 0)), 1);
-  chart.innerHTML = days.map(d => {
+  // 년월 구간 파악
+  let lastYM = '';
+  const ymRanges = []; // {label, startIdx, endIdx}
+  days.forEach((d, i) => {
+    const [yr, mm] = d.split('-');
+    const ym = yr + '-' + mm;
+    if (ym !== lastYM) {
+      ymRanges.push({ label: `${yr}년 ${parseInt(mm)}월`, startIdx: i, endIdx: i });
+      lastYM = ym;
+    } else {
+      ymRanges[ymRanges.length - 1].endIdx = i;
+    }
+  });
+
+  chart.innerHTML = days.map((d, i) => {
     const dayData = data.dailyAll[d];
     const segs = PF_LIST.map(p => dayData[p] ? `<div class="bar-segment ${p}" style="height:${Math.max(0,(dayData[p].rev/maxRev)*180)}px;" title="${PLATFORMS[p].name}: ${fmt(dayData[p].rev)}원"></div>` : '').join('');
     const [yr, mm, dy] = d.split('-');
-    return `<div class="bar-group"><div class="bar-stack">${segs}</div><div class="bar-label">${parseInt(mm)}/${parseInt(dy)}</div></div>`;
+    // 해당 월의 첫 번째 날이면 년월 마커 표시
+    const ymInfo = ymRanges.find(r => r.startIdx === i);
+    const ymMarker = ymInfo ? `<div class="bar-ym-marker">${ymInfo.label}</div>` : '';
+    return `<div class="bar-group${ymInfo ? ' ym-start' : ''}"><div class="bar-stack">${segs}</div><div class="bar-label">${parseInt(dy)}일</div>${ymMarker}</div>`;
   }).join('');
 }
 
