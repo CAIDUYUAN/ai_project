@@ -1,7 +1,7 @@
 // [B] 데이터 저장소
 // ==============================================
-const DB    = { bm:{}, cp:{}, tg:{}, yg:{}, ts:{} };
-const FILES = { bm:[], cp:[], tg:[], yg:[], ts:[] };
+const DB    = { bm:{}, cp:{}, tg:{}, yg:{}, ts:{}, nv:{}, di:{} };
+const FILES = { bm:[], cp:[], tg:[], yg:[], ts:[], nv:[], di:[] };
 
 // ==============================================
 // [C] 헬퍼 유틸
@@ -13,7 +13,7 @@ const fixedCost = () => {
   return base + (S.customExpenses||[]).reduce((s,i) => s + (i.amount||0), 0);
 };
 const bmFeeRate = () => (S.bmComm + S.bmPg + S.bmVat + S.bmExtra) / 100;
-const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg), ...Object.keys(DB.yg), ...Object.keys(DB.ts)])].sort();
+const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg), ...Object.keys(DB.yg), ...Object.keys(DB.ts), ...Object.keys(DB.nv), ...Object.keys(DB.di)])].sort();
 const toNum     = v => parseFloat(String(v||'').replace(/[,₩"원]/g,''))||0;
 
 function couponAmt(orderAmt) {
@@ -60,6 +60,17 @@ function toastCenter(msg) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3000);
 }
+function goTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+  if (id === 'overview') renderOverview();
+  if (id === 'compare')  renderCompare();
+  if (id === 'menucost') renderMenuCost();
+  if (id === 'calendar') renderCalendar();
+  if (id === 'diagnosis') renderDiagnosis();
+  if (id === 'settings') { applySettingsToUI(); calcBEPSummary(); }
+}
+document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => goTab(btn.dataset.tab)));
 
 // ==============================================
 // [D] 배민 재계산 (설정 수수료 기반 - 매입 데이터 없을 때)

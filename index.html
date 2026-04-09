@@ -17,7 +17,7 @@
 <!-- ═══ LOGIN ═══ -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
-    <div class="login-logo">자동 마진 <span>계산기</span></div>
+    <div class="login-logo">빨<span>마라</span></div>
     <div class="login-sub">배달 플랫폼 수익 분석 대시보드</div>
     <input type="password" class="login-input" id="loginPw" placeholder="비밀번호" inputmode="numeric" pattern="[0-9]*" maxlength="20" autocomplete="off">
     <button class="login-btn" id="loginBtn" onclick="doLogin()">로그인</button>
@@ -27,7 +27,7 @@
 
 <!-- ═══ NAV ═══ -->
 <nav class="nav" id="mainNav" style="display:none;">
-  <div class="nav-logo">자동 마진 <span>계산기</span></div>
+  <div class="nav-logo">빨<span>마라</span></div>
   <div class="nav-tabs" id="navTabs">
     <button class="nav-tab active" data-tab="upload" onclick="switchTab('upload')">📁 데이터</button>
     <button class="nav-tab" data-tab="dashboard" onclick="switchTab('dashboard')">📊 대시보드</button>
@@ -113,6 +113,8 @@
     <button class="pill" data-p="tg" onclick="togglePlatform('tg')"><span class="pf-dot" style="background:#FF5722"></span> 땡겨요</button>
     <button class="pill" data-p="yg" onclick="togglePlatform('yg')"><span class="pf-dot" style="background:#FA0050"></span> 요기요</button>
     <button class="pill" data-p="ts" onclick="togglePlatform('ts')"><span class="pf-dot" style="background:#1B64DA"></span> 가게</button>
+    <button class="pill" data-p="nv" onclick="togglePlatform('nv')"><span class="pf-dot" style="background:#03C75A"></span> 네이버</button>
+    <button class="pill" data-p="di" onclick="togglePlatform('di')"><span class="pf-dot" style="background:#FF6B35"></span> 두잇</button>
   </div>
   <div id="diagnosisBanner"></div>
   <div class="kpi-grid" id="kpiGrid">
