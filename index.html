@@ -95,7 +95,16 @@
 
 <!-- TAB 2: DASHBOARD -->
 <div class="page" id="page-dashboard">
-  <div class="section-header"><h2>대시보드</h2></div>
+  <div class="section-header"><h2>대시보드</h2>
+    <div class="fee-mode-toggle">
+      <span class="fee-mode-label">수수료</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="globalFeeToggle" onchange="toggleGlobalFeeMode(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="fee-mode-text" id="feeModeText">DB평균</span>
+    </div>
+  </div>
   <div class="pill-group" id="monthPills"></div>
   <div class="pill-group" id="platformPills">
     <button class="pill active" data-p="all" onclick="togglePlatform('all')">전체</button>

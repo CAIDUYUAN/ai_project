@@ -66,11 +66,37 @@ async function initApp() {
   try { if (typeof applyFeeModes === 'function') applyFeeModes(); } catch(e) {}
 
   setLoading(90, '화면 준비 중...', '대시보드를 렌더링합니다');
+  initFeeToggleUI();
   renderFileList();
   updateBEP();
   refreshAll();
 
   hideLoading();
+}
+
+/* ═══ 수수료 모드 글로벌 토글 ═══ */
+function toggleGlobalFeeMode(isManual) {
+  const mode = isManual ? 'manual' : 'db';
+  const text = document.getElementById('feeModeText');
+  if (text) text.textContent = isManual ? '직접입력' : 'DB평균';
+
+  ['bm','cp','tg','yg'].forEach(pf => {
+    if (typeof setFeeMode === 'function') setFeeMode(pf, mode);
+    else S['feeMode_'+pf] = mode;
+  });
+
+  localStorage.setItem('bbalgan_v2', JSON.stringify(S));
+  refreshAll();
+}
+
+function initFeeToggleUI() {
+  const toggle = document.getElementById('globalFeeToggle');
+  const text = document.getElementById('feeModeText');
+  if (!toggle) return;
+  // 현재 모드 확인 (하나라도 manual이면 manual)
+  const isManual = ['bm','cp','tg','yg'].some(pf => S['feeMode_'+pf] === 'manual');
+  toggle.checked = isManual;
+  if (text) text.textContent = isManual ? '직접입력' : 'DB평균';
 }
 
 /* ═══ render.js/drive.js 오버라이드 ═══ */
