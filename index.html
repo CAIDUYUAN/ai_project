@@ -192,11 +192,62 @@
 <!-- TAB 3: MENU -->
 <div class="page" id="page-menu">
   <h2 style="margin-bottom:20px;">메뉴·가격 설계</h2>
-  <div class="pill-group" style="margin-top:8px;">
-    <button class="pill active" data-menutab="design" onclick="switchMenuTab('design')">🎯 가격 설계</button>
-    <button class="pill" data-menutab="simulator" onclick="switchMenuTab('simulator')">🎮 시뮬레이터</button>
+
+  <!-- 메뉴 엑셀 업로드 -->
+  <div class="dropzone" id="box-menu" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');loadMenuXlsx(event.dataTransfer.files)" style="padding:32px 24px;">
+    <div class="dropzone-icon">🧾</div>
+    <div class="dropzone-text">메뉴 원가 엑셀을 업로드하세요</div>
+    <div class="dropzone-sub">16컬럼: 메뉴명, 가게가격, 할인, 플랫폼별 가격/할인, 원가항목 5개</div>
+    <input type="file" accept=".xlsx,.xls" onchange="loadMenuXlsx(this.files)" style="margin-top:12px;">
+    <div id="menu-filename" style="display:none;margin-top:8px;font-size:13px;color:var(--green);font-weight:600;"></div>
   </div>
-  <div id="menuDesign">
+  <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
+    <button class="btn btn-primary" onclick="downloadMenuSample()">📥 샘플 엑셀 다운로드</button>
+    <span class="text-xs text-tertiary">이 양식에 맞춰서 작성 후 업로드하세요</span>
+  </div>
+
+  <!-- 서브탭 3개 -->
+  <div class="pill-group" style="margin-top:20px;">
+    <button class="pill active" data-menutab="analysis" onclick="switchMenuTab('analysis')">📊 원가 분석</button>
+    <button class="pill" data-menutab="design" onclick="switchMenuTab('design')">🎯 가격 설계</button>
+    <button class="pill" data-menutab="simulator" onclick="switchMenuTab('simulator')">🔮 시뮬레이터</button>
+  </div>
+
+  <!-- 원가 분석 서브탭 -->
+  <div id="menuAnalysis">
+    <div id="mc-summary" class="kpi-grid" style="display:none;margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">등록 메뉴</div><div class="kpi-value" id="mc-count">0건</div></div>
+      <div class="kpi-card"><div class="kpi-label">평균 원가율</div><div class="kpi-value" id="mc-avg-cost">-%</div></div>
+      <div class="kpi-card"><div class="kpi-label">최고 수익 메뉴</div><div class="kpi-value" id="mc-best" style="font-size:16px;">-</div><div class="kpi-sub neutral" id="mc-best-sub"></div></div>
+      <div class="kpi-card"><div class="kpi-label">원가율 위험</div><div class="kpi-value" id="mc-worst" style="font-size:16px;">-</div><div class="kpi-sub neutral" id="mc-worst-sub"></div></div>
+    </div>
+    <div id="mc-cards"></div>
+    <div id="mc-table-card" style="display:none;margin-top:16px;">
+      <div class="section-header"><span class="section-title">메뉴 비교 테이블</span></div>
+      <div class="table-wrap"><table class="table">
+        <thead><tr>
+          <th style="cursor:pointer" onclick="sortMenuTable('name')">메뉴명</th>
+          <th class="num" style="cursor:pointer" onclick="sortMenuTable('price')">실제판매가</th>
+          <th class="num" style="cursor:pointer" onclick="sortMenuTable('costTotal')">원가</th>
+          <th class="num" style="cursor:pointer" onclick="sortMenuTable('costRate')">원가율</th>
+          <th class="num" style="cursor:pointer" onclick="sortMenuTable('bmProfit')">배민</th>
+          <th class="num" style="cursor:pointer" onclick="sortMenuTable('cpProfit')">쿠팡</th>
+          <th class="num" style="cursor:pointer" onclick="sortMenuTable('tgProfit')">땡겨요</th>
+          <th class="num" style="cursor:pointer" onclick="sortMenuTable('ygProfit')">요기요</th>
+          <th class="num">최적</th>
+        </tr></thead>
+        <tbody id="mc-tbody"></tbody>
+      </table></div>
+    </div>
+    <div class="empty-state" id="menuEmpty">
+      <div class="empty-icon">🧾</div>
+      <div class="empty-title">메뉴 데이터가 없습니다</div>
+      <div class="empty-desc">위에서 메뉴 원가 엑셀을 업로드하세요.</div>
+    </div>
+  </div>
+
+  <!-- 가격 설계 서브탭 -->
+  <div id="menuDesign" style="display:none;">
     <div class="sim-card">
       <h3 style="margin-bottom:16px;">쿠폰 계산기</h3>
       <div class="sim-row">
@@ -239,10 +290,16 @@
       </div>
     </div>
   </div>
+
+  <!-- 시뮬레이터 서브탭 -->
   <div id="menuSimulator" style="display:none;">
     <div class="sim-card">
       <h3 style="margin-bottom:16px;">통합 시뮬레이터</h3>
       <p class="text-sm text-tertiary" style="margin-bottom:16px;">메뉴, 플랫폼, 쿠폰을 조합해서 건당 순수익을 실시간으로 확인하세요.</p>
+      <div class="sim-row">
+        <span class="sim-label">메뉴 선택</span>
+        <select class="sim-select" id="simMenu" onchange="runSimulator()"><option>메뉴를 먼저 등록하세요</option></select>
+      </div>
       <div class="sim-row">
         <span class="sim-label">플랫폼</span>
         <select class="sim-select" id="simPlatform" onchange="runSimulator()">

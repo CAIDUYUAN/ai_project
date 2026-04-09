@@ -37,6 +37,11 @@
   --radius-pill: 980px;
   --nav-h: 48px;
   --transition: 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  /* menucost.js 호환 변수 */
+  --bg2: #1c1c1e; --bg3: #272729; --bd: rgba(255,255,255,0.08);
+  --tx: #f5f5f7; --tx2: rgba(255,255,255,0.8); --muted: rgba(255,255,255,0.48);
+  --grn: #30d158; --danger: #ff453a; --or: #ff9f0a; --blue: #2997ff;
+  --mono: 'SF Mono', 'Fira Code', monospace;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }

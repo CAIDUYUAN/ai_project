@@ -114,6 +114,7 @@ function loadMenuXlsx(files) {
       document.getElementById('box-menu').classList.add('loaded');
 
       renderMenuCost();
+      if (typeof updateSimulatorMenu === 'function') updateSimulatorMenu();
       toast('🧾 메뉴 원가 데이터 로드 완료!');
     } catch(err) {
       alert('파일 오류: ' + err.message);
@@ -289,12 +290,15 @@ function renderMenuCost() {
     } catch(e) {}
   }
 
+  const menuEmpty = document.getElementById('menuEmpty');
   if (!MENU_DATA.length) {
     document.getElementById('mc-summary').style.display = 'none';
     document.getElementById('mc-cards').innerHTML = '';
     document.getElementById('mc-table-card').style.display = 'none';
+    if (menuEmpty) menuEmpty.style.display = '';
     return;
   }
+  if (menuEmpty) menuEmpty.style.display = 'none';
 
   const items = MENU_DATA.map((d, i) => calcMenuItem(d, i));
   document.getElementById('mc-summary').style.display = 'block';

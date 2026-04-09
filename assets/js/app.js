@@ -67,6 +67,7 @@ async function initApp() {
 
   setLoading(90, '화면 준비 중...', '대시보드를 렌더링합니다');
   initFeeToggleUI();
+  try { renderMenuCost(); updateSimulatorMenu(); } catch(e) {}
   renderFileList();
   updateBEP();
   refreshAll();
@@ -667,9 +668,10 @@ function switchDiagTab(tab) {
 /* ═══ MENU TABS ═══ */
 function switchMenuTab(tab) {
   document.querySelectorAll('[data-menutab]').forEach(p=>p.classList.remove('active'));
-  document.querySelector(`[data-menutab="${tab}"]`).classList.add('active');
-  ['menuDesign','menuSimulator'].forEach(id=>document.getElementById(id).style.display='none');
-  document.getElementById({design:'menuDesign',simulator:'menuSimulator'}[tab]).style.display='block';
+  document.querySelector(`[data-menutab="${tab}"]`)?.classList.add('active');
+  ['menuAnalysis','menuDesign','menuSimulator'].forEach(id=>document.getElementById(id).style.display='none');
+  const map = {analysis:'menuAnalysis', design:'menuDesign', simulator:'menuSimulator'};
+  document.getElementById(map[tab]).style.display='block';
 }
 
 /* ═══ CALCULATORS ═══ */
@@ -734,7 +736,18 @@ function runSimulator() {
   const pf = document.getElementById('simPlatform').value;
   const fr = getPfFeeRate(pf);
   const del = getPfDel(pf);
-  const base = 16000; const mc = base*(S.cogs/100);
+
+  // 메뉴 데이터 연동
+  let base = 16000, mc = base*(S.cogs/100);
+  const menuIdx = +document.getElementById('simMenu')?.value;
+  if (typeof MENU_DATA !== 'undefined' && MENU_DATA.length > 0 && MENU_DATA[menuIdx]) {
+    const m = MENU_DATA[menuIdx];
+    const pfPrice = m['pf_'+pf+'_price'] || m.price;
+    const pfDiscount = m['pf_'+pf+'_discount'] || 0;
+    base = pfPrice - pfDiscount;
+    mc = (m.food||0) + (m.sauce||0) + (m.pack||0) + (m.side||0) + (m.etc||0);
+  }
+
   const actual = base-cpn-disc; const fee = actual*fr; const net = actual-mc-fee-del;
   const margin = actual>0?(net/actual*100):0;
   document.getElementById('simActualPrice').textContent = fmt(actual)+'원';
@@ -743,6 +756,19 @@ function runSimulator() {
   document.getElementById('simTotalFee').textContent = fmt(Math.round(fee+del))+'원';
   document.getElementById('simMarginRate').textContent = fmtPct(margin);
   document.getElementById('simMarginRate').style.color = margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)';
+}
+
+function updateSimulatorMenu() {
+  const sel = document.getElementById('simMenu');
+  if (!sel) return;
+  if (typeof MENU_DATA === 'undefined' || MENU_DATA.length === 0) {
+    sel.innerHTML = '<option>메뉴를 먼저 등록하세요</option>';
+    return;
+  }
+  sel.innerHTML = MENU_DATA.map((m, i) =>
+    `<option value="${i}">${m.name} (${W(m.price)})</option>`
+  ).join('');
+  runSimulator();
 }
 
 /* ═══ GUIDE (모달) ═══ */
