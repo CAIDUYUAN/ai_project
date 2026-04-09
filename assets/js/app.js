@@ -7,9 +7,11 @@ const PLATFORMS = {
   cp: { name: '쿠팡이츠', icon: '🧡', color: '#ff453a' },
   tg: { name: '땡겨요', icon: '🟢', color: '#2D9E6B' },
   yg: { name: '요기요', icon: '🟠', color: '#E5302A' },
-  ts: { name: '가게', icon: '🏪', color: '#6366f1' }
+  ts: { name: '가게', icon: '🏪', color: '#6366f1' },
+  nv: { name: '네이버', icon: '🟩', color: '#03C75A' },
+  di: { name: '두잇', icon: '📱', color: '#FF6B35' }
 };
-const PF_LIST = ['bm','cp','tg','yg','ts'];
+const PF_LIST = ['bm','cp','tg','yg','ts','nv','di'];
 let selectedMonths = [];
 let selectedPlatform = 'all';
 
@@ -538,7 +540,8 @@ function showGuide(pf) {
     bm: '배달의민족 → 셀프서비스 → 정산관리 → 매출상세내역 / 매입상세내역 다운로드\nhttps://ceo.baemin.com',
     cp: '쿠팡이츠 → 정산 → 정산내역 → 엑셀 다운로드\nhttps://store.coupangeats.com',
     tg: '땡겨요 → 정산관리 → 정산내역(건별) 다운로드\nhttps://partner.ttanggeyeo.com',
-    yg: '요기요 → 사장님 광장 → 정산 → 매출내역 다운로드\nhttps://ceo.yogiyo.co.kr'
+    yg: '요기요 → 사장님 광장 → 정산 → 매출내역 다운로드\nhttps://ceo.yogiyo.co.kr',
+    ts: '토스포스 → 매출 리포트 → 엑셀 내보내기 → "매출리포트-YYMMDD.xlsx"\n\n⚠️ 암호가 걸린 파일은 열 수 없습니다.\n암호 없이 다시 다운로드해주세요.'
   };
   alert(guides[pf]);
 }

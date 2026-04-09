@@ -66,6 +66,7 @@
     <button class="btn btn-secondary" onclick="showGuide('cp')">🧡 쿠팡 다운로드 가이드</button>
     <button class="btn btn-secondary" onclick="showGuide('tg')">🟢 땡겨요 다운로드 가이드</button>
     <button class="btn btn-secondary" onclick="showGuide('yg')">🟠 요기요 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('ts')">🏪 가게(토스) 다운로드 가이드</button>
   </div>
   <div id="fileListContainer" class="file-list"></div>
   <div style="margin-top:20px;" id="dataActions">
@@ -84,6 +85,8 @@
     <button class="pill" data-p="tg" onclick="togglePlatform('tg')">🟢 땡겨요</button>
     <button class="pill" data-p="yg" onclick="togglePlatform('yg')">🟠 요기요</button>
     <button class="pill" data-p="ts" onclick="togglePlatform('ts')">🏪 가게</button>
+    <button class="pill" data-p="nv" onclick="togglePlatform('nv')">🟩 네이버</button>
+    <button class="pill" data-p="di" onclick="togglePlatform('di')">📱 두잇</button>
   </div>
   <div id="diagnosisBanner"></div>
   <div class="kpi-grid" id="kpiGrid">
@@ -145,7 +148,7 @@
     <div class="section-header"><span class="section-title">월별 요약</span></div>
     <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>월</th><th class="num">배민</th><th class="num">쿠팡</th><th class="num">땡겨요</th><th class="num">요기요</th><th class="num">가게</th><th class="num">합계</th><th class="num">차감</th><th class="num">입금</th><th class="num">순수익</th></tr></thead>
+        <thead><tr><th>월</th><th class="num">배민</th><th class="num">쿠팡</th><th class="num">땡겨요</th><th class="num">요기요</th><th class="num">가게</th><th class="num">네이버</th><th class="num">두잇</th><th class="num">합계</th><th class="num">차감</th><th class="num">입금</th><th class="num">순수익</th></tr></thead>
         <tbody id="monthlySummaryBody"></tbody>
       </table>
     </div>
@@ -333,6 +336,20 @@
       <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sYgFee" value="12.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sYgPg" value="3.3" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sYgDel" value="3000" onchange="saveSettings()"></div>
+    </div>
+    <div class="setting-group" style="border-top:3px solid var(--ts-color);"><h3 style="margin-bottom:14px;">🏪 가게(토스포스)</h3>
+      <div class="setting-row"><span class="setting-label">카드 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sTsFee" value="1.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label" style="color:var(--text-tertiary);font-size:12px;">※ 가게 직접매출은 배달비·중개수수료 없음</span></div>
+    </div>
+    <div class="setting-group" style="border-top:3px solid var(--nv-color);"><h3 style="margin-bottom:14px;">🟩 네이버주문 수수료</h3>
+      <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sNvFee" value="5.0" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sNvPg" value="1.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sNvDel" value="3000" onchange="saveSettings()"></div>
+    </div>
+    <div class="setting-group" style="border-top:3px solid var(--di-color);"><h3 style="margin-bottom:14px;">📱 두잇주문 수수료</h3>
+      <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sDiFee" value="5.0" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sDiPg" value="1.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
+      <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sDiDel" value="3000" onchange="saveSettings()"></div>
     </div>
   </div>
   <div class="setting-group" style="margin-top:16px;">

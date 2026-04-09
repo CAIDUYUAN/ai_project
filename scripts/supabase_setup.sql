@@ -6,7 +6,7 @@
 -- 1. 테이블 생성
 CREATE TABLE IF NOT EXISTS sales_data (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  platform TEXT NOT NULL CHECK (platform IN ('bm', 'cp', 'tg', 'yg', 'ts', 'settings')),
+  platform TEXT NOT NULL CHECK (platform IN ('bm', 'cp', 'tg', 'yg', 'ts', 'nv', 'di', 'settings')),
   ym_key TEXT NOT NULL,
   period TEXT NOT NULL,
   filename TEXT,

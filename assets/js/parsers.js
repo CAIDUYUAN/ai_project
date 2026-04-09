@@ -1,7 +1,7 @@
 // [B] 데이터 저장소
 // ==============================================
-const DB    = { bm:{}, cp:{}, tg:{}, yg:{}, ts:{} };
-const FILES = { bm:[], cp:[], tg:[], yg:[], ts:[] };
+const DB    = { bm:{}, cp:{}, tg:{}, yg:{}, ts:{}, nv:{}, di:{} };
+const FILES = { bm:[], cp:[], tg:[], yg:[], ts:[], nv:[], di:[] };
 
 // ==============================================
 // [C] 헬퍼 유틸
@@ -10,7 +10,7 @@ const W         = n  => '₩' + Math.round(n||0).toLocaleString('ko-KR');
 const Pct       = (a,b) => b ? (a/b*100).toFixed(1)+'%' : '0%';
 const fixedCost = () => S.rent + S.mgmt + S.util + S.pack + S.etc;
 const bmFeeRate = () => (S.bmComm + S.bmPg + S.bmVat + S.bmExtra) / 100;
-const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg), ...Object.keys(DB.yg), ...Object.keys(DB.ts)])].sort();
+const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg), ...Object.keys(DB.yg), ...Object.keys(DB.ts), ...Object.keys(DB.nv), ...Object.keys(DB.di)])].sort();
 const toNum     = v => parseFloat(String(v||'').replace(/[,₩"원]/g,''))||0;
 
 function couponAmt(orderAmt) {
