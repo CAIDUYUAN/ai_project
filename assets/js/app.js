@@ -437,12 +437,11 @@ function updateServiceTable(data) {
   let tCount=0, tFee=0, tDel=0, tAd=0, tTotal=0;
   const rows = entries.map(([name, s]) => {
     tCount += s.count; tFee += s.fee; tDel += s.delivery; tAd += s.ad; tTotal += s.total;
+    const cell = v => v > 0 ? `<td class="num" style="color:var(--red);">${fmtW(v)}원</td>` : `<td class="num" style="color:var(--text-quaternary);">-</td>`;
     return `<tr>
       <td><span class="pf-dot" style="background:${s.pfColor}"></span> ${s.pfIcon} ${name}</td>
-      <td class="num">${fmt(s.count)}건</td>
-      <td class="num" style="color:var(--red);">${fmtW(s.fee)}원</td>
-      <td class="num" style="color:var(--red);">${fmtW(s.delivery)}원</td>
-      <td class="num" style="color:var(--red);">${fmtW(s.ad)}원</td>
+      <td class="num">${s.count > 0 ? fmt(s.count)+'건' : '<span style="color:var(--text-quaternary);">-</span>'}</td>
+      ${cell(s.fee)}${cell(s.delivery)}${cell(s.ad)}
       <td class="num" style="color:var(--red);">${fmtW(s.total)}원</td>
     </tr>`;
   }).join('');
