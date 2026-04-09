@@ -696,8 +696,7 @@ function toggleCollapse(id) {
 /* ═══ BEP ═══ */
 function updateBEP() {
   const fixed = fixedCost();
-  const avgFee = ['bm','cp','tg','yg'].reduce((s,pf) => s + (S[pf+'Comm']||0) + (S[pf+'Pg']||0) + (S[pf+'Vat']||0) + (S[pf+'Extra']||0), 0) / 4;
-  const mr = (100 - S.cogs - avgFee) / 100;
+  const mr = (100 - S.cogs - 10) / 100;
   const bep = mr > 0 ? fixed / mr : 0;
   document.getElementById('bepFixed').textContent = fmtW(fixed) + '원';
   document.getElementById('bepRevenue').textContent = fmtW(bep) + '원';
@@ -776,7 +775,7 @@ function switchMenuTab(tab) {
 
 /* ═══ CALCULATORS ═══ */
 function getPfFeeRate(pf) {
-  return ((S[pf+'Comm']||0) + (S[pf+'Pg']||0) + (S[pf+'Vat']||0) + (S[pf+'Extra']||0)) / 100;
+  return ((S[pf+'Comm']||0) + (S[pf+'Pg']||0) + (S[pf+'Vat']||0)) / 100;
 }
 function getPfDel(pf) { return S[pf+'Del']||3000; }
 
@@ -787,8 +786,7 @@ function calcCoupon() {
   const pf = document.getElementById('couponPlatform').value;
   document.getElementById('couponAmountLabel').textContent = fmt(cpn)+'원';
   const actual = price - cpn;
-  const feeBase = pf === 'cp' ? price : actual;
-  const fee = feeBase * getPfFeeRate(pf);
+  const fee = actual * getPfFeeRate(pf);
   const del = getPfDel(pf);
   const net = actual - cost - fee - del;
   const margin = actual > 0 ? (net/actual*100) : 0;
@@ -818,8 +816,7 @@ function calcAdROI() {
   document.getElementById('adBudgetLabel').textContent = fmt(budget)+'원';
   const ppo = avgRev*mr;
   const bep = ppo>0?Math.ceil(budget/ppo):0;
-  const estCPA = 2000;
-  const est = budget>0?Math.round(budget/estCPA):0;
+  const est = Math.round(bep*1.5);
   const roi = budget>0?((est*ppo-budget)/budget*100):0;
   const delta = est*ppo-budget;
   document.getElementById('adBEPOrders').textContent = fmt(bep)+'건';
@@ -850,7 +847,7 @@ function runSimulator() {
     mc = (m.food||0) + (m.sauce||0) + (m.pack||0) + (m.side||0) + (m.etc||0);
   }
 
-  const actual = base-cpn-disc; const feeBase = pf === 'cp' ? base : actual; const fee = feeBase*fr; const net = actual-mc-fee-del;
+  const actual = base-cpn-disc; const fee = actual*fr; const net = actual-mc-fee-del;
   const margin = actual>0?(net/actual*100):0;
   document.getElementById('simActualPrice').textContent = fmt(actual)+'원';
   document.getElementById('simNetProfit').textContent = fmt(Math.round(net))+'원';
