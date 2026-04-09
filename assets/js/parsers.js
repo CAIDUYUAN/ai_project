@@ -390,38 +390,42 @@ function parseCP_xlsx(wb, filename) {
 
   // 컬럼 매핑
   let ci, getCols;
+  // ── 컬럼 매핑 (A~AN, 총 40열) ──
+  // J=9(총금액) K=10(주문금액=정산기준매출) L=11(결제금액)
+  // M=12(쿠팡부담쿠폰) N=13(상점부담쿠폰)
+  // Q=16(중개이용료산정후) R=17(PG수수료)
+  // V=21(배달비산정후) W=22(즉시할인배달) X=23(즉시할인음식)
+  // Z=25(고객부담배달비총액)
+  // AG=32(서비스이용료부가세산정후) AH=33(서비스이용료총액산정후)
+  // AI=34(광고공급가액) AJ=35(광고부가세) AK=36(광고총액)
+  // AN=39(정산금액산정후)
+  // 정산공식: AN = K - N - Q - R - V - AI - (AG+AJ) - (W+X) + Z
   if (isNew) {
-    // 신형식 (43컬럼)
-    // K=10(주문금액) N=13(상점부담쿠폰) Q=16(중개이용료산정후) R=17(PG수수료)
-    // V=21(배달비산정후) W=22(즉시할인배달) X=23(즉시할인음식)
-    // AC=33(서비스이용료총액) AK=36(광고비총액) Z=25(고객부담배달비총액) AN=39(정산금액산정후)
-    ci = {date:0, orderId:2, type:3, txType:8, totalAmt:9, orderAmt:10, payAmt:11, cpBurden:12, shopBurden:13};
-    // 정산공식: AN = K-N-Q-R-V-AI-(AC+AJ)-(W+X)+Z+AP+AQ
+    ci = {date:0, orderId:2, type:3, txType:8, orderAmt:10, cpBurden:12, shopBurden:13};
     getCols = r => ({
-      broker: Math.abs(Number(r[16])||0),        // Q: 중개이용료 산정후
-      pgFee: Math.abs(Number(r[17])||0),          // R: 결제대행사 수수료
-      delFee: Math.abs(Number(r[21])||0),         // V: 배달비 산정후
-      instantDelDisc: Math.abs(Number(r[22])||0), // W: 즉시할인 배달전용
-      instantFoodDisc: Math.abs(Number(r[23])||0),// X: 즉시할인 음식전용
-      custDelFee: Math.abs(Number(r[25])||0),     // Z: 고객부담배달비 총액
-      svcVat: Math.abs(Number(r[32])||0),         // AC(col32): 서비스이용료 부가세액
-      adSupply: Math.abs(Number(r[34])||0),       // AI: 광고 공급가액
-      adVat: Math.abs(Number(r[35])||0),          // AJ: 광고 부가세액
-      settleAmt: Number(r[39])||0,                // AN: 정산금액 산정후
-      promo: Number(r[41])||0,                    // AP: 프로모션 혜택
-      refund: Number(r[42])||0,                   // AQ: 환급액
+      N: Math.abs(Number(r[13])||0),   // 상점부담쿠폰
+      Q: Math.abs(Number(r[16])||0),   // 중개이용료 산정후
+      R: Math.abs(Number(r[17])||0),   // PG수수료
+      V: Math.abs(Number(r[21])||0),   // 배달비 산정후
+      W: Math.abs(Number(r[22])||0),   // 즉시할인 배달전용
+      X: Math.abs(Number(r[23])||0),   // 즉시할인 음식전용
+      Z: Math.abs(Number(r[25])||0),   // 고객부담배달비 총액
+      AG: Math.abs(Number(r[32])||0),  // 서비스이용료 부가세
+      AI: Math.abs(Number(r[34])||0),  // 광고 공급가액
+      AJ: Math.abs(Number(r[35])||0),  // 광고 부가세
+      AN: Number(r[39])||0,            // 정산금액
     });
   } else {
-    // 구형식 (32컬럼): 거래일(0),거래유형(7),주문금액(10),중개(14),PG(15),배달비(16),최종요금총액(27),광고총액(30),정산(31)
-    ci = {date:0, orderId:4, type:2, txType:7, totalAmt:9, orderAmt:10, payAmt:11, cpBurden:12, shopBurden:13};
+    ci = {date:0, orderId:4, type:2, txType:7, orderAmt:10, cpBurden:12, shopBurden:13};
     getCols = r => ({
-      broker: Math.abs(Number(r[14])||0),
-      pgFee: Math.abs(Number(r[15])||0),
-      delFee: Math.abs(Number(r[16])||0),
-      instantDelDisc: 0, instantFoodDisc: 0, custDelFee: 0,
-      svcTotal: Math.abs(Number(r[27])||0),
-      adTotal: Math.abs(Number(r[30])||0),
-      settleAmt: Number(r[31])||0,
+      N: Math.abs(Number(r[13])||0),
+      Q: Math.abs(Number(r[14])||0),
+      R: Math.abs(Number(r[15])||0),
+      V: Math.abs(Number(r[16])||0),
+      W:0, X:0, Z:0, AG:0,
+      AI: Math.abs(Number(r[30])||0),
+      AJ: 0,
+      AN: Number(r[31])||0,
     });
   }
 
@@ -437,58 +441,47 @@ function parseCP_xlsx(wb, filename) {
 
     const txType = String(r[ci.txType]||'').trim();
     const isCancel = /취소|CANCEL/i.test(txType);
-    // 결제 또는 취소만 처리
     if (txType && !/결제|PAY|취소|CANCEL/i.test(txType)) continue;
 
-    const orderAmt = Number(r[ci.orderAmt])||0;
-    if (orderAmt === 0) continue;
+    const K = Number(r[ci.orderAmt])||0; // 주문금액 (정산기준 매출)
+    if (K === 0) continue;
 
-    const cols = getCols(r);
+    const c = getCols(r);
 
-    if (isCancel) {
-      // 취소: 매출/수수료/배달비 등 모두 음수로 차감
-      const ds = fmtDate(r[ci.date]);
-      if (!ds) continue;
-      if (!daily[ds]) daily[ds] = {rev:0, orders:0, fee:0, coupon:0, delivery:0};
-      daily[ds].rev += orderAmt; // 음수
-      totalOrders--;
-      continue;
-    }
+    // 대시보드 분류:
+    // 수수료 = Q(중개) + R(PG) + AG(서비스부가세) + AJ(광고부가세)
+    // 배달비 = V(배달비) - Z(고객부담배달비)
+    // 쿠폰  = N(상점쿠폰) + W(즉시할인배달) + X(즉시할인음식)
+    // 광고  = AI(광고 공급가액)
+    const sign = isCancel ? -1 : 1;
+    const fee = (c.Q + c.R + c.AG + c.AJ) * sign;
+    const delivery = (c.V - c.Z) * sign;
+    const coupon = (c.N + c.W + c.X) * sign;
+    const ad = c.AI * sign;
 
-    const shopCoupon = Math.abs(Number(r[ci.shopBurden])||0);
-    const cpCoupon = Math.abs(Number(r[ci.cpBurden])||0);
-
-    // 정산공식: AN = K-N-Q-R-V-AI-(AC+AJ)-(W+X)+Z+AP+AQ
-    const fee = cols.broker + cols.pgFee + cols.svcVat + cols.adVat;
-    const realDel = cols.delFee - cols.custDelFee;
-    const totalDiscount = shopCoupon + cols.instantDelDisc + cols.instantFoodDisc;
-    const adAmt = cols.adSupply;
-
-    if (!daily[ds]) daily[ds] = {rev:0, orders:0, fee:0, coupon:0, delivery:0};
-    daily[ds].rev += orderAmt;
-    daily[ds].orders++;
-    daily[ds].fee += fee;
-    daily[ds].coupon += totalDiscount;
-    daily[ds].delivery += realDel;
+    if (!daily[ds]) daily[ds] = {rev:0, orders:0};
+    daily[ds].rev += K;
+    daily[ds].orders += sign;
 
     totalFee += fee;
-    totalDel += realDel;
-    totalCoupon += totalDiscount;
-    totalAd += adAmt;
-    totalOrders++;
+    totalDel += delivery;
+    totalCoupon += coupon;
+    totalAd += ad;
+    totalOrders += sign;
 
-    orderList.push({
-      date:ds, orderId:String(r[ci.orderId]||''), type:String(r[ci.type]||''),
-      orderAmt, shopCoupon, cpCoupon,
-      instantDelDisc:cols.instantDelDisc, instantFoodDisc:cols.instantFoodDisc,
-      custDelFee:cols.custDelFee, fee, realDel, adAmt,
-      broker:cols.broker, pgFee:cols.pgFee, delFee:cols.delFee,
-      svcVat:cols.svcVat, adSupply:cols.adSupply, adVat:cols.adVat,
-      settleAmt:cols.settleAmt, promo:cols.promo, refund:cols.refund,
-    });
+    if (!isCancel) {
+      orderList.push({
+        date:ds, orderId:String(r[ci.orderId]||''), type:String(r[ci.type]||''),
+        orderAmt:K, fee:Math.abs(fee), realDel:Math.abs(delivery), adAmt:Math.abs(ad),
+        shopCoupon:c.N, instantDelDisc:c.W, instantFoodDisc:c.X,
+        broker:c.Q, pgFee:c.R, svcVat:c.AG, adVat:c.AJ,
+        delFee:c.V, custDelFee:c.Z, adSupply:c.AI,
+        settleAmt:c.AN,
+      });
+    }
   }
 
-  if (!totalOrders) throw new Error('쿠팡이츠 파일에서 데이터를 찾을 수 없습니다. 파일 형식을 확인해주세요.');
+  if (totalOrders <= 0) throw new Error('쿠팡이츠 파일에서 데이터를 찾을 수 없습니다.');
 
   // 서비스(주문유형)별 집계
   const services = {};
