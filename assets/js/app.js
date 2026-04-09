@@ -32,14 +32,41 @@ function showApp() {
   initApp();
 }
 
+let _loadingCurrent = 0;
+let _loadingAnim = null;
+
 function setLoading(pct, text, sub) {
+  if (_loadingAnim) { clearInterval(_loadingAnim); _loadingAnim = null; }
+  _loadingCurrent = pct;
+  _applyLoading(pct);
+  if (text) document.getElementById('loadingText').textContent = text;
+  if (sub) document.getElementById('loadingSub').textContent = sub;
+}
+
+function _applyLoading(pct) {
   const ring = document.getElementById('loadingRing');
-  const circ = 2 * Math.PI * 48; // r=48
+  const circ = 2 * Math.PI * 48;
   if (ring) ring.setAttribute('stroke-dashoffset', circ - (circ * pct / 100));
   const pctEl = document.getElementById('loadingPct');
   if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+}
+
+// 목표치까지 부드럽게 올라가는 애니메이션 (await 가능)
+function animateLoading(target, text, sub) {
+  if (_loadingAnim) { clearInterval(_loadingAnim); _loadingAnim = null; }
   if (text) document.getElementById('loadingText').textContent = text;
   if (sub) document.getElementById('loadingSub').textContent = sub;
+  return new Promise(resolve => {
+    _loadingAnim = setInterval(() => {
+      if (_loadingCurrent < target) {
+        _loadingCurrent += 0.5;
+        _applyLoading(Math.min(_loadingCurrent, target));
+      } else {
+        clearInterval(_loadingAnim); _loadingAnim = null;
+        resolve();
+      }
+    }, 50);
+  });
 }
 
 function hideLoading() {
@@ -55,21 +82,27 @@ function hideLoading() {
 }
 
 async function initApp() {
-  setLoading(10, '설정 불러오는 중...', '로컬 설정을 복원합니다');
+  setLoading(5, '설정 불러오는 중...', '로컬 설정을 복원합니다');
   loadSettings();
   try { applySettingsToUI(); } catch(e) {}
+  setLoading(10, '설정 완료', '');
 
-  setLoading(30, '데이터 불러오는 중...', 'Supabase에서 매출 데이터를 복원합니다');
+  // Supabase 로드 중 30→65까지 부드럽게 올라감
+  const loadingPromise = animateLoading(65, '데이터 불러오는 중...', 'Supabase에서 매출 데이터를 복원합니다');
   try { await loadFromSupabase(); } catch(e) { console.warn('Supabase 로드:', e.message); }
-
+  // 로드 완료 → 애니메이션 중단하고 70으로
+  if (_loadingAnim) { clearInterval(_loadingAnim); _loadingAnim = null; }
   setLoading(70, '데이터 처리 중...', '수수료 모드를 적용합니다');
   try { if (typeof applyFeeModes === 'function') applyFeeModes(); } catch(e) {}
 
-  setLoading(90, '화면 준비 중...', '대시보드를 렌더링합니다');
+  setLoading(80, '화면 준비 중...', '대시보드를 렌더링합니다');
   initFeeToggleUI();
   try { renderMenuCost(); updateSimulatorMenu(); } catch(e) {}
+  setLoading(85);
   renderFileList();
+  setLoading(90);
   updateBEP();
+  setLoading(95);
   refreshAll();
 
   hideLoading();
