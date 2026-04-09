@@ -488,17 +488,23 @@ function updatePlatformGrid(data) {
 
     const rev = ps.totalRev;
     const orders = ps.orders;
-    // 개별 항목 (DB 실제값)
+    // 개별 항목이 있으면(쿠팡) 상세 표시, 없으면 합산값으로 표시
+    const hasDetail = !!(ps.broker || ps.pgFee || ps.vat);
     const broker = ps.broker||0, pgFee = ps.pgFee||0;
+    const fee = ps.fee||0;
     const delFee = ps.delFee || ps.delivery || 0;
     const adSupply = ps.adSupply || ps.ad || 0;
     const vat = ps.vat || 0;
+    const coupon = ps.coupon || 0;
     const shopCoupon = ps.shopCoupon || 0;
     const instantDisc = ps.instantDisc || 0;
     const promo = ps.promo || 0;
     const refund = ps.refund || 0;
-    // 최종 입금예정 = AN + AP + AQ (DB에 있으면 사용, 없으면 수식 계산)
-    const finalSettle = ps.finalSettle || (rev - shopCoupon - broker - pgFee - delFee - adSupply - vat - instantDisc + promo + refund);
+    // 최종 입금예정
+    const totalDeduct = hasDetail
+      ? (shopCoupon + broker + pgFee + delFee + adSupply + vat + instantDisc - promo - refund)
+      : (fee + delFee + adSupply + coupon);
+    const finalSettle = ps.finalSettle || (rev - totalDeduct);
     // 내 비용
     const matCost = Math.round(rev * (S.cogs / 100));
     const revShare = totalAllRev > 0 ? rev / totalAllRev : 0;
@@ -513,9 +519,10 @@ function updatePlatformGrid(data) {
     const neg = v => v ? '-'+fmtW(v)+'원' : '0원';
     const negColor = v => v ? 'var(--red)' : 'var(--text-tertiary)';
 
-    return `<div class="platform-card ${p}">
-      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(orders)}건</span></div>
-      ${row('매출액', fmtW(rev)+'원', 'var(--text-primary)')}
+    // 상세(쿠팡) vs 합산(기타 플랫폼) 분기
+    let detailRows;
+    if (hasDetail) {
+      detailRows = `
       ${row('상점부담 쿠폰', neg(shopCoupon), negColor(shopCoupon))}
       ${row('중개 이용료', neg(broker), negColor(broker))}
       ${row('결제대행사 수수료', neg(pgFee), negColor(pgFee))}
@@ -526,7 +533,19 @@ function updatePlatformGrid(data) {
       </div>
       ${row('즉시할인금액', neg(instantDisc), negColor(instantDisc))}
       ${promo ? row('프로모션 혜택', '+'+fmtW(promo)+'원', 'var(--green)') : ''}
-      ${refund ? row('환급액', '+'+fmtW(refund)+'원', 'var(--green)') : ''}
+      ${refund ? row('환급액', '+'+fmtW(refund)+'원', 'var(--green)') : ''}`;
+    } else {
+      detailRows = `
+      ${row('수수료', neg(fee), negColor(fee))}
+      ${isDeliveryPf(p) ? row('배달비', neg(delFee), negColor(delFee)) : ''}
+      ${row('광고', neg(adSupply), negColor(adSupply))}
+      ${row('쿠폰', neg(coupon), negColor(coupon))}`;
+    }
+
+    return `<div class="platform-card ${p}">
+      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(orders)}건</span></div>
+      ${row('매출액', fmtW(rev)+'원', 'var(--text-primary)')}
+      ${detailRows}
       ${sep}
       ${row('최종 입금예정금액', fmtW(finalSettle)+'원', 'var(--accent)')}
       ${sep}${secLabel('내 비용')}
