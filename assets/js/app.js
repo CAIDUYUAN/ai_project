@@ -455,8 +455,9 @@ function updateCalendar(data) {
 function updateMonthlySummary() {
   const am = getAllMonths(); const body = document.getElementById('monthlySummaryBody');
   if (!am.length) { body.innerHTML = ''; return; }
+  let lastYear = '';
   body.innerHTML = am.map(m => {
-    const [,mo] = m.split('-'); const vals = {};
+    const [yr, mo] = m.split('-'); const vals = {};
     let ded = 0;
     PF_LIST.forEach(p => {
       const d = DB[p]?.[m]; vals[p] = d?.totalRev||0;
@@ -465,7 +466,12 @@ function updateMonthlySummary() {
     const tot = PF_LIST.reduce((s,p) => s + vals[p], 0);
     const dep = tot - ded;
     const net = dep - tot*(S.cogs/100) - fixedCost();
-    return `<tr><td>${parseInt(mo)}월</td>${PF_LIST.map(p => `<td class="num">${fmtW(vals[p])}</td>`).join('')}<td class="num total">${fmtW(tot)}</td><td class="num" style="color:var(--red);">${fmtW(ded)}</td><td class="num">${fmtW(dep)}</td><td class="num total" style="color:${net>=0?'var(--green)':'var(--red)'};">${fmtW(net)}</td></tr>`;
+    let yearRow = '';
+    if (yr !== lastYear) {
+      lastYear = yr;
+      yearRow = `<tr><td colspan="${PF_LIST.length + 5}" style="text-align:left;font-weight:700;color:var(--accent);padding:10px 8px 4px;border-bottom:1px solid var(--accent);font-size:13px;">${yr}년</td></tr>`;
+    }
+    return yearRow + `<tr><td>${parseInt(mo)}월</td>${PF_LIST.map(p => `<td class="num">${fmtW(vals[p])}</td>`).join('')}<td class="num total">${fmtW(tot)}</td><td class="num" style="color:var(--red);">${fmtW(ded)}</td><td class="num">${fmtW(dep)}</td><td class="num total" style="color:${net>=0?'var(--green)':'var(--red)'};">${fmtW(net)}</td></tr>`;
   }).join('');
 }
 
