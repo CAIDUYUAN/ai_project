@@ -324,106 +324,69 @@ function renderMenuCost() {
 // ── 카드 렌더 ──
 function renderMenuCards(items) {
   const container = document.getElementById('mc-cards');
-  container.innerHTML = items.map(item => {
-    const costItems = [
-      {name:'식재료비', val:item.food},
-      {name:'소스비', val:item.sauce},
-      {name:'포장재비', val:item.pack},
-      {name:'반찬비', val:item.side},
-      {name:'기타원가', val:item.etc},
-    ];
+  container.innerHTML = `
+    <div style="margin-bottom:16px;"><div class="card-title">메뉴 ${items.length}개 로드됨</div></div>
+    <div class="platform-grid">${items.map(item => renderSingleMenuCard(item)).join('')}</div>`;
+}
 
-    const barsHtml = costItems.map(c => {
-      const pct = item.storeActual ? (c.val / item.storeActual * 100) : 0;
-      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <span style="width:60px;font-size:11px;color:var(--tx2);text-align:right">${c.name}</span>
-        <div style="flex:1;background:var(--bg3);border-radius:4px;height:18px;overflow:hidden">
-          <div style="width:${Math.min(pct, 100)}%;height:100%;background:${pct > 15 ? 'var(--danger)' : 'var(--grn)'};border-radius:4px;transition:width .3s"></div>
-        </div>
-        <span style="width:80px;font-size:11px;font-family:var(--mono);color:var(--tx2);text-align:right">${W(c.val)} (${pct.toFixed(1)}%)</span>
-      </div>`;
-    }).join('');
+function renderSingleMenuCard(item) {
+  const rateColor = item.storeCostRate <= 30 ? 'var(--green)' : item.storeCostRate <= 40 ? 'var(--orange)' : 'var(--red)';
 
-    const totalBarColor = item.storeCostRate >= 50 ? 'var(--danger)' : item.storeCostRate >= 35 ? 'var(--or)' : 'var(--grn)';
-    const profitPct = item.storeActual ? (item.storeProfit / item.storeActual * 100) : 0;
-    const profitBarColor = item.storeProfit >= 0 ? 'var(--blue)' : 'var(--danger)';
-    const badgeColor = item.gradeClass === 'mc-good' ? 'var(--grn)' : item.gradeClass === 'mc-warn' ? 'var(--or)' : 'var(--danger)';
+  // 원가 바 차트
+  const costItems = [
+    {name:'재료비', val:item.food, color:'var(--red)'},
+    {name:'소스비', val:item.sauce, color:'var(--orange)'},
+    {name:'포장비', val:item.pack, color:'var(--purple)'},
+  ];
+  if (item.side > 0) costItems.push({name:'반찬비', val:item.side, color:'var(--teal)'});
+  if (item.etc > 0) costItems.push({name:'기타', val:item.etc, color:'var(--accent)'});
+  const maxCost = Math.max(...costItems.map(c => c.val), 1);
+  const barW = v => Math.max(2, v / maxCost * 100) + '%';
 
-    // 플랫폼별 가격 편집 UI
-    const pfPriceHtml = PFS.map(pf => {
-      const pfPrice = item['pf_'+pf+'_price'] || item.price;
-      const pfDiscount = item['pf_'+pf+'_discount'] || 0;
-      const pfActual = pfPrice - pfDiscount;
-      const recPrice = item.recPrices[pf];
-      const maxVal = Math.max(pfPrice * 2, 50000);
-      return `<div style="background:var(--bg3);border-radius:10px;padding:10px">
-        <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">${pfIcon(pf)} ${pfName(pf)}</div>
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
-          <span style="font-size:10px;color:var(--muted);width:45px">판매가</span>
-          <input id="mc-${item.idx}-${pf}-price" type="number" value="${pfPrice}"
-            oninput="updatePfPrice(${item.idx},'${pf}','price',this.value)"
-            style="flex:1;width:0;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:4px 6px;color:var(--tx);font-family:var(--mono);font-size:12px;outline:none">
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
-          <span style="font-size:10px;color:var(--muted);width:45px">할인금액</span>
-          <input id="mc-${item.idx}-${pf}-discount" type="number" value="${pfDiscount}"
-            oninput="updatePfPrice(${item.idx},'${pf}','discount',this.value)"
-            style="flex:1;width:0;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:4px 6px;color:var(--tx);font-family:var(--mono);font-size:12px;outline:none">
-        </div>
-        <input id="mc-${item.idx}-${pf}-price-s" type="range" min="0" max="${maxVal}" step="100" value="${pfPrice}"
-          oninput="updatePfPrice(${item.idx},'${pf}','price',this.value)"
-          style="width:100%;margin-top:2px">
-        <div id="mc-${item.idx}-${pf}-actual" style="font-size:10px;color:var(--muted);margin-top:2px">실제판매가: ${W(pfActual)}</div>
-        <div style="font-size:10px;color:var(--blue);margin-top:1px">적정판매가: <span id="mc-${item.idx}-${pf}-rec">${W(recPrice)}</span></div>
-      </div>`;
-    }).join('');
-
-    return `<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div>
-          <span style="font-size:15px;font-weight:700">${item.name}</span>
-          <span style="font-size:13px;margin-left:10px">판매가 <strong style="color:var(--tx);font-size:14px">${W(item.price)}</strong></span>
-          <span style="font-size:12px;color:var(--muted);margin-left:6px">할인 ${W(item.discount)}</span>
-          <span style="font-size:12px;color:var(--muted)">→</span>
-          <span style="font-size:13px;color:var(--grn);font-weight:600">실제 ${W(item.storeActual)}</span>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <span style="padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;background:${badgeColor}">${item.grade}</span>
-          <button onclick="resetPfPrices(${item.idx})" style="padding:4px 8px;border:1px solid var(--bd);background:var(--bg3);color:var(--tx2);border-radius:6px;font-size:11px;cursor:pointer">🔄 초기화</button>
-          <button onclick="deleteMenuItem(${item.idx})" style="padding:4px 8px;border:1px solid var(--danger);background:rgba(229,48,42,0.1);color:var(--danger);border-radius:6px;font-size:11px;cursor:pointer">🗑 삭제</button>
-        </div>
+  const barsHtml = costItems.map(c =>
+    `<div style="display:flex;align-items:center;gap:8px;">
+      <span style="min-width:44px;font-size:11px;color:var(--text-tertiary);">${c.name}</span>
+      <div style="flex:1;height:6px;background:var(--bg-secondary);border-radius:3px;overflow:hidden;">
+        <div style="width:${barW(c.val)};height:100%;background:${c.color};border-radius:3px;"></div>
       </div>
+      <span style="min-width:44px;text-align:right;font-size:12px;font-weight:500;">${fmt(c.val)}</span>
+    </div>`
+  ).join('');
 
-      <div style="display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap">
-        <span style="font-size:12px;color:var(--grn);font-weight:600">🏪 가게 순수익 ${W(item.storeProfit)} (마진 ${item.storeMarginRate.toFixed(1)}%)</span>
-        <button onclick="matchAllStoreProfit(${item.idx})" style="padding:2px 8px;font-size:11px;border:1px solid var(--grn);background:rgba(45,158,107,0.1);color:var(--grn);border-radius:6px;cursor:pointer;font-weight:600">모든 플랫폼 가게 순수익 맞추기</button>
-      </div>
+  // 플랫폼별 건당 순수익
+  const nets = {};
+  PFS.forEach(pf => { nets[pf] = item.profits[pf]; });
+  const bestPf = Object.entries(nets).sort((a,b) => b[1] - a[1])[0][0];
 
-      <div style="margin-bottom:12px">
-        ${barsHtml}
-        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)">
-          <span style="width:60px;font-size:11px;font-weight:700;color:var(--tx);text-align:right">원가합계</span>
-          <div style="flex:1;background:var(--bg3);border-radius:4px;height:18px;overflow:hidden">
-            <div style="width:${Math.min(item.storeCostRate, 100)}%;height:100%;background:${totalBarColor};border-radius:4px;transition:width .3s"></div>
-          </div>
-          <span style="width:80px;font-size:11px;font-family:var(--mono);font-weight:700;color:${totalBarColor};text-align:right">${W(item.costTotal)} (${item.storeCostRate.toFixed(1)}%)</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-          <span style="width:60px;font-size:11px;font-weight:700;color:${profitBarColor};text-align:right">순수익</span>
-          <div style="flex:1;background:var(--bg3);border-radius:4px;height:18px;overflow:hidden">
-            <div style="width:${Math.min(Math.abs(profitPct), 100)}%;height:100%;background:${profitBarColor};border-radius:4px;transition:width .3s"></div>
-          </div>
-          <span style="width:80px;font-size:11px;font-family:var(--mono);font-weight:700;color:${profitBarColor};text-align:right">${W(item.storeProfit)} (${profitPct.toFixed(1)}%)</span>
-        </div>
-      </div>
-
-      <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">💰 플랫폼별 가격 설정 <span style="font-size:10px;font-weight:400;color:var(--muted)">(스크롤바로 판매가 조절)</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">${pfPriceHtml}</div>
-
-      <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px">📦 플랫폼별 순수익 (실제판매가 - 수수료 - 배달비 - 원가)</div>
-      <div id="mc-profit-${item.idx}" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${buildProfitGrid(item)}</div>
+  const pfGrid = PFS.map(pf => {
+    const n = nets[pf];
+    const isBest = pf === bestPf;
+    return `<div style="display:flex;justify-content:space-between;padding:6px 10px;background:${isBest?'rgba(48,209,88,0.08)':'var(--bg-secondary)'};border-radius:6px;${isBest?'border:1px solid rgba(48,209,88,0.2);':''}">
+      <span>${pfIcon(pf)} ${pfName(pf)}</span>
+      <span style="font-weight:600;color:${n>=0?'var(--green)':'var(--red)'};">${fmt(Math.round(n))}원</span>
     </div>`;
   }).join('');
+
+  return `<div class="card" style="padding:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-size:15px;font-weight:600;">${item.name}</span>
+      <span style="font-size:13px;color:${rateColor};font-weight:600;">원가율 ${item.storeCostRate.toFixed(1)}%</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px;">
+      가게가 ${fmt(item.price)}원${item.discount ? ' (할인 '+fmt(item.discount)+')' : ''}
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">원가 구성</div>
+      <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;">
+        ${barsHtml}
+        <div style="display:flex;justify-content:space-between;padding-top:4px;border-top:1px solid var(--border);font-weight:600;">
+          <span>합계</span><span>${fmt(item.costTotal)}원</span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">플랫폼별 건당 순수익</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">${pfGrid}</div>
+  </div>`;
 }
 
 // ── 테이블 렌더 ──
