@@ -393,6 +393,8 @@
       <div class="setting-row"><span class="setting-label">인터넷</span><input class="setting-input" type="number" id="s-internet" value="32000" onchange="saveSettings()"></div>
       <div class="setting-row"><span class="setting-label">카드 단말기</span><input class="setting-input" type="number" id="s-cardTerminal" value="20000" onchange="saveSettings()"></div>
       <div class="setting-row"><span class="setting-label">CCTV 구독</span><input class="setting-input" type="number" id="s-cctv" value="16000" onchange="saveSettings()"></div>
+      <div id="customFixedList"></div>
+      <button class="pill" style="font-size:11px;padding:4px 12px;margin:8px 0;" onclick="addCustomExpense('fixed')">+ 항목 추가</button>
       <div class="setting-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="setting-label" style="font-weight:600;">고정 소계</span><span id="fixedSubtotal" style="font-weight:600;color:var(--text-primary);font-size:14px;">-</span></div>
     </div>
     <div class="setting-group">
@@ -402,6 +404,8 @@
       <div class="setting-row"><span class="setting-label">수도세</span><input class="setting-input" type="number" id="s-water" value="60000" onchange="saveSettings()"></div>
       <div class="setting-row"><span class="setting-label">포장재</span><input class="setting-input" type="number" id="s-pack" value="100000" onchange="saveSettings()"></div>
       <div class="setting-row"><span class="setting-label">기타</span><input class="setting-input" type="number" id="s-etc" value="50000" onchange="saveSettings()"></div>
+      <div id="customVarList"></div>
+      <button class="pill" style="font-size:11px;padding:4px 12px;margin:8px 0;" onclick="addCustomExpense('variable')">+ 항목 추가</button>
       <div class="setting-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="setting-label" style="font-weight:600;">변동 소계</span><span id="varSubtotal" style="font-weight:600;color:var(--text-primary);font-size:14px;">-</span></div>
     </div>
     <div class="setting-group">

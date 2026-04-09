@@ -3,7 +3,7 @@
 const S = {
   rent:550000, internet:32000, cardTerminal:20000, cctv:16000,
   elec:280000, gas:270000, water:60000,
-  pack:100000, etc:50000, living:2000000,
+  pack:100000, etc:50000, living:2000000, customExpenses:[],
   cogs:35,
   bmComm:6.8, bmPg:1.3, bmVat:0.68, bmExtra:0, bmDel:3100,
   cpComm:7.8, cpPg:2.8, cpVat:2.5,  cpExtra:0, cpDel:3400,
@@ -37,6 +37,7 @@ function saveSettings() {
     rent:g('s-rent'), internet:g('s-internet'), cardTerminal:g('s-cardTerminal'), cctv:g('s-cctv'),
     elec:g('s-elec'), gas:g('s-gas'), water:g('s-water'),
     pack:g('s-pack'), etc:g('s-etc'), living:g('s-living'), cogs:g('s-cogs'),
+    customExpenses: collectCustomExpenses(),
     bmComm:g('s-bm-comm'), bmPg:g('s-bm-pg'), bmVat:g('s-bm-vat'), bmExtra:g('s-bm-extra'), bmDel:g('s-bm-del'),
     cpComm:g('s-cp-comm'), cpPg:g('s-cp-pg'), cpVat:g('s-cp-vat'), cpExtra:g('s-cp-extra'), cpDel:g('s-cp-del'),
     tgComm:g('s-tg-comm'), tgPg:g('s-tg-pg'), tgVat:g('s-tg-vat'), tgExtra:g('s-tg-extra'), tgDel:g('s-tg-del'),
@@ -70,7 +71,7 @@ function resetSettings() {
   const defaults = {
     rent:550000, internet:32000, cardTerminal:20000, cctv:16000,
     elec:280000, gas:270000, water:60000,
-    pack:100000, etc:50000, living:2000000, cogs:35,
+    pack:100000, etc:50000, living:2000000, customExpenses:[], cogs:35,
     bmComm:6.8, bmPg:1.3, bmVat:0.68, bmExtra:0, bmDel:3100,
     cpComm:7.8, cpPg:2.8, cpVat:2.5, cpExtra:0, cpDel:3400,
     tgComm:9.0, tgPg:3.3, tgVat:0, tgExtra:0, tgDel:2500,
@@ -95,6 +96,7 @@ function applySettingsToUI() {
   s('s-cp2-min',S.cp2Min); s('s-cp2-amt',S.cp2Amt);
   s('s-cp3-min',S.cp3Min); s('s-cp3-amt',S.cp3Amt);
   updateFeeTotal('bm'); updateFeeTotal('cp'); updateFeeTotal('tg'); updateFeeTotal('yg'); updateCouponPreview();
+  renderCustomExpenses();
 }
 function updateFeeTotal(pf) {
   const g = id => parseFloat(document.getElementById(id)?.value) || 0;
@@ -272,4 +274,53 @@ function updateCouponPreview() {
     {min:g('s-cp2-min'), amt:g('s-cp2-amt')},
     {min:g('s-cp3-min'), amt:g('s-cp3-amt')},
   ].map(t => `<span style="margin-right:16px">₩${t.min.toLocaleString()} 이상 → <strong style="color:var(--red)">-₩${t.amt.toLocaleString()}</strong></span>`).join('');
+}
+
+// ── 사용자 정의 지출 항목 CRUD ──
+function collectCustomExpenses() {
+  const items = [];
+  document.querySelectorAll('.custom-expense-row').forEach(row => {
+    const name = row.querySelector('.ce-name')?.value?.trim();
+    const amount = parseFloat(row.querySelector('.ce-amount')?.value) || 0;
+    const category = row.dataset.category;
+    const id = row.dataset.id;
+    if (name) items.push({ id, name, amount, category });
+  });
+  return items;
+}
+
+function renderCustomExpenses() {
+  const fixedList = document.getElementById('customFixedList');
+  const varList = document.getElementById('customVarList');
+  if (!fixedList || !varList) return;
+  fixedList.innerHTML = '';
+  varList.innerHTML = '';
+  (S.customExpenses || []).forEach(item => {
+    const container = item.category === 'fixed' ? fixedList : varList;
+    container.insertAdjacentHTML('beforeend', buildCustomRow(item));
+  });
+}
+
+function buildCustomRow(item) {
+  return `<div class="setting-row custom-expense-row" data-id="${item.id}" data-category="${item.category}">
+    <input class="ce-name" type="text" value="${item.name}" placeholder="항목명" onchange="saveSettings()">
+    <input class="setting-input ce-amount" type="number" value="${item.amount}" onchange="saveSettings()">
+    <button class="ce-delete" onclick="removeCustomExpense('${item.id}')" title="삭제">✕</button>
+  </div>`;
+}
+
+function addCustomExpense(category) {
+  const id = 'ce_' + Date.now();
+  const item = { id, name: '', amount: 0, category };
+  S.customExpenses = S.customExpenses || [];
+  S.customExpenses.push(item);
+  const container = category === 'fixed' ? document.getElementById('customFixedList') : document.getElementById('customVarList');
+  container.insertAdjacentHTML('beforeend', buildCustomRow(item));
+  container.querySelector(`[data-id="${id}"] .ce-name`).focus();
+}
+
+function removeCustomExpense(id) {
+  S.customExpenses = (S.customExpenses || []).filter(i => i.id !== id);
+  document.querySelector(`[data-id="${id}"]`)?.remove();
+  saveSettings();
 }

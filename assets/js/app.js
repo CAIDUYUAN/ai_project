@@ -671,8 +671,9 @@ function updateBEP() {
   document.getElementById('bepLiving').textContent = fmtW(mr > 0 ? (fixed+S.living)/mr : 0) + '원';
 
   // 설정 페이지 소계 업데이트
-  const fixedSub = (S.rent||0) + (S.internet||0) + (S.cardTerminal||0) + (S.cctv||0);
-  const varSub = (S.elec||0) + (S.gas||0) + (S.water||0) + (S.pack||0) + (S.etc||0);
+  const ce = S.customExpenses || [];
+  const fixedSub = (S.rent||0) + (S.internet||0) + (S.cardTerminal||0) + (S.cctv||0) + ce.filter(i=>i.category==='fixed').reduce((s,i)=>s+(i.amount||0),0);
+  const varSub = (S.elec||0) + (S.gas||0) + (S.water||0) + (S.pack||0) + (S.etc||0) + ce.filter(i=>i.category==='variable').reduce((s,i)=>s+(i.amount||0),0);
   const el = id => document.getElementById(id);
   if (el('fixedSubtotal')) el('fixedSubtotal').textContent = fmt(fixedSub) + '원';
   if (el('varSubtotal')) el('varSubtotal').textContent = fmt(varSub) + '원';

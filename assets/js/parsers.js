@@ -8,7 +8,10 @@ const FILES = { bm:[], cp:[], tg:[], yg:[], ts:[], nv:[], di:[] };
 // ==============================================
 const W         = n  => '₩' + Math.round(n||0).toLocaleString('ko-KR');
 const Pct       = (a,b) => b ? (a/b*100).toFixed(1)+'%' : '0%';
-const fixedCost = () => (S.rent||0) + (S.internet||0) + (S.cardTerminal||0) + (S.cctv||0) + (S.elec||0) + (S.gas||0) + (S.water||0) + (S.pack||0) + (S.etc||0);
+const fixedCost = () => {
+  const base = (S.rent||0)+(S.internet||0)+(S.cardTerminal||0)+(S.cctv||0)+(S.elec||0)+(S.gas||0)+(S.water||0)+(S.pack||0)+(S.etc||0);
+  return base + (S.customExpenses||[]).reduce((s,i) => s + (i.amount||0), 0);
+};
 const bmFeeRate = () => (S.bmComm + S.bmPg + S.bmVat + S.bmExtra) / 100;
 const allMonths = () => [...new Set([...Object.keys(DB.bm), ...Object.keys(DB.cp), ...Object.keys(DB.tg), ...Object.keys(DB.yg), ...Object.keys(DB.ts), ...Object.keys(DB.nv), ...Object.keys(DB.di)])].sort();
 const toNum     = v => parseFloat(String(v||'').replace(/[,₩"원]/g,''))||0;

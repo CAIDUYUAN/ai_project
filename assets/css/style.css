@@ -406,6 +406,21 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 }
 .setting-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 
+/* ─── CUSTOM EXPENSE ─── */
+.custom-expense-row { display: flex; align-items: center; gap: 8px; }
+.ce-name {
+  flex: 1; background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 10px; color: var(--text-primary);
+  font-family: var(--font); font-size: 13px;
+}
+.ce-name:focus { outline: none; border-color: var(--accent); }
+.ce-delete {
+  background: none; border: none; color: var(--text-tertiary);
+  cursor: pointer; font-size: 14px; padding: 4px 8px;
+  border-radius: var(--radius-sm); transition: all var(--transition);
+}
+.ce-delete:hover { color: var(--red); background: rgba(255,69,58,0.1); }
+
 /* ─── SIMULATOR ─── */
 .sim-card { background: var(--bg-card); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
 .sim-row { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
