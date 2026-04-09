@@ -313,16 +313,17 @@ function refreshDashboard() {
   }).join('');
 
   const data = getFilteredData();
-  updateKPIs(data);
-  updateDiagnosisBanner(data);
-  updateStoreVsDelivery(data);
-  updateRevDonut(data);
-  updateDailyChart(data);
-  updateMonthlyTrend();
-  updatePlatformGrid(data);
-  updateServiceTable(data);
-  updateCalendar(data);
-  updateMonthlySummary();
+  [() => updateKPIs(data),
+   () => updateDiagnosisBanner(data),
+   () => updateStoreVsDelivery(data),
+   () => updateRevDonut(data),
+   () => updateDailyChart(data),
+   () => updateMonthlyTrend(),
+   () => updatePlatformGrid(data),
+   () => updateServiceTable(data),
+   () => updateCalendar(data),
+   () => updateMonthlySummary(),
+  ].forEach(fn => { try { fn(); } catch(e) { console.warn('Dashboard:', e.message); } });
 }
 
 function toggleMonth(m) {
