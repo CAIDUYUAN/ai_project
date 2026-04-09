@@ -11,10 +11,8 @@ const PLATFORMS = {
   tg: { name: '땡겨요', icon: pfSvg('땡','#FF5722'), color: '#2D9E6B' },
   yg: { name: '요기요', icon: pfSvg('요','#FA0050'), color: '#E5302A' },
   ts: { name: '가게', icon: pfSvg('T','#1B64DA'), color: '#6366f1' },
-  nv: { name: '네이버', icon: pfSvg('N','#03C75A'), color: '#03C75A' },
-  di: { name: '두잇', icon: pfSvg('D','#FF6B35'), color: '#FF6B35' }
 };
-const PF_LIST = ['bm','cp','tg','yg','ts','nv','di'];
+const PF_LIST = ['bm','cp','tg','yg','ts'];
 let selectedMonths = [];
 let selectedPlatform = 'all';
 
@@ -135,9 +133,6 @@ function initFeeToggleUI() {
 
 /* ═══ render.js/drive.js 오버라이드 ═══ */
 window.renderAll = function() { renderFileList(); refreshAll(); };
-window.updateFileList = function() { renderFileList(); };
-window.updateUploadUI = function() {};
-window.updateHeaderPeriod = function() {};
 
 /* ═══ TAB NAVIGATION ═══ */
 function switchTab(tab) {
