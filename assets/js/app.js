@@ -368,15 +368,15 @@ function updateServiceTable(data) {
     months.forEach(m => {
       const d = DB[pf]?.[m];
       if (!d || !d.services) return;
+      const pfInfo = PLATFORMS[pf] || {};
       Object.entries(d.services).forEach(([sn, sv]) => {
-        if (!merged[sn]) merged[sn] = { count:0, fee:0, delivery:0, ad:0, total:0, pf };
-        merged[sn].count += sv.count||0;
-        merged[sn].fee += sv.fee||0;
-        merged[sn].delivery += sv.delivery||0;
-        merged[sn].ad += sv.ad||0;
-        merged[sn].total += sv.total||0;
-        // 플랫폼 색상 (첫 매칭)
-        if (!merged[sn].pfColor) merged[sn].pfColor = PLATFORMS[pf]?.color || '#888';
+        const key = pfInfo.name + ' — ' + sn;
+        if (!merged[key]) merged[key] = { count:0, fee:0, delivery:0, ad:0, total:0, pfColor: pfInfo.color || '#888', pfIcon: pfInfo.icon || '' };
+        merged[key].count += sv.count||0;
+        merged[key].fee += sv.fee||0;
+        merged[key].delivery += sv.delivery||0;
+        merged[key].ad += sv.ad||0;
+        merged[key].total += sv.total||0;
       });
     });
   });
@@ -388,7 +388,7 @@ function updateServiceTable(data) {
   const rows = entries.map(([name, s]) => {
     tCount += s.count; tFee += s.fee; tDel += s.delivery; tAd += s.ad; tTotal += s.total;
     return `<tr>
-      <td><span class="pf-dot" style="background:${s.pfColor}"></span> ${name}</td>
+      <td><span class="pf-dot" style="background:${s.pfColor}"></span> ${s.pfIcon} ${name}</td>
       <td class="num">${fmt(s.count)}건</td>
       <td class="num" style="color:var(--red);">${fmtW(s.fee)}원</td>
       <td class="num" style="color:var(--red);">${fmtW(s.delivery)}원</td>
