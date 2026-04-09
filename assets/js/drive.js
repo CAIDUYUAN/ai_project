@@ -45,10 +45,25 @@ function onDrag(e, id)  { e.preventDefault(); document.getElementById(id).classL
 function offDrag(id)    { document.getElementById(id).classList.remove('drag'); }
 function onDrop(e, pf)  { e.preventDefault(); offDrag('box-'+pf); loadXlsx2(e.dataTransfer.files, pf); }
 function loadXlsx(inp, pf) { loadXlsx2(inp.files, pf); }
+function showUploadProgress(text, pct) {
+  const el = document.getElementById('uploadProgress');
+  if (!el) return;
+  el.classList.add('active');
+  document.getElementById('uploadProgressText').textContent = text;
+  document.getElementById('uploadProgressPct').textContent = Math.round(pct) + '%';
+  document.getElementById('uploadProgressFill').style.width = pct + '%';
+}
+function hideUploadProgress() {
+  const el = document.getElementById('uploadProgress');
+  if (el) setTimeout(() => el.classList.remove('active'), 1500);
+}
+
 async function loadXlsx2(files, pf) {
   const fileArr = Array.from(files);
   const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':pf==='ts'?'가게(토스)':'땡겨요';
   let loaded = 0, failed = 0;
+  const total = fileArr.length;
+  showUploadProgress(`${label} 파일 준비 중... (0/${total})`, 0);
 
   for (const file of fileArr) {
     try {
@@ -72,10 +87,12 @@ async function loadXlsx2(files, pf) {
       else if (pf === 'ts') data = parseTS_xlsx(wb, file.name);
       else                  data = parseTG_xlsx(wb, file.name);
 
+      showUploadProgress(`${label} 파싱 중... ${file.name}`, ((loaded + 0.5) / total) * 100);
       await storeData(pf, data, file.name);
       loaded++;
+      showUploadProgress(`${label} ${loaded}/${total} 완료`, (loaded / total) * 100);
       const first = Array.isArray(data) ? data[0] : data;
-      toast(`${label} ${first.period} 로드 완료! (${loaded}/${fileArr.length})`);
+      toast(`${label} ${first.period} 로드 완료! (${loaded}/${total})`);
     } catch(err) {
       failed++;
       const msg = /password.protected/i.test(err.message)
@@ -85,6 +102,9 @@ async function loadXlsx2(files, pf) {
       toast(`⚠️ ${file.name}: ${msg}`);
     }
   }
+
+  showUploadProgress(`완료! ${loaded}개 성공${failed ? `, ${failed}개 실패` : ''}`, 100);
+  hideUploadProgress();
 
   if (fileArr.length > 1) {
     toast(`${label} ${loaded}개 로드 완료${failed ? ` (${failed}개 실패)` : ''}`);

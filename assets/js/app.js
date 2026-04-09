@@ -85,29 +85,51 @@ function handleFiles(files) {
 function renderFileList() {
   const container = document.getElementById('fileListContainer');
   if (!container) return;
-  const allFiles = [];
-  PF_LIST.forEach(pf => {
-    (FILES[pf]||[]).forEach(f => allFiles.push({ ...f, pf }));
-  });
-  allFiles.sort((a,b) => a.key.localeCompare(b.key));
 
-  if (!allFiles.length) { container.innerHTML = ''; return; }
-  container.innerHTML = allFiles.map(f => {
-    const p = PLATFORMS[f.pf];
-    return `<div class="file-item">
-      <div class="file-icon ${f.pf}">${p.icon || ''}</div>
-      <div class="file-info">
-        <div class="file-name">${f.filename}</div>
-        <div class="file-meta"><span>${p.name}</span><span>${f.period}</span>${
-          f.key.includes('purchase') ? '<span class="file-tag purchase">매입</span>' :
-          f.period.includes('매입') ? '<span class="file-tag purchase">매입</span>' :
-          f.filename && /매입/.test(f.filename) ? '<span class="file-tag purchase">매입</span>' :
-          '<span class="file-tag sales">매출</span>'
-        }</div>
-      </div>
-      <button class="file-delete" onclick="removeFile('${f.pf}','${f.key}')">✕</button>
+  // 플랫폼별 그룹핑
+  const groups = {};
+  PF_LIST.forEach(pf => {
+    const files = (FILES[pf]||[]).map(f => ({ ...f, pf }));
+    if (files.length) groups[pf] = files.sort((a,b) => a.key.localeCompare(b.key));
+  });
+
+  if (!Object.keys(groups).length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = Object.entries(groups).map(([pf, files]) => {
+    const p = PLATFORMS[pf];
+    const SHOW = 3;
+    const hasMore = files.length > SHOW;
+    const fileItems = files.map((f, i) => {
+      const tag = (f.key.includes('purchase') || (f.period && f.period.includes('매입')) || (f.filename && /매입/.test(f.filename)))
+        ? '<span class="file-tag purchase">매입</span>'
+        : '<span class="file-tag sales">매출</span>';
+      return `<div class="file-item" ${i >= SHOW ? 'style="display:none;" data-extra="'+pf+'"' : ''}>
+        <div class="file-icon ${pf}">${p.icon || ''}</div>
+        <div class="file-info">
+          <div class="file-name">${f.filename}</div>
+          <div class="file-meta"><span>${p.name}</span><span>${f.period}</span>${tag}</div>
+        </div>
+        <button class="file-delete" onclick="removeFile('${f.pf}','${f.key}')">✕</button>
+      </div>`;
+    }).join('');
+
+    const moreBtn = hasMore
+      ? `<button class="btn-more" id="more-${pf}" onclick="toggleFileMore('${pf}')">${files.length - SHOW}개 더보기 ▼</button>`
+      : '';
+
+    return `<div class="file-group">
+      <div class="file-group-header">${p.icon || ''} <span>${p.name}</span><span class="file-group-count">${files.length}개</span></div>
+      ${fileItems}${moreBtn}
     </div>`;
   }).join('');
+}
+
+function toggleFileMore(pf) {
+  const extras = document.querySelectorAll(`[data-extra="${pf}"]`);
+  const btn = document.getElementById('more-' + pf);
+  const visible = extras[0]?.style.display !== 'none';
+  extras.forEach(el => el.style.display = visible ? 'none' : 'flex');
+  if (btn) btn.textContent = visible ? `${extras.length}개 더보기 ▼` : '접기 ▲';
 }
 
 async function clearAllData() {

@@ -271,6 +271,32 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 }
 .file-delete:hover { background: rgba(255,69,58,0.15); color: var(--red); }
 
+/* ─── FILE GROUPS ─── */
+.file-group {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 14px; margin-bottom: 12px;
+}
+.file-group-header {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 600; color: var(--text-secondary);
+  margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.file-group-count {
+  margin-left: auto; font-size: 12px; font-weight: 500;
+  color: var(--text-tertiary);
+}
+.file-group .file-item { margin-bottom: 6px; }
+.file-group .file-item:last-of-type { margin-bottom: 0; }
+.btn-more {
+  display: block; width: 100%; margin-top: 8px;
+  padding: 6px; background: none; border: 1px dashed var(--border);
+  border-radius: var(--radius-sm); color: var(--text-tertiary);
+  font-size: 12px; font-family: var(--font); cursor: pointer;
+  transition: all var(--transition); text-align: center;
+}
+.btn-more:hover { border-color: var(--accent); color: var(--accent); }
+
 /* ─── PLATFORM CARDS ─── */
 .platform-grid {
   display: grid;
@@ -489,6 +515,31 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
   border-radius: 3px;
   vertical-align: middle;
   margin-right: 2px;
+}
+
+/* ─── UPLOAD PROGRESS ─── */
+.upload-progress {
+  display: none; margin-top: 16px;
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 14px 18px;
+  animation: fadeIn 0.2s ease;
+}
+.upload-progress.active { display: block; }
+.upload-progress-info {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px; font-size: 13px;
+}
+#uploadProgressText { color: var(--text-secondary); }
+#uploadProgressPct { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.upload-progress-bar {
+  height: 4px; background: var(--bg-secondary);
+  border-radius: 2px; overflow: hidden;
+}
+.upload-progress-fill {
+  height: 100%; width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
 }
 
 /* ─── SALES ANALYSIS ─── */

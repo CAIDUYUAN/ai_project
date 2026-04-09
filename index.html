@@ -68,6 +68,15 @@
     <button class="btn btn-secondary" onclick="showGuide('yg')"><span class="pf-dot" style="background:#FA0050"></span> 요기요 다운로드 가이드</button>
     <button class="btn btn-secondary" onclick="showGuide('ts')"><span class="pf-dot" style="background:#1B64DA"></span> 가게(토스) 다운로드 가이드</button>
   </div>
+  <!-- 업로드 진행률 -->
+  <div class="upload-progress" id="uploadProgress">
+    <div class="upload-progress-info">
+      <span id="uploadProgressText">업로드 중...</span>
+      <span id="uploadProgressPct">0%</span>
+    </div>
+    <div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div>
+  </div>
+
   <div id="fileListContainer" class="file-list"></div>
   <div style="margin-top:20px;" id="dataActions">
     <button class="btn btn-danger" onclick="clearAllData()">🗑️ 전체 삭제</button>
