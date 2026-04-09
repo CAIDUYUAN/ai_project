@@ -519,19 +519,22 @@ function updatePlatformGrid(data) {
     const neg = v => v ? '-'+fmtW(v)+'원' : '0원';
     const negColor = v => v ? 'var(--red)' : 'var(--text-tertiary)';
 
-    // 상세(쿠팡) vs 합산(기타 플랫폼) 분기
+    // 상세(개별항목 있음) vs 합산(없음) 분기
     let detailRows;
     if (hasDetail) {
+      const isBM = (p === 'bm');
+      const pgLabel = isBM ? '결제정산수수료' : '결제대행사 수수료';
+      const adLabel = isBM ? '광고비(우리가게클릭)' : '광고비';
       detailRows = `
-      ${row('상점부담 쿠폰', neg(shopCoupon), negColor(shopCoupon))}
+      ${!isBM && shopCoupon ? row('상점부담 쿠폰', neg(shopCoupon), negColor(shopCoupon)) : ''}
       ${row('중개 이용료', neg(broker), negColor(broker))}
-      ${row('결제대행사 수수료', neg(pgFee), negColor(pgFee))}
+      ${row(pgLabel, neg(pgFee), negColor(pgFee))}
       ${isDeliveryPf(p) ? row('배달비', neg(delFee), negColor(delFee)) : ''}
-      ${row('광고비', neg(adSupply), negColor(adSupply))}
+      ${row(adLabel, neg(adSupply), negColor(adSupply))}
       <div class="platform-stat vat-tip-wrap"><span class="platform-stat-label">부가세 <span style="cursor:help;color:var(--accent);font-size:11px;">ⓘ</span></span><span class="platform-stat-value" style="color:${negColor(vat)};">${neg(vat)}</span>
-        <div class="vat-tooltip">부가세 = 광고비 VAT + 서비스이용료<br>(중개이용료 + 결제수수료 + 배달비) VAT</div>
+        <div class="vat-tooltip">부가세 = ${isBM ? '(중개이용료 + 결제정산수수료 + 배달비) × 10%' : '광고비 VAT + 서비스이용료<br>(중개이용료 + 결제수수료 + 배달비) VAT'}</div>
       </div>
-      ${row('즉시할인금액', neg(instantDisc), negColor(instantDisc))}
+      ${!isBM && instantDisc ? row('즉시할인금액', neg(instantDisc), negColor(instantDisc)) : ''}
       ${promo ? row('프로모션 혜택', '+'+fmtW(promo)+'원', 'var(--green)') : ''}
       ${refund ? row('환급액', '+'+fmtW(refund)+'원', 'var(--green)') : ''}`;
     } else {

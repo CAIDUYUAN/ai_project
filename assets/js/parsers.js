@@ -221,15 +221,15 @@ function parseBM_purchase_xlsx(wb, filename) {
       else if (/배달비/.test(feeType)) od.bmDeliveryFee += total;
       od.bmTotal += total;
     } else {
-      // 사장님 부담
-      if (/결제정산/.test(feeType)) od.settleFee += total;
-      else if (/중개이용료/.test(feeType)) od.brokerageFee += total;
-      else if (/배달비/.test(feeType)) { od.deliveryFee += total; totalDelivery += total; }
-      else if (/광고이용료/.test(feeType)) { od.adFee += total; totalAd += total; }
+      // 사장님 부담 — 공급가액(supply)만 저장, 부가세(vat)는 별도 합산
+      if (/결제정산/.test(feeType)) { od.settleFee += supply; }
+      else if (/중개이용료/.test(feeType)) { od.brokerageFee += supply; }
+      else if (/배달비/.test(feeType)) { od.deliveryFee += supply; totalDelivery += supply; }
+      else if (/광고이용료/.test(feeType)) { od.adFee += total; totalAd += total; } // 광고는 합계(부가세포함)
       od.supplyTotal += supply;
       od.vatTotal += vat;
       od.total += total;
-      if (!/광고|배달비/.test(feeType)) totalFee += total;
+      if (!/광고/.test(feeType)) totalFee += supply; // 수수료는 공급가액만
     }
   }
 
@@ -250,9 +250,24 @@ function parseBM_purchase_xlsx(wb, filename) {
     services[sn].total += (od.settleFee + od.brokerageFee) + od.deliveryFee + od.adFee;
   });
 
+  // 카드용 개별 항목 합산
+  let aggBroker=0, aggPgFee=0, aggDelFee=0, aggVat=0;
+  Object.values(orderDetails).forEach(od => {
+    aggBroker += od.brokerageFee;
+    aggPgFee += od.settleFee;
+    aggDelFee += od.deliveryFee;
+    aggVat += od.vatTotal;
+  });
+
   return {
     type: 'purchase', ym:[yr,mn], period,
     fee: totalFee, delivery: totalDelivery, ad: totalAd,
+    // 카드용 개별 항목 (배민 앱 정산 화면과 동일)
+    broker: aggBroker,     // 중개이용료 (공급가액)
+    pgFee: aggPgFee,       // 결제정산수수료 (공급가액)
+    delFee: aggDelFee,     // 배달비 (공급가액)
+    vat: aggVat,           // 부가세 합계
+    adSupply: totalAd,     // 광고비 (부가세포함 합계, 우리가게클릭)
     services, details, orderDetails: Object.values(orderDetails),
   };
 }
