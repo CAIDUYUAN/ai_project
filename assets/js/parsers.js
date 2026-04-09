@@ -391,26 +391,23 @@ function parseCP_xlsx(wb, filename) {
   // 컬럼 매핑
   let ci, getCols;
   // ── 컬럼 매핑 (A~AN, 총 40열) ──
-  // J=9(총금액) K=10(주문금액=정산기준매출) L=11(결제금액)
-  // M=12(쿠팡부담쿠폰) N=13(상점부담쿠폰)
-  // Q=16(중개이용료산정후) R=17(PG수수료)
-  // V=21(배달비산정후) W=22(즉시할인배달) X=23(즉시할인음식)
-  // Z=25(고객부담배달비총액)
-  // AG=32(서비스이용료부가세산정후) AH=33(서비스이용료총액산정후)
-  // AI=34(광고공급가액) AJ=35(광고부가세) AK=36(광고총액)
+  // K=10(주문금액=정산기준매출) N=13(상점부담쿠폰)
+  // Q=16(중개이용료산정후) S=18(PG수수료) V=21(배달비산정후)
+  // W=22(즉시할인배달) X=23(즉시할인음식)
+  // AF=31(서비스이용료공급가액=V+S+Q) AI=34(광고공급가액) AJ=35(광고부가세)
   // AN=39(정산금액산정후)
-  // 정산공식: AN = K - N - Q - R - V - AI - (AG+AJ) - (W+X) + Z
+  // 부가세 = AF×10% + AJ
+  // 정산공식: AN = K - N - Q - S - V - AI - (AF×10%+AJ) - (W+X)
   if (isNew) {
     ci = {date:0, orderId:2, type:3, txType:8, orderAmt:10, cpBurden:12, shopBurden:13};
     getCols = r => ({
       N: Math.abs(Number(r[13])||0),   // 상점부담쿠폰
       Q: Math.abs(Number(r[16])||0),   // 중개이용료 산정후
-      R: Math.abs(Number(r[17])||0),   // PG수수료
+      S: Math.abs(Number(r[18])||0),   // 결제대행사 수수료
       V: Math.abs(Number(r[21])||0),   // 배달비 산정후
       W: Math.abs(Number(r[22])||0),   // 즉시할인 배달전용
       X: Math.abs(Number(r[23])||0),   // 즉시할인 음식전용
-      Z: Math.abs(Number(r[25])||0),   // 고객부담배달비 총액
-      AG: Math.abs(Number(r[32])||0),  // 서비스이용료 부가세
+      AF: Math.abs(Number(r[31])||0),  // 서비스이용료 공급가액 (=V+S+Q)
       AI: Math.abs(Number(r[34])||0),  // 광고 공급가액
       AJ: Math.abs(Number(r[35])||0),  // 광고 부가세
       AN: Number(r[39])||0,            // 정산금액
@@ -420,9 +417,9 @@ function parseCP_xlsx(wb, filename) {
     getCols = r => ({
       N: Math.abs(Number(r[13])||0),
       Q: Math.abs(Number(r[14])||0),
-      R: Math.abs(Number(r[15])||0),
+      S: Math.abs(Number(r[15])||0),
       V: Math.abs(Number(r[16])||0),
-      W:0, X:0, Z:0, AG:0,
+      W:0, X:0, AF:0,
       AI: Math.abs(Number(r[30])||0),
       AJ: 0,
       AN: Number(r[31])||0,
@@ -450,14 +447,14 @@ function parseCP_xlsx(wb, filename) {
 
     const c = getCols(r);
 
-    // 대시보드 분류:
-    // 수수료 = Q(중개) + R(PG) + AG(서비스부가세) + AJ(광고부가세)
-    // 배달비 = V(배달비) - Z(고객부담배달비)
-    // 쿠폰  = N(상점쿠폰) + W(즉시할인배달) + X(즉시할인음식)
-    // 광고  = AI(광고 공급가액)
+    // 카드 표시 항목 (쿠팡 정산 규칙):
+    // 상점쿠폰=N, 중개=Q, PG수수료=S, 배달비=V, 광고=AI
+    // 서비스이용료공급가액 AF=V+S+Q, 부가세=AF×10%+AJ, 즉시할인=W+X
+    // 정산=K-N-Q-S-V-AI-부가세-(W+X)
     const sign = isCancel ? -1 : 1;
-    const fee = (c.Q + c.R + c.AG + c.AJ) * sign;
-    const delivery = (c.V - c.Z) * sign;
+    const vat = Math.round(c.AF * 0.1) + c.AJ;  // 부가세
+    const fee = (c.Q + c.S + vat) * sign;         // 수수료 합산 (중개+PG+부가세)
+    const delivery = c.V * sign;
     const coupon = (c.N + c.W + c.X) * sign;
     const ad = c.AI * sign;
 
@@ -470,8 +467,8 @@ function parseCP_xlsx(wb, filename) {
     totalCoupon += coupon;
     totalAd += ad;
     totalOrders += sign;
-    tQ += c.Q*sign; tR += c.R*sign; tV += c.V*sign;
-    tAG += c.AG*sign; tAI += c.AI*sign; tAJ += c.AJ*sign;
+    tQ += c.Q*sign; tR += c.S*sign; tV += c.V*sign;
+    tAG += vat*sign; tAI += c.AI*sign; tAJ += c.AJ*sign;
     tN += c.N*sign; tW += c.W*sign; tX += c.X*sign;
 
     if (!isCancel) {
@@ -479,8 +476,8 @@ function parseCP_xlsx(wb, filename) {
         date:ds, orderId:String(r[ci.orderId]||''), type:String(r[ci.type]||''),
         orderAmt:K, fee:Math.abs(fee), realDel:Math.abs(delivery), adAmt:Math.abs(ad),
         shopCoupon:c.N, instantDelDisc:c.W, instantFoodDisc:c.X,
-        broker:c.Q, pgFee:c.R, svcVat:c.AG, adVat:c.AJ,
-        delFee:c.V, custDelFee:c.Z, adSupply:c.AI,
+        broker:c.Q, pgFee:c.S, vat,
+        delFee:c.V, adSupply:c.AI, adVat:c.AJ,
         settleAmt:c.AN,
       });
     }
@@ -509,9 +506,9 @@ function parseCP_xlsx(wb, filename) {
     delivery: totalDel, coupon: totalCoupon, ad: totalAd,
     // 개별 항목 (카드 표시용)
     broker: tQ, pgFee: tR, delFee: tV,
-    svcVat: tAG, adSupply: tAI, adVat: tAJ,
+    adSupply: tAI, adVat: tAJ,
     shopCoupon: tN, instantDel: tW, instantFood: tX,
-    vat: tAG + tAJ, instantDisc: tW + tX,
+    vat: tAG, instantDisc: tW + tX,
     _hasPurchaseData: true,
     orderDetails: orderList, services,
   };

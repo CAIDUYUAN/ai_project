@@ -270,7 +270,7 @@ function getFilteredData() {
 
   platforms.forEach(p => {
     platformSummary[p] = { totalRev:0, orders:0, fee:0, delivery:0, coupon:0, ad:0,
-      broker:0, pgFee:0, delFee:0, svcVat:0, adSupply:0, adVat:0,
+      broker:0, pgFee:0, delFee:0, adSupply:0, adVat:0,
       shopCoupon:0, instantDel:0, instantFood:0, vat:0, instantDisc:0 };
     months.forEach(m => {
       const d = DB[p]?.[m]; if (!d) return;
@@ -284,7 +284,6 @@ function getFilteredData() {
       platformSummary[p].broker += d.broker||0;
       platformSummary[p].pgFee += d.pgFee||0;
       platformSummary[p].delFee += d.delFee||0;
-      platformSummary[p].svcVat += d.svcVat||0;
       platformSummary[p].adSupply += d.adSupply||0;
       platformSummary[p].adVat += d.adVat||0;
       platformSummary[p].shopCoupon += d.shopCoupon||0;
