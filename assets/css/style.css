@@ -513,3 +513,53 @@ select option { background: var(--bg-secondary); color: var(--text-primary); }
   box-shadow: var(--shadow-card);
 }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  width: 90%; max-width: 480px;
+  max-height: 80vh; overflow-y: auto;
+  box-shadow: var(--shadow-card);
+  animation: fadeIn 0.2s ease;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg-secondary); border: none;
+  color: var(--text-tertiary); font-size: 14px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.modal-close:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.modal-body { padding: 20px; font-size: 14px; line-height: 1.8; color: var(--text-secondary); }
+.modal-body .step { display: flex; gap: 10px; margin-bottom: 12px; }
+.modal-body .step-n {
+  min-width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(41,151,255,0.15); color: var(--accent);
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.modal-body .step-t { flex: 1; }
+.modal-body a { color: var(--accent); text-decoration: none; }
+.modal-body a:hover { text-decoration: underline; }
+.modal-body .warn-box {
+  background: rgba(255,159,10,0.1); border-radius: 8px;
+  padding: 12px 14px; margin-top: 12px; color: var(--orange); font-size: 13px;
+}
+.modal-body .tip-box {
+  background: rgba(41,151,255,0.08); border-radius: 8px;
+  padding: 12px 14px; margin-top: 12px; color: var(--accent); font-size: 13px;
+}

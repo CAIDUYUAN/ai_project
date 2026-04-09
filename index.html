@@ -363,6 +363,17 @@
   </div>
 </div>
 
+<!-- 가이드 모달 -->
+<div class="modal-overlay" id="guideModal" onclick="if(event.target===this)closeGuide()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="guideTitle"></span>
+      <button class="modal-close" onclick="closeGuide()">✕</button>
+    </div>
+    <div class="modal-body" id="guideBody"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div><!-- end app -->
 

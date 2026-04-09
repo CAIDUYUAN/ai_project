@@ -539,16 +539,70 @@ function runSimulator() {
   document.getElementById('simMarginRate').style.color = margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)';
 }
 
-/* ═══ GUIDE ═══ */
+/* ═══ GUIDE (모달) ═══ */
+const GUIDES = {
+  bm: {
+    title: '🛵 배민 다운로드 가이드',
+    steps: [
+      '<a href="https://ceo.baemin.com" target="_blank">ceo.baemin.com</a> 접속 (배민 셀프서비스)',
+      '<b>정산관리</b> → <b>매출상세내역</b> → 월 선택 → 엑셀 다운로드',
+      '매입 파일: <b>매입상세내역</b> → 같은 방법으로 다운로드',
+      '다운받은 파일을 위 업로드 박스에 드래그'
+    ],
+    warn: '암호가 걸린 파일은 업로드할 수 없습니다.<br>엑셀에서 열고 → <b>다른 이름으로 저장</b> → 새 파일을 업로드하세요.'
+  },
+  cp: {
+    title: '🧡 쿠팡이츠 다운로드 가이드',
+    steps: [
+      '<a href="https://store.coupangeats.com" target="_blank">store.coupangeats.com</a> 접속',
+      '<b>정산</b> → <b>정산내역</b> → 월 선택',
+      '<b>엑셀 다운로드</b> 클릭',
+      '다운받은 파일을 위 업로드 박스에 드래그'
+    ]
+  },
+  tg: {
+    title: '🟢 땡겨요 다운로드 가이드',
+    steps: [
+      '<a href="https://partner.ttanggeyeo.com" target="_blank">partner.ttanggeyeo.com</a> 접속',
+      '<b>정산관리</b> → <b>정산내역(건별)</b> 선택',
+      '기간 선택 후 <b>엑셀 다운로드</b>',
+      '다운받은 파일을 위 업로드 박스에 드래그'
+    ]
+  },
+  yg: {
+    title: '🟠 요기요 다운로드 가이드',
+    steps: [
+      '<a href="https://ceo.yogiyo.co.kr" target="_blank">ceo.yogiyo.co.kr</a> 접속 (사장님 광장)',
+      '<b>정산</b> → <b>매출내역</b> → 월 선택',
+      '<b>엑셀 다운로드</b> 클릭',
+      '다운받은 파일을 위 업로드 박스에 드래그'
+    ]
+  },
+  ts: {
+    title: '🏪 가게(토스포스) 다운로드 가이드',
+    steps: [
+      '토스포스 앱 또는 PC → <b>매출 리포트</b>',
+      '<b>엑셀 내보내기</b> 클릭 → "매출리포트-YYMMDD.xlsx" 저장',
+      '다운받은 파일을 위 업로드 박스에 드래그'
+    ],
+    warn: '암호가 걸린 파일은 업로드할 수 없습니다.',
+    tip: '<b>암호 푸는 방법:</b><br>① 엑셀에서 파일 열기 (암호 입력)<br>② 파일 → 정보 → 통합 문서 보호 → 암호 설정<br>③ 암호 칸을 <b>비우고</b> 확인 → 저장<br><br>또는: 엑셀에서 열고 → <b>다른 이름으로 저장</b>'
+  }
+};
+
 function showGuide(pf) {
-  const guides = {
-    bm: '배달의민족 → 셀프서비스 → 정산관리 → 매출상세내역 / 매입상세내역 다운로드\nhttps://ceo.baemin.com\n\n⚠️ 암호가 걸린 파일은 업로드할 수 없습니다.\n엑셀에서 파일 열기 → 다른 이름으로 저장 → 새 파일로 업로드',
-    cp: '쿠팡이츠 → 정산 → 정산내역 → 엑셀 다운로드\nhttps://store.coupangeats.com',
-    tg: '땡겨요 → 정산관리 → 정산내역(건별) 다운로드\nhttps://partner.ttanggeyeo.com',
-    yg: '요기요 → 사장님 광장 → 정산 → 매출내역 다운로드\nhttps://ceo.yogiyo.co.kr',
-    ts: '토스포스 → 매출 리포트 → 엑셀 내보내기 → "매출리포트-YYMMDD.xlsx"\n\n⚠️ 암호가 걸린 파일은 업로드할 수 없습니다.\n\n📌 엑셀 암호 푸는 방법:\n1. 엑셀에서 파일 열기 (암호 입력)\n2. 파일 → 정보 → 통합 문서 보호 → 암호 설정\n3. 암호 칸을 비우고 확인 → 저장\n4. 저장된 파일을 다시 업로드\n\n또는: 엑셀에서 열고 → 다른 이름으로 저장 → 새 파일로 저장'
-  };
-  alert(guides[pf]);
+  const g = GUIDES[pf];
+  if (!g) return;
+  document.getElementById('guideTitle').textContent = g.title;
+  let html = g.steps.map((s, i) => `<div class="step"><div class="step-n">${i+1}</div><div class="step-t">${s}</div></div>`).join('');
+  if (g.warn) html += `<div class="warn-box">⚠️ ${g.warn}</div>`;
+  if (g.tip) html += `<div class="tip-box">💡 ${g.tip}</div>`;
+  document.getElementById('guideBody').innerHTML = html;
+  document.getElementById('guideModal').classList.add('open');
+}
+
+function closeGuide() {
+  document.getElementById('guideModal').classList.remove('open');
 }
 
 /* ═══ REFRESH ═══ */
