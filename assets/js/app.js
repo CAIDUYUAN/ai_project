@@ -486,14 +486,14 @@ function updatePlatformGrid(data) {
       : '';
 
     // 호버 툴팁 계산 카드
-    const tt = (label, val, color, pct) => `<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${label}</span><span style="color:${color};font-weight:600;">${val}${pct?` <span style="font-size:10px;opacity:0.7;">${pct}</span>`:''}</span></div>`;
-    const sep = `<div style="border-top:1px solid rgba(255,255,255,0.1);margin:4px 0;"></div>`;
+    const tt = (label, val, color, pct) => `<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>${label}</span><span style="color:${color};font-weight:600;">${val}${pct?` <span style="font-size:12px;opacity:0.7;">${pct}</span>`:''}</span></div>`;
+    const sep = `<div style="border-top:1px solid rgba(255,255,255,0.1);margin:6px 0;"></div>`;
     const pct = v => ps.totalRev>0 ? fmtPct(v/ps.totalRev*100) : '-';
 
     const tooltipHtml = `
       ${tt(PLATFORMS[p].name+' 매출', fmtW(ps.totalRev)+'원', '#fff', '')}
       ${sep}
-      <div style="font-size:10px;color:rgba(255,255,255,0.4);padding:2px 0;">플랫폼 차감</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);padding:2px 0;">플랫폼 차감</div>
       ${tt('  수수료', '-'+fmtW(ps.fee)+'원', 'var(--red)', pct(ps.fee))}
       ${ps.delivery ? tt('  배달비', '-'+fmtW(ps.delivery)+'원', 'var(--red)', pct(ps.delivery)) : ''}
       ${ps.ad ? tt('  광고', '-'+fmtW(ps.ad)+'원', 'var(--red)', pct(ps.ad)) : ''}
@@ -501,7 +501,7 @@ function updatePlatformGrid(data) {
       ${sep}
       ${tt('입금예정 (플랫폼 마진)', fmtW(deposit)+'원', 'var(--accent)', pct(deposit))}
       ${sep}
-      <div style="font-size:10px;color:rgba(255,255,255,0.4);padding:2px 0;">내 비용</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);padding:2px 0;">내 비용</div>
       ${tt('  원가 ('+S.cogs+'%)', '-'+fmtW(matCost)+'원', 'var(--orange)', '')}
       ${tt('  고정비 배분', '-'+fmtW(fixedAlloc)+'원', 'var(--orange)', '비중 '+fmtPct(revShare*100))}
       ${sep}
