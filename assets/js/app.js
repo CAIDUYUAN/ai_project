@@ -147,7 +147,9 @@ function renderFileList() {
       : '';
 
     return `<div class="file-group">
-      <div class="file-group-header">${p.icon || ''} <span>${p.name}</span><span class="file-group-count">${files.length}개</span></div>
+      <div class="file-group-header">${p.icon || ''} <span>${p.name}</span><span class="file-group-count">${files.length}개</span>
+        <button class="btn-clear-pf" onclick="clearPlatformData('${pf}')">🗑️ 전체삭제</button>
+      </div>
       ${fileItems}${moreBtn}
     </div>`;
   }).join('');
@@ -164,6 +166,29 @@ function toggleFileMore(pf) {
 async function clearAllData() {
   if (!confirm('모든 데이터를 삭제하시겠습니까?')) return;
   await clearAll();
+  renderFileList();
+  refreshAll();
+}
+
+async function clearPlatformData(pf) {
+  const p = PLATFORMS[pf];
+  if (!confirm(`${p.name}의 모든 데이터를 삭제하시겠습니까?`)) return;
+
+  // DB에서 해당 플랫폼 데이터 삭제
+  const keys = Object.keys(DB[pf]);
+  const purchaseKeys = (FILES[pf]||[]).filter(f => f.key.includes('purchase')).map(f => f.key);
+  const allKeys = [...new Set([...keys, ...purchaseKeys])];
+
+  for (const key of allKeys) {
+    await deleteFromSupabase(pf, key).catch(e => console.warn(e));
+  }
+
+  // 로컬 메모리 삭제
+  Object.keys(DB[pf]).forEach(k => delete DB[pf][k]);
+  FILES[pf] = [];
+
+  toast(`${p.name} 데이터가 삭제되었습니다.`);
+  updateUploadUI(pf);
   renderFileList();
   refreshAll();
 }
@@ -279,26 +304,35 @@ function updateDailyChart(data) {
   if (!days.length) { chart.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-desc">일별 데이터가 없습니다</div></div>'; return; }
   const maxRev = Math.max(...days.map(d => Object.values(data.dailyAll[d]).reduce((s,v) => s + v.rev, 0)), 1);
   chart.innerHTML = days.map(d => {
-    const dd = data.dailyAll[d];
-    const segs = PF_LIST.map(p => dd[p] ? `<div class="bar-segment ${p}" style="height:${Math.max(0,(dd[p].rev/maxRev)*180)}px;" title="${PLATFORMS[p].name}: ${fmt(dd[p].rev)}원"></div>` : '').join('');
-    return `<div class="bar-group"><div class="bar-stack">${segs}</div><div class="bar-label">${parseInt(d.split('-')[2])}</div></div>`;
+    const dayData = data.dailyAll[d];
+    const segs = PF_LIST.map(p => dayData[p] ? `<div class="bar-segment ${p}" style="height:${Math.max(0,(dayData[p].rev/maxRev)*180)}px;" title="${PLATFORMS[p].name}: ${fmt(dayData[p].rev)}원"></div>` : '').join('');
+    const [yr, mm, dy] = d.split('-');
+    return `<div class="bar-group"><div class="bar-stack">${segs}</div><div class="bar-label">${parseInt(mm)}/${parseInt(dy)}</div></div>`;
   }).join('');
 }
 
 function updatePlatformGrid(data) {
   const grid = document.getElementById('platformGrid');
+  const isDeliveryPf = pf => !['ts','nv','di'].includes(pf);
   grid.innerHTML = PF_LIST.map(p => {
-    const ps = data.platformSummary[p]; if (!ps || !ps.totalRev) return '';
+    const ps = data.platformSummary[p];
+    if (!ps || (!ps.totalRev && !ps.orders)) return '';
     const dep = ps.totalRev - ps.fee - ps.delivery - ps.coupon - ps.ad;
     const net = dep - ps.totalRev * (S.cogs/100);
     const margin = ps.totalRev > 0 ? (net/ps.totalRev*100) : 0;
     const perOrd = ps.orders > 0 ? net / ps.orders : 0;
+    const deliveryRow = isDeliveryPf(p)
+      ? `<div class="platform-stat"><span class="platform-stat-label">배달비</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.delivery)}원 <span style="font-size:11px;color:var(--text-tertiary);">${fmtPct(ps.totalRev>0?ps.delivery/ps.totalRev*100:0)}</span></span></div>`
+      : '';
+    const pctSpan = (val, total) => `<span style="font-size:11px;color:var(--text-tertiary);">${fmtPct(total>0?val/total*100:0)}</span>`;
     return `<div class="platform-card ${p}">
       <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span></div>
       <div class="platform-stat"><span class="platform-stat-label">매출</span><span class="platform-stat-value">${fmtW(ps.totalRev)}원</span></div>
       <div class="platform-stat"><span class="platform-stat-label">주문수</span><span class="platform-stat-value">${fmt(ps.orders)}건</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">수수료</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.fee)}원 <span style="font-size:11px;color:var(--text-tertiary);">${fmtPct(ps.totalRev>0?ps.fee/ps.totalRev*100:0)}</span></span></div>
-      <div class="platform-stat"><span class="platform-stat-label">배달비</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.delivery)}원 <span style="font-size:11px;color:var(--text-tertiary);">${fmtPct(ps.totalRev>0?ps.delivery/ps.totalRev*100:0)}</span></span></div>
+      <div class="platform-stat"><span class="platform-stat-label">수수료</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.fee)}원 ${pctSpan(ps.fee, ps.totalRev)}</span></div>
+      ${deliveryRow}
+      <div class="platform-stat"><span class="platform-stat-label">광고</span><span class="platform-stat-value" style="color:${ps.ad?'var(--red)':'var(--text-tertiary)'};">${fmtW(ps.ad)}원${ps.ad ? ' '+pctSpan(ps.ad, ps.totalRev) : ''}</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">쿠폰</span><span class="platform-stat-value" style="color:${ps.coupon?'var(--red)':'var(--text-tertiary)'};">${fmtW(ps.coupon)}원${ps.coupon ? ' '+pctSpan(ps.coupon, ps.totalRev) : ''}</span></div>
       <div class="platform-stat"><span class="platform-stat-label">건당 순수익</span><span class="platform-stat-value" style="color:${perOrd>=0?'var(--green)':'var(--red)'};">${fmt(Math.round(perOrd))}원</span></div>
       <div class="platform-stat"><span class="platform-stat-label">마진율</span><span class="platform-stat-value" style="color:${margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)'};">${fmtPct(margin)}</span></div>
     </div>`;
@@ -415,7 +449,7 @@ function updateMonthlyTrend() {
   });
 
   const maxRev = Math.max(...monthlyRevs.map(d => d.rev), 1);
-  const w = 800, h = 150, padX = 40, padY = 25;
+  const w = 800, h = 175, padX = 40, padY = 25;
   const stepX = (w - padX * 2) / Math.max(1, monthlyRevs.length - 1);
 
   const points = monthlyRevs.map((d, i) => ({
@@ -430,7 +464,30 @@ function updateMonthlyTrend() {
 
   const labels = points.map(p => {
     const [,mo] = p.month.split('-');
-    return `<text class="trend-label" x="${p.x}" y="${h - 5}">${parseInt(mo)}월</text>`;
+    return `<text class="trend-label" x="${p.x}" y="${h - 30}">${parseInt(mo)}월</text>`;
+  }).join('');
+
+  // 년도 표시: 년도별 구간에 라벨 + 구분선
+  let yearLabels = '';
+  let lastYear = '';
+  const yearGroups = [];
+  points.forEach((p, i) => {
+    const yr = p.month.split('-')[0];
+    if (yr !== lastYear) {
+      if (yearGroups.length) yearGroups[yearGroups.length-1].endX = points[i-1].x;
+      yearGroups.push({ year: yr, startX: p.x, endX: p.x });
+      lastYear = yr;
+    } else {
+      yearGroups[yearGroups.length-1].endX = p.x;
+    }
+  });
+  yearLabels = yearGroups.map((g, gi) => {
+    const cx = (g.startX + g.endX) / 2;
+    const lineY = h - 16;
+    let line = `<line x1="${g.startX - 5}" y1="${lineY}" x2="${g.endX + 5}" y2="${lineY}" stroke="var(--accent)" stroke-width="1.5" stroke-opacity="0.4"/>`;
+    // 년도 구분 세로선
+    let divider = gi > 0 ? `<line x1="${g.startX - 8}" y1="${h - 35}" x2="${g.startX - 8}" y2="${h - 5}" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3,2"/>` : '';
+    return `${divider}${line}<text class="trend-year" x="${cx}" y="${h - 5}">${g.year}년</text>`;
   }).join('');
 
   const values = points.map(p =>
@@ -439,7 +496,7 @@ function updateMonthlyTrend() {
 
   el.innerHTML = `<svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
     <path class="trend-line" d="${linePath}"/>
-    ${dots}${labels}${values}
+    ${dots}${labels}${yearLabels}${values}
   </svg>`;
 }
 
