@@ -471,9 +471,9 @@ function updatePlatformGrid(data) {
 
     const rev = ps.totalRev;
     const orders = ps.orders;
-    // DB에 실제값이 있으면 사용, 없으면 설정값으로 계산
-    const fee = ps.fee || Math.round(rev * getPfFeeRate(p));
-    const del = ps.delivery || (isDeliveryPf(p) ? orders * getPfDel(p) : 0);
+    // DB 실제값만 사용 (설정값 계산 안 함)
+    const fee = ps.fee || 0;
+    const del = ps.delivery || 0;
     const ad = ps.ad || 0;
     const coupon = ps.coupon || 0;
     const deposit = rev - fee - del - ad - coupon;
