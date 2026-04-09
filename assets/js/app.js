@@ -147,10 +147,9 @@ function renderFileList() {
       : '';
 
     return `<div class="file-group">
-      <div class="file-group-header">${p.icon || ''} <span>${p.name}</span><span class="file-group-count">${files.length}개</span>
-        <button class="btn-clear-pf" onclick="clearPlatformData('${pf}')">🗑️ 전체삭제</button>
-      </div>
+      <div class="file-group-header">${p.icon || ''} <span>${p.name}</span><span class="file-group-count">${files.length}개</span></div>
       ${fileItems}${moreBtn}
+      <button class="btn-clear-pf" onclick="clearPlatformData('${pf}')">🗑️ 전체 삭제</button>
     </div>`;
   }).join('');
 }
