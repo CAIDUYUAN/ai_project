@@ -95,7 +95,12 @@ function renderFileList() {
       <div class="file-icon ${f.pf}">${p.icon}</div>
       <div class="file-info">
         <div class="file-name">${f.filename}</div>
-        <div class="file-meta"><span>${p.name}</span><span>${f.period}</span><span class="file-tag sales">매출</span></div>
+        <div class="file-meta"><span>${p.name}</span><span>${f.period}</span>${
+          f.key.includes('purchase') ? '<span class="file-tag purchase">매입</span>' :
+          f.period.includes('매입') ? '<span class="file-tag purchase">매입</span>' :
+          f.filename && /매입/.test(f.filename) ? '<span class="file-tag purchase">매입</span>' :
+          '<span class="file-tag sales">매출</span>'
+        }</div>
       </div>
       <button class="file-delete" onclick="removeFile('${f.pf}','${f.key}')">✕</button>
     </div>`;
