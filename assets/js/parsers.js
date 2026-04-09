@@ -225,7 +225,7 @@ function parseBM_purchase_xlsx(wb, filename) {
       if (/결제정산/.test(feeType)) { od.settleFee += supply; }
       else if (/중개이용료/.test(feeType)) { od.brokerageFee += supply; }
       else if (/배달비/.test(feeType)) { od.deliveryFee += supply; totalDelivery += supply; }
-      else if (/광고이용료/.test(feeType)) { od.adFee += total; totalAd += total; } // 광고는 합계(부가세포함)
+      else if (/광고이용료/.test(feeType)) { od.adFee += supply; totalAd += supply; } // 광고도 공급가액만
       od.supplyTotal += supply;
       od.vatTotal += vat;
       od.total += total;
@@ -267,7 +267,7 @@ function parseBM_purchase_xlsx(wb, filename) {
     pgFee: aggPgFee,       // 결제정산수수료 (공급가액)
     delFee: aggDelFee,     // 배달비 (공급가액)
     vat: aggVat,           // 부가세 합계
-    adSupply: totalAd,     // 광고비 (부가세포함 합계, 우리가게클릭)
+    adSupply: totalAd,     // 광고비 (공급가액, 우리가게클릭)
     services, details, orderDetails: Object.values(orderDetails),
   };
 }
