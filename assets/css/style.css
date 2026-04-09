@@ -482,6 +482,15 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 
 select option { background: var(--bg-secondary); color: var(--text-primary); }
 
+/* ─── PLATFORM DOT ─── */
+.pf-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+
 /* ─── SALES ANALYSIS ─── */
 @media (max-width: 640px) {
   #salesAnalysis { grid-template-columns: 1fr !important; }

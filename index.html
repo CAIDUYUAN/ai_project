@@ -62,11 +62,11 @@
     <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv" onchange="handleFiles(this.files)">
   </div>
   <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
-    <button class="btn btn-secondary" onclick="showGuide('bm')">🛵 배민 다운로드 가이드</button>
-    <button class="btn btn-secondary" onclick="showGuide('cp')">🧡 쿠팡 다운로드 가이드</button>
-    <button class="btn btn-secondary" onclick="showGuide('tg')">🟢 땡겨요 다운로드 가이드</button>
-    <button class="btn btn-secondary" onclick="showGuide('yg')">🟠 요기요 다운로드 가이드</button>
-    <button class="btn btn-secondary" onclick="showGuide('ts')">🏪 가게(토스) 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('bm')"><span class="pf-dot" style="background:#2AC1BC"></span> 배민 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('cp')"><span class="pf-dot" style="background:#FF2F6E"></span> 쿠팡 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('tg')"><span class="pf-dot" style="background:#FF5722"></span> 땡겨요 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('yg')"><span class="pf-dot" style="background:#FA0050"></span> 요기요 다운로드 가이드</button>
+    <button class="btn btn-secondary" onclick="showGuide('ts')"><span class="pf-dot" style="background:#1B64DA"></span> 가게(토스) 다운로드 가이드</button>
   </div>
   <div id="fileListContainer" class="file-list"></div>
   <div style="margin-top:20px;" id="dataActions">
@@ -80,13 +80,13 @@
   <div class="pill-group" id="monthPills"></div>
   <div class="pill-group" id="platformPills">
     <button class="pill active" data-p="all" onclick="togglePlatform('all')">전체</button>
-    <button class="pill" data-p="bm" onclick="togglePlatform('bm')">🛵 배민</button>
-    <button class="pill" data-p="cp" onclick="togglePlatform('cp')">🧡 쿠팡</button>
-    <button class="pill" data-p="tg" onclick="togglePlatform('tg')">🟢 땡겨요</button>
-    <button class="pill" data-p="yg" onclick="togglePlatform('yg')">🟠 요기요</button>
-    <button class="pill" data-p="ts" onclick="togglePlatform('ts')">🏪 가게</button>
-    <button class="pill" data-p="nv" onclick="togglePlatform('nv')">🟩 네이버</button>
-    <button class="pill" data-p="di" onclick="togglePlatform('di')">📱 두잇</button>
+    <button class="pill" data-p="bm" onclick="togglePlatform('bm')"><span class="pf-dot" style="background:#2AC1BC"></span> 배민</button>
+    <button class="pill" data-p="cp" onclick="togglePlatform('cp')"><span class="pf-dot" style="background:#FF2F6E"></span> 쿠팡</button>
+    <button class="pill" data-p="tg" onclick="togglePlatform('tg')"><span class="pf-dot" style="background:#FF5722"></span> 땡겨요</button>
+    <button class="pill" data-p="yg" onclick="togglePlatform('yg')"><span class="pf-dot" style="background:#FA0050"></span> 요기요</button>
+    <button class="pill" data-p="ts" onclick="togglePlatform('ts')"><span class="pf-dot" style="background:#1B64DA"></span> 가게</button>
+    <button class="pill" data-p="nv" onclick="togglePlatform('nv')"><span class="pf-dot" style="background:#03C75A"></span> 네이버</button>
+    <button class="pill" data-p="di" onclick="togglePlatform('di')"><span class="pf-dot" style="background:#FF6B35"></span> 두잇</button>
   </div>
   <div id="diagnosisBanner"></div>
   <div class="kpi-grid" id="kpiGrid">
@@ -315,38 +315,38 @@
     <div class="setting-row"><span class="setting-label">재료 원가율</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sCostRate" value="35" min="0" max="100" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
   </div>
   <div class="platform-grid">
-    <div class="setting-group" style="border-top:3px solid var(--bm-color);"><h3 style="margin-bottom:14px;">🛵 배민 수수료</h3>
+    <div class="setting-group" style="border-top:3px solid var(--bm-color);"><h3 style="margin-bottom:14px;"><span class="pf-dot" style="background:#2AC1BC"></span> 배민 수수료</h3>
       <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sBmFee" value="6.8" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sBmPg" value="1.3" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">부가세</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sBmVat" value="0.68" step="0.01" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sBmDel" value="3100" onchange="saveSettings()"></div>
     </div>
-    <div class="setting-group" style="border-top:3px solid var(--cp-color);"><h3 style="margin-bottom:14px;">🧡 쿠팡이츠 수수료</h3>
+    <div class="setting-group" style="border-top:3px solid var(--cp-color);"><h3 style="margin-bottom:14px;"><span class="pf-dot" style="background:#FF2F6E"></span> 쿠팡이츠 수수료</h3>
       <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sCpFee" value="7.8" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sCpPg" value="2.8" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">부가세</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sCpVat" value="2.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sCpDel" value="3400" onchange="saveSettings()"></div>
     </div>
-    <div class="setting-group" style="border-top:3px solid var(--tg-color);"><h3 style="margin-bottom:14px;">🟢 땡겨요 수수료</h3>
+    <div class="setting-group" style="border-top:3px solid var(--tg-color);"><h3 style="margin-bottom:14px;"><span class="pf-dot" style="background:#FF5722"></span> 땡겨요 수수료</h3>
       <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sTgFee" value="9" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sTgPg" value="3.3" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sTgDel" value="2500" onchange="saveSettings()"></div>
     </div>
-    <div class="setting-group" style="border-top:3px solid var(--yg-color);"><h3 style="margin-bottom:14px;">🟠 요기요 수수료</h3>
+    <div class="setting-group" style="border-top:3px solid var(--yg-color);"><h3 style="margin-bottom:14px;"><span class="pf-dot" style="background:#FA0050"></span> 요기요 수수료</h3>
       <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sYgFee" value="12.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sYgPg" value="3.3" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sYgDel" value="3000" onchange="saveSettings()"></div>
     </div>
-    <div class="setting-group" style="border-top:3px solid var(--ts-color);"><h3 style="margin-bottom:14px;">🏪 가게(토스포스)</h3>
+    <div class="setting-group" style="border-top:3px solid var(--ts-color);"><h3 style="margin-bottom:14px;"><span class="pf-dot" style="background:#1B64DA"></span> 가게(토스포스)</h3>
       <div class="setting-row"><span class="setting-label">카드 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sTsFee" value="1.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label" style="color:var(--text-tertiary);font-size:12px;">※ 가게 직접매출은 배달비·중개수수료 없음</span></div>
     </div>
-    <div class="setting-group" style="border-top:3px solid var(--nv-color);"><h3 style="margin-bottom:14px;">🟩 네이버주문 수수료</h3>
+    <div class="setting-group" style="border-top:3px solid var(--nv-color);"><h3 style="margin-bottom:14px;"><span class="pf-dot" style="background:#03C75A"></span> 네이버주문 수수료</h3>
       <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sNvFee" value="5.0" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sNvPg" value="1.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sNvDel" value="3000" onchange="saveSettings()"></div>
     </div>
-    <div class="setting-group" style="border-top:3px solid var(--di-color);"><h3 style="margin-bottom:14px;">📱 두잇주문 수수료</h3>
+    <div class="setting-group" style="border-top:3px solid var(--di-color);"><h3 style="margin-bottom:14px;"><span class="pf-dot" style="background:#FF6B35"></span> 두잇주문 수수료</h3>
       <div class="setting-row"><span class="setting-label">중개 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sDiFee" value="5.0" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">PG 수수료</span><div style="display:flex;align-items:center;gap:8px;"><input class="setting-input" type="number" id="sDiPg" value="1.5" step="0.1" onchange="saveSettings()"><span class="text-xs text-tertiary">%</span></div></div>
       <div class="setting-row"><span class="setting-label">건당 배달비</span><input class="setting-input" type="number" id="sDiDel" value="3000" onchange="saveSettings()"></div>

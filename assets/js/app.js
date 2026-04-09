@@ -2,14 +2,17 @@
    빨마라 대시보드 — 메인 앱 로직
    ═══════════════════════════════════════════ */
 
+function pfSvg(letter, color) {
+  return `<svg viewBox="0 0 32 32" width="20" height="20"><rect rx="6" width="32" height="32" fill="${color}"/><text x="16" y="22" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="var(--font)">${letter}</text></svg>`;
+}
 const PLATFORMS = {
-  bm: { name: '배민', icon: '🛵', color: '#30d158' },
-  cp: { name: '쿠팡이츠', icon: '🧡', color: '#ff453a' },
-  tg: { name: '땡겨요', icon: '🟢', color: '#2D9E6B' },
-  yg: { name: '요기요', icon: '🟠', color: '#E5302A' },
-  ts: { name: '가게', icon: '🏪', color: '#6366f1' },
-  nv: { name: '네이버', icon: '🟩', color: '#03C75A' },
-  di: { name: '두잇', icon: '📱', color: '#FF6B35' }
+  bm: { name: '배민', icon: pfSvg('배','#2AC1BC'), color: '#30d158' },
+  cp: { name: '쿠팡이츠', icon: pfSvg('쿠','#FF2F6E'), color: '#ff453a' },
+  tg: { name: '땡겨요', icon: pfSvg('땡','#FF5722'), color: '#2D9E6B' },
+  yg: { name: '요기요', icon: pfSvg('요','#FA0050'), color: '#E5302A' },
+  ts: { name: '가게', icon: pfSvg('T','#1B64DA'), color: '#6366f1' },
+  nv: { name: '네이버', icon: pfSvg('N','#03C75A'), color: '#03C75A' },
+  di: { name: '두잇', icon: pfSvg('D','#FF6B35'), color: '#FF6B35' }
 };
 const PF_LIST = ['bm','cp','tg','yg','ts','nv','di'];
 let selectedMonths = [];
@@ -92,7 +95,7 @@ function renderFileList() {
   container.innerHTML = allFiles.map(f => {
     const p = PLATFORMS[f.pf];
     return `<div class="file-item">
-      <div class="file-icon ${f.pf}">${p.icon}</div>
+      <div class="file-icon ${f.pf}">${p.icon || ''}</div>
       <div class="file-info">
         <div class="file-name">${f.filename}</div>
         <div class="file-meta"><span>${p.name}</span><span>${f.period}</span>${
