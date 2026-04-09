@@ -537,11 +537,11 @@ function runSimulator() {
 /* ═══ GUIDE ═══ */
 function showGuide(pf) {
   const guides = {
-    bm: '배달의민족 → 셀프서비스 → 정산관리 → 매출상세내역 / 매입상세내역 다운로드\nhttps://ceo.baemin.com',
+    bm: '배달의민족 → 셀프서비스 → 정산관리 → 매출상세내역 / 매입상세내역 다운로드\nhttps://ceo.baemin.com\n\n⚠️ 암호가 걸린 파일은 업로드할 수 없습니다.\n엑셀에서 파일 열기 → 다른 이름으로 저장 → 새 파일로 업로드',
     cp: '쿠팡이츠 → 정산 → 정산내역 → 엑셀 다운로드\nhttps://store.coupangeats.com',
     tg: '땡겨요 → 정산관리 → 정산내역(건별) 다운로드\nhttps://partner.ttanggeyeo.com',
     yg: '요기요 → 사장님 광장 → 정산 → 매출내역 다운로드\nhttps://ceo.yogiyo.co.kr',
-    ts: '토스포스 → 매출 리포트 → 엑셀 내보내기 → "매출리포트-YYMMDD.xlsx"\n\n⚠️ 암호가 걸린 파일은 열 수 없습니다.\n암호 없이 다시 다운로드해주세요.'
+    ts: '토스포스 → 매출 리포트 → 엑셀 내보내기 → "매출리포트-YYMMDD.xlsx"\n\n⚠️ 암호가 걸린 파일은 업로드할 수 없습니다.\n\n📌 엑셀 암호 푸는 방법:\n1. 엑셀에서 파일 열기 (암호 입력)\n2. 파일 → 정보 → 통합 문서 보호 → 암호 설정\n3. 암호 칸을 비우고 확인 → 저장\n4. 저장된 파일을 다시 업로드\n\n또는: 엑셀에서 열고 → 다른 이름으로 저장 → 새 파일로 저장'
   };
   alert(guides[pf]);
 }

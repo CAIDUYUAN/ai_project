@@ -79,7 +79,7 @@ async function loadXlsx2(files, pf) {
     } catch(err) {
       failed++;
       const msg = /password.protected/i.test(err.message)
-        ? '암호가 걸린 파일입니다. 토스포스에서 다시 다운로드하세요.'
+        ? '암호가 걸린 파일입니다. 암호를 푸시고 다시 다운로드해주세요. (데이터 탭 가이드 참고)'
         : err.message;
       console.warn(`파일 오류(${file.name}):`, msg);
       toast(`⚠️ ${file.name}: ${msg}`);
