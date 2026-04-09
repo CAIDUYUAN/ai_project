@@ -50,6 +50,19 @@
 </div>
 
 <!-- ═══ APP ═══ -->
+<!-- 데이터 로딩 화면 -->
+<div class="loading-screen" id="loadingScreen" style="display:none;">
+  <div class="loading-ring">
+    <svg viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+      <circle cx="60" cy="60" r="48" fill="none" stroke="var(--accent)" stroke-width="6" stroke-dasharray="301" stroke-dashoffset="301" stroke-linecap="round" id="loadingRing"/>
+    </svg>
+    <div class="loading-pct" id="loadingPct">0%</div>
+  </div>
+  <div class="loading-text" id="loadingText">데이터 불러오는 중...</div>
+  <div class="loading-sub" id="loadingSub">Supabase에서 매출 데이터를 복원하고 있습니다</div>
+</div>
+
 <div class="app" id="appContainer" style="display:none;">
 
 <!-- TAB 1: UPLOAD -->

@@ -28,20 +28,49 @@ function doLogin() { attemptLogin(); }
 
 function showApp() {
   document.getElementById('loginOverlay').style.display = 'none';
-  document.getElementById('mainNav').style.display = 'flex';
-  document.getElementById('appContainer').style.display = 'block';
-  if (window.innerWidth <= 768) document.getElementById('mobileNav').style.display = 'block';
+  document.getElementById('loadingScreen').style.display = 'flex';
   initApp();
 }
 
+function setLoading(pct, text, sub) {
+  const ring = document.getElementById('loadingRing');
+  const circ = 2 * Math.PI * 48; // r=48
+  if (ring) ring.setAttribute('stroke-dashoffset', circ - (circ * pct / 100));
+  const pctEl = document.getElementById('loadingPct');
+  if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+  if (text) document.getElementById('loadingText').textContent = text;
+  if (sub) document.getElementById('loadingSub').textContent = sub;
+}
+
+function hideLoading() {
+  const ring = document.querySelector('.loading-ring');
+  if (ring) ring.classList.add('done');
+  setLoading(100, '완료!', '');
+  setTimeout(() => {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('mainNav').style.display = 'flex';
+    document.getElementById('appContainer').style.display = 'block';
+    if (window.innerWidth <= 768) document.getElementById('mobileNav').style.display = 'block';
+  }, 500);
+}
+
 async function initApp() {
+  setLoading(10, '설정 불러오는 중...', '로컬 설정을 복원합니다');
   loadSettings();
   try { applySettingsToUI(); } catch(e) {}
+
+  setLoading(30, '데이터 불러오는 중...', 'Supabase에서 매출 데이터를 복원합니다');
   try { await loadFromSupabase(); } catch(e) { console.warn('Supabase 로드:', e.message); }
+
+  setLoading(70, '데이터 처리 중...', '수수료 모드를 적용합니다');
   try { if (typeof applyFeeModes === 'function') applyFeeModes(); } catch(e) {}
+
+  setLoading(90, '화면 준비 중...', '대시보드를 렌더링합니다');
   renderFileList();
   updateBEP();
   refreshAll();
+
+  hideLoading();
 }
 
 /* ═══ render.js/drive.js 오버라이드 ═══ */
