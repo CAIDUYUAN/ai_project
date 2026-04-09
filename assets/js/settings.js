@@ -1,7 +1,9 @@
 // [A] 설정 관리 (S 객체)
 // ==============================================
 const S = {
-  rent:800000, mgmt:100000, util:150000, pack:100000, etc:50000, living:2000000,
+  rent:550000, internet:32000, cardTerminal:20000, cctv:16000,
+  elec:280000, gas:270000, water:60000,
+  pack:100000, etc:50000, living:2000000,
   cogs:35,
   bmComm:6.8, bmPg:1.3, bmVat:0.68, bmExtra:0, bmDel:3100,
   cpComm:7.8, cpPg:2.8, cpVat:2.5,  cpExtra:0, cpDel:3400,
@@ -32,7 +34,9 @@ async function loadSettingsFromSupabase() {
 function saveSettings() {
   const g = id => parseFloat(document.getElementById(id)?.value) || 0;
   Object.assign(S, {
-    rent:g('s-rent'), mgmt:g('s-mgmt'), util:g('s-util'), pack:g('s-pack'), etc:g('s-etc'), living:g('s-living'), cogs:g('s-cogs'),
+    rent:g('s-rent'), internet:g('s-internet'), cardTerminal:g('s-cardTerminal'), cctv:g('s-cctv'),
+    elec:g('s-elec'), gas:g('s-gas'), water:g('s-water'),
+    pack:g('s-pack'), etc:g('s-etc'), living:g('s-living'), cogs:g('s-cogs'),
     bmComm:g('s-bm-comm'), bmPg:g('s-bm-pg'), bmVat:g('s-bm-vat'), bmExtra:g('s-bm-extra'), bmDel:g('s-bm-del'),
     cpComm:g('s-cp-comm'), cpPg:g('s-cp-pg'), cpVat:g('s-cp-vat'), cpExtra:g('s-cp-extra'), cpDel:g('s-cp-del'),
     tgComm:g('s-tg-comm'), tgPg:g('s-tg-pg'), tgVat:g('s-tg-vat'), tgExtra:g('s-tg-extra'), tgDel:g('s-tg-del'),
@@ -64,7 +68,9 @@ function saveSettings() {
 function resetSettings() {
   if (!confirm('설정을 초기값으로 되돌리시겠습니까?')) return;
   const defaults = {
-    rent:800000, mgmt:100000, util:150000, pack:100000, etc:50000, living:2000000, cogs:35,
+    rent:550000, internet:32000, cardTerminal:20000, cctv:16000,
+    elec:280000, gas:270000, water:60000,
+    pack:100000, etc:50000, living:2000000, cogs:35,
     bmComm:6.8, bmPg:1.3, bmVat:0.68, bmExtra:0, bmDel:3100,
     cpComm:7.8, cpPg:2.8, cpVat:2.5, cpExtra:0, cpDel:3400,
     tgComm:9.0, tgPg:3.3, tgVat:0, tgExtra:0, tgDel:2500,
@@ -78,7 +84,9 @@ function resetSettings() {
 }
 function applySettingsToUI() {
   const s = (id, v) => { const el = document.getElementById(id); if(el) el.value = v; };
-  s('s-rent',S.rent); s('s-mgmt',S.mgmt); s('s-util',S.util); s('s-pack',S.pack); s('s-etc',S.etc); s('s-living',S.living); s('s-cogs',S.cogs);
+  s('s-rent',S.rent); s('s-internet',S.internet); s('s-cardTerminal',S.cardTerminal); s('s-cctv',S.cctv);
+  s('s-elec',S.elec); s('s-gas',S.gas); s('s-water',S.water);
+  s('s-pack',S.pack); s('s-etc',S.etc); s('s-living',S.living); s('s-cogs',S.cogs);
   s('s-bm-comm',S.bmComm); s('s-bm-pg',S.bmPg); s('s-bm-vat',S.bmVat); s('s-bm-extra',S.bmExtra); s('s-bm-del',S.bmDel);
   s('s-cp-comm',S.cpComm); s('s-cp-pg',S.cpPg); s('s-cp-vat',S.cpVat); s('s-cp-extra',S.cpExtra); s('s-cp-del',S.cpDel);
   s('s-tg-comm',S.tgComm); s('s-tg-pg',S.tgPg); s('s-tg-vat',S.tgVat); s('s-tg-extra',S.tgExtra); s('s-tg-del',S.tgDel);
