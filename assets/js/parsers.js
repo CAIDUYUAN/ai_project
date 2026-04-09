@@ -436,25 +436,33 @@ function parseCP_xlsx(wb, filename) {
     if (!ds) continue;
 
     const txType = String(r[ci.txType]||'').trim();
-    // 신형식: "결제"/"취소", 구형식: "PAY"/"CANCEL"
-    if (txType && !/결제|PAY/i.test(txType)) continue;
+    const isCancel = /취소|CANCEL/i.test(txType);
+    // 결제 또는 취소만 처리
+    if (txType && !/결제|PAY|취소|CANCEL/i.test(txType)) continue;
 
     const orderAmt = Number(r[ci.orderAmt])||0;
-    if (orderAmt <= 0) continue;
+    if (orderAmt === 0) continue;
+
+    const cols = getCols(r);
+
+    if (isCancel) {
+      // 취소: 매출/수수료/배달비 등 모두 음수로 차감
+      const ds = fmtDate(r[ci.date]);
+      if (!ds) continue;
+      if (!daily[ds]) daily[ds] = {rev:0, orders:0, fee:0, coupon:0, delivery:0};
+      daily[ds].rev += orderAmt; // 음수
+      totalOrders--;
+      continue;
+    }
 
     const shopCoupon = Math.abs(Number(r[ci.shopBurden])||0);
     const cpCoupon = Math.abs(Number(r[ci.cpBurden])||0);
-    const cols = getCols(r);
 
     // 정산공식: AN = K-N-Q-R-V-AI-(AC+AJ)-(W+X)+Z+AP+AQ
-    // fee = 수수료 = Q(중개) + R(PG) + AC(서비스부가세) + AJ(광고부가세)
-    // delivery = V(배달비) - Z(고객부담배달비)
-    // coupon = N(상점쿠폰) + W(즉시할인배달) + X(즉시할인음식)
-    // ad = AI(광고 공급가액) — 부가세는 fee에 포함
     const fee = cols.broker + cols.pgFee + cols.svcVat + cols.adVat;
     const realDel = cols.delFee - cols.custDelFee;
     const totalDiscount = shopCoupon + cols.instantDelDisc + cols.instantFoodDisc;
-    const adAmt = cols.adSupply; // 광고 공급가액 (부가세 제외)
+    const adAmt = cols.adSupply;
 
     if (!daily[ds]) daily[ds] = {rev:0, orders:0, fee:0, coupon:0, delivery:0};
     daily[ds].rev += orderAmt;
