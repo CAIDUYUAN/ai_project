@@ -430,7 +430,8 @@ function updateServiceTable(data) {
   });
   const entries = Object.values(pfOrder)
     .sort((a, b) => b.total - a.total)
-    .flatMap(g => g.items.sort((a, b) => b[1].total - a[1].total));
+    .flatMap(g => g.items.sort((a, b) => b[1].total - a[1].total))
+    .filter(([, s]) => s.count > 0 || s.fee > 0 || s.delivery > 0 || s.ad > 0 || s.total > 0);
   if (!entries.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:20px;">서비스 데이터가 없습니다</td></tr>'; return; }
 
   let tCount=0, tFee=0, tDel=0, tAd=0, tTotal=0;
