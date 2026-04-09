@@ -474,6 +474,24 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 
 select option { background: var(--bg-secondary); color: var(--text-primary); }
 
+/* ─── SALES ANALYSIS ─── */
+@media (max-width: 640px) {
+  #salesAnalysis { grid-template-columns: 1fr !important; }
+}
+.ratio-bar { display: flex; height: 32px; border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+.ratio-bar-seg { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; min-width: 30px; transition: width 0.5s ease; }
+.ratio-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+.ratio-row:last-child { border-bottom: none; }
+.ratio-label { color: var(--text-tertiary); }
+.ratio-value { font-weight: 600; }
+
+/* ─── MONTHLY TREND LINE ─── */
+.trend-svg { width: 100%; height: 100%; }
+.trend-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.trend-dot { fill: var(--accent); }
+.trend-label { font-size: 10px; fill: var(--text-tertiary); text-anchor: middle; }
+.trend-value { font-size: 10px; fill: var(--text-secondary); text-anchor: middle; font-weight: 600; }
+
 /* ─── TOAST ─── */
 #toast {
   position: fixed; bottom: 24px; left: 50%;

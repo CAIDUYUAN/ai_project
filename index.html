@@ -94,10 +94,30 @@
     <div class="kpi-card"><div class="kpi-label">차감합계</div><div class="kpi-value" id="kpiDeduction">-</div><div class="kpi-sub neutral" id="kpiDedSub">비용 이합</div></div>
     <div class="kpi-card"><div class="kpi-label">건당평균</div><div class="kpi-value" id="kpiPerOrder">-</div><div class="kpi-sub neutral" id="kpiPerSub">주문 0건</div></div>
   </div>
+  <!-- 매장 vs 배달 비율 + 매출 구성 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;" id="salesAnalysis">
+    <div class="card" id="storeVsDeliveryCard">
+      <div class="card-title">매출 분석</div>
+      <div id="storeVsDelivery"></div>
+    </div>
+    <div class="card" id="revDonutCard">
+      <div class="card-title">플랫폼 매출 구성</div>
+      <div class="donut-wrap" id="revDonut"></div>
+    </div>
+  </div>
+
+  <!-- 일별 막대 차트 -->
   <div class="chart-container">
     <div class="chart-header"><span class="chart-title">일별 매출 추이</span></div>
     <div class="bar-chart" id="dailyChart"></div>
   </div>
+
+  <!-- 월별 추이 라인 차트 -->
+  <div class="chart-container" id="monthlyTrendCard">
+    <div class="chart-header"><span class="chart-title">월별 매출 추이</span></div>
+    <div id="monthlyTrend" style="height:180px;position:relative;"></div>
+  </div>
+
   <div class="section-header"><span class="section-title">플랫폼 비교</span></div>
   <div class="platform-grid" id="platformGrid"></div>
   <div class="collapse-header" onclick="toggleCollapse('serviceDetail')">

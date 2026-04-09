@@ -164,7 +164,10 @@ function refreshDashboard() {
   const data = getFilteredData();
   updateKPIs(data);
   updateDiagnosisBanner(data);
+  updateStoreVsDelivery(data);
+  updateRevDonut(data);
   updateDailyChart(data);
+  updateMonthlyTrend();
   updatePlatformGrid(data);
   updateCalendar(data);
   updateMonthlySummary();
@@ -273,6 +276,110 @@ function updateMonthlySummary() {
     const net = dep - tot*(S.cogs/100) - fixedCost();
     return `<tr><td>${parseInt(mo)}월</td>${PF_LIST.map(p => `<td class="num">${fmtW(vals[p])}</td>`).join('')}<td class="num total">${fmtW(tot)}</td><td class="num" style="color:var(--red);">${fmtW(ded)}</td><td class="num">${fmtW(dep)}</td><td class="num total" style="color:${net>=0?'var(--green)':'var(--red)'};">${fmtW(net)}</td></tr>`;
   }).join('');
+}
+
+/* ═══ 매장 vs 배달 비율 바 ═══ */
+function updateStoreVsDelivery(data) {
+  const el = document.getElementById('storeVsDelivery');
+  if (!el) return;
+  const ps = data.platformSummary;
+  const storeRev = (ps.ts?.totalRev||0);
+  const storeOrd = (ps.ts?.orders||0);
+  const delRev = ['bm','cp','tg','yg'].reduce((s,p) => s + (ps[p]?.totalRev||0), 0);
+  const delOrd = ['bm','cp','tg','yg'].reduce((s,p) => s + (ps[p]?.orders||0), 0);
+  const total = storeRev + delRev;
+  if (total === 0) { el.innerHTML = '<div class="text-sm text-tertiary">데이터가 없습니다</div>'; return; }
+  const storePct = (storeRev / total * 100).toFixed(0);
+  const delPct = (100 - storePct);
+
+  el.innerHTML = `
+    <div class="ratio-bar">
+      <div class="ratio-bar-seg" style="width:${storePct}%;background:var(--ts-color);">${storePct}%</div>
+      <div class="ratio-bar-seg" style="width:${delPct}%;background:var(--orange);">${delPct}%</div>
+    </div>
+    <div class="ratio-row"><span class="ratio-label">🏪 매장</span><span class="ratio-value">${fmtW(storeRev)}원 (${fmt(storeOrd)}건)</span></div>
+    <div class="ratio-row"><span class="ratio-label">🛵 배달</span><span class="ratio-value">${fmtW(delRev)}원 (${fmt(delOrd)}건)</span></div>
+    <div class="ratio-row"><span class="ratio-label">합계</span><span class="ratio-value" style="color:var(--text-primary);">${fmtW(total)}원 (${fmt(storeOrd+delOrd)}건)</span></div>
+  `;
+}
+
+/* ═══ 매출 구성 도넛 ═══ */
+function updateRevDonut(data) {
+  const el = document.getElementById('revDonut');
+  if (!el) return;
+  const items = PF_LIST.map(p => ({
+    label: PLATFORMS[p].name,
+    value: data.platformSummary[p]?.totalRev||0,
+    color: PLATFORMS[p].color
+  })).filter(i => i.value > 0);
+
+  if (!items.length) { el.innerHTML = '<div class="text-sm text-tertiary">데이터가 없습니다</div>'; return; }
+  const total = items.reduce((s,i) => s + i.value, 0);
+
+  let offset = 0;
+  const radius = 50, circ = 2 * Math.PI * radius;
+  const segments = items.map(i => {
+    const pct = i.value / total;
+    const dash = circ * pct;
+    const seg = `<circle cx="60" cy="60" r="${radius}" fill="none" stroke="${i.color}" stroke-width="16" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 60 60)"/>`;
+    offset += dash;
+    return seg;
+  }).join('');
+
+  const legend = items.map(i => `
+    <div class="donut-legend-item">
+      <div class="donut-legend-dot" style="background:${i.color};"></div>
+      <span style="flex:1;color:var(--text-secondary);">${i.label}</span>
+      <span style="font-weight:600;">${fmtPct(i.value/total*100)}</span>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    <div class="donut-chart"><svg viewBox="0 0 120 120">${segments}</svg></div>
+    <div class="donut-legend">${legend}</div>
+  `;
+}
+
+/* ═══ 월별 추이 라인 차트 ═══ */
+function updateMonthlyTrend() {
+  const el = document.getElementById('monthlyTrend');
+  if (!el) return;
+  const am = getAllMonths();
+  if (am.length < 2) { el.innerHTML = '<div class="text-sm text-tertiary" style="padding:20px;text-align:center;">2개월 이상 데이터가 필요합니다</div>'; return; }
+
+  const monthlyRevs = am.map(m => {
+    let rev = 0;
+    PF_LIST.forEach(p => { rev += DB[p]?.[m]?.totalRev||0; });
+    return { month: m, rev };
+  });
+
+  const maxRev = Math.max(...monthlyRevs.map(d => d.rev), 1);
+  const w = 800, h = 150, padX = 40, padY = 25;
+  const stepX = (w - padX * 2) / Math.max(1, monthlyRevs.length - 1);
+
+  const points = monthlyRevs.map((d, i) => ({
+    x: padX + i * stepX,
+    y: padY + (1 - d.rev / maxRev) * (h - padY * 2),
+    ...d
+  }));
+
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+
+  const dots = points.map(p => `<circle class="trend-dot" cx="${p.x}" cy="${p.y}" r="3"/>`).join('');
+
+  const labels = points.map(p => {
+    const [,mo] = p.month.split('-');
+    return `<text class="trend-label" x="${p.x}" y="${h - 5}">${parseInt(mo)}월</text>`;
+  }).join('');
+
+  const values = points.map(p =>
+    `<text class="trend-value" x="${p.x}" y="${p.y - 10}">${fmtW(p.rev)}</text>`
+  ).join('');
+
+  el.innerHTML = `<svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path class="trend-line" d="${linePath}"/>
+    ${dots}${labels}${values}
+  </svg>`;
 }
 
 /* ═══ COLLAPSIBLE ═══ */
