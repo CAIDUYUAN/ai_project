@@ -1,71 +1,96 @@
 # 프로젝트 컨텍스트
 
 ## 프로젝트 개요
-배달 플랫폼(배민, 쿠팡이츠, 땡겨요) 매출 데이터를 분석하는 **웹 대시보드**.
-단일 HTML 파일 + 순수 JS 구조 (프레임워크 없음).
+배달 플랫폼(배민, 쿠팡이츠, 땡겨요, 요기요) + 가게(토스포스) 매출 데이터를 분석하는 **웹 대시보드**.
+순수 HTML + JS 구조 (프레임워크 없음). Supabase(PostgreSQL) 백엔드.
 
 ## 파일 구조
-- `index.html` — 메인 UI (탭: 월별/비교/캘린더/설정)
-- `js/settings.js` — 설정 관리 (`S` 객체: 수수료율, 고정비 등)
-- `js/parsers.js` — 데이터 저장소(`DB`, `FILES`), CSV/XLSX 파싱, 헬퍼 함수
-- `js/drive.js` — 구글 드라이브 연동, 로컬 XLSX 업로드, 파일 목록 UI
-- `js/render.js` — UI 렌더링 (업로드 UI, 파일 리스트, 탭 전환)
-- `css/style.css` — 스타일
-- `Apps_Script_코드.gs` — 구글 Apps Script (드라이브에서 파일 읽어 전달)
-- `url데이터.txt` — 관련 URL 메모
+```
+ai_project/
+├── index.html                ← HTML (UI 구조만, 343줄)
+├── assets/
+│   ├── css/
+│   │   └── style.css         ← 전체 CSS (Apple Dark Design System)
+│   └── js/
+│       ├── app.js            ← 메인 앱 로직 (대시보드/진단/계산기/탭/초기화)
+│       ├── parsers.js        ← DB/FILES 저장소 + 파서 함수 + 헬퍼 유틸
+│       ├── drive.js          ← 파일 업로드 (loadXlsx2) + storeData + mergeSales/Purchase
+│       ├── render.js         ← 기존 렌더 (clearAll, 일부 레거시 함수)
+│       ├── settings.js       ← 설정 관리 (S 객체, applySettingsToUI, saveSettings)
+│       ├── supabase.js       ← 인증 (SHA-256 로그인) + DB CRUD (save/load/delete)
+│       └── menucost.js       ← 메뉴 원가 분석
+├── scripts/
+│   └── supabase_setup.sql    ← DB 스키마 + RPC 함수
+├── CLAUDE.md                 ← 이 파일
+├── .gitignore
+└── .nojekyll
+```
 
-## 지원 플랫폼 코드
-| 코드 | 플랫폼 |
-|------|--------|
-| `bm` | 배달의민족 |
-| `cp` | 쿠팡이츠 |
-| `tg` | 땡겨요 |
-| `ts` | 가게(토스포스) |
+### JS 로드 순서 (index.html)
+```
+settings.js → parsers.js → drive.js → render.js → supabase.js → menucost.js → app.js
+```
+`app.js`가 마지막에 로드되어 `renderAll`, `updateFileList` 등을 오버라이드함.
+
+## 지원 플랫폼
+| 코드 | 플랫폼 | 색상 | 아이콘 | 파일명 패턴 |
+|------|--------|------|--------|------------|
+| `bm` | 배달의민족 | `#30d158` | 🛵 | `매출상세내역_...xlsx` / `매입상세내역_...xlsx` |
+| `cp` | 쿠팡이츠 | `#ff453a` | 🧡 | `coupang_eats_YYYY-MM.xlsx` |
+| `tg` | 땡겨요 | `#2D9E6B` | 🟢 | `땡겨요 정산내역(건별).xls` |
+| `yg` | 요기요 | `#E5302A` | 🟠 | `요기요 YYYY년 MM월 매출.xlsx` |
+| `ts` | 가게(토스포스) | `#6366f1` | 🏪 | `매출리포트-YYMMDD....xlsx` (결제 상세내역 시트, 배달 제외) |
 
 ## 데이터 흐름
-1. 로컬 XLSX 업로드
-2. 파싱 함수:
-   - 배민 매출: `parseBM_xlsx` (행11 헤더, 서비스거래번호별 합산)
-   - 배민 매입: `parseBM_purchase_xlsx` (서비스별/주문번호별 상세 저장)
-   - 쿠팡이츠: `parseCP_xlsx` (매출+매입 통합, 다단헤더)
-   - 땡겨요: `parseTG_xlsx` (정산내역 건별, 행38 헤더, 다중월 자동분리)
-   - 요기요: `parseYG_xlsx` (요약형 데이터)
-3. `storeData(pf, data, filename)` 로 `DB[pf][ym-key]` 에 저장
-4. `renderAll()` 로 전체 UI 갱신
+```
+파일 업로드 → handleFiles() [app.js]
+  → loadXlsx2(files, pf) [drive.js]
+    → parseBM_xlsx / parseCP_xlsx / parseTG_xlsx / parseYG_xlsx / parseTS_xlsx [parsers.js]
+    → storeData(pf, data, filename) [drive.js]
+      → mergeSales/mergePurchase → DB[pf][ym-key] 저장
+      → saveToSupabase() [supabase.js]
+    → renderAll() → renderFileList() + refreshAll() [app.js 오버라이드]
+```
 
-## 파일명 패턴
-- 배민: `매출상세내역_YYYY년MM월DD일(요일)_...xlsx` / `매입상세내역_...xlsx`
-- 쿠팡: `coupang_eats_YYYY-MM.xlsx`
-- 땡겨요: `땡겨요 정산내역(건별).xls`
-- 요기요: `요기요 YYYY년 MM월 매출.xlsx`
+## 5개 탭 구성
+1. **📁 데이터** — 파일 드래그&드롭 업로드, 파일 목록, 전체삭제
+2. **📊 대시보드** — KPI 6개, 진단배너, 일별차트, 플랫폼카드, 캘린더, 월별요약
+3. **🧾 메뉴·가격** — 쿠폰계산기, 적정가격 역산, 시뮬레이터
+4. **🔴 돈새는곳** — 건강점수 링, 핵심진단, 비용분석, 광고ROI, 플랫폼공략
+5. **⚙️ 설정** — 고정비, 원가율, 플랫폼별 수수료, BEP
 
-## 주요 설정값 (S 객체 기본값)
+## 인증 & Supabase
+- 로그인: SHA-256 해시 → Supabase RPC `verify_access` (5회 실패 시 60초 잠금)
+- 세션: `sessionStorage` (탭 닫으면 로그아웃)
+- DB: `sales_data` 테이블 (platform, ym_key, data JSONB)
+- RPC: `upsert_sales`, `delete_sales`, `clear_all_sales`, `verify_access`
+
+## 주요 설정값 (S 객체)
 - 고정비: 임대료 80만, 관리비 10만, 공과금 15만, 포장재 10만, 기타 5만, 생활비 200만
 - 원가율(cogs): 35%
-- 배민 수수료: 6.8% + PG 1.3% + 부가세 0.68%
-- 쿠팡이츠 수수료: 7.8% + PG 2.8% + 부가세 2.5%
-- 땡겨요 수수료: 건별 정산내역에서 실제 수수료 사용 (주문중개+결제정산이용료)
-- 요기요 수수료: 월별 요약에서 주문중개+배달대행+외부결제 이용료
-
-## GitHub
-- 레포지토리: https://github.com/CAIDUYUAN/ai_project
-- 브랜치: main
+- 배민: 중개 6.8% + PG 1.3% + 부가세 0.68%, 건당 배달비 3,100원
+- 쿠팡: 중개 7.8% + PG 2.8% + 부가세 2.5%, 건당 배달비 3,400원
+- 땡겨요: 중개 9% + PG 3.3%, 건당 배달비 2,500원
+- 요기요: 중개 12.5% + PG 3.3%, 건당 배달비 3,000원
 
 ## 디자인 시스템
-- **모든 UI 디자인은 Apple DESIGN.md를 참조**
-- 참조 파일: `C:\Users\coehd\Downloads\awesome-design-md-main\design-md\apple\DESIGN.md`
-- 핵심 규칙:
-  - 액센트 컬러: Apple Blue `#0071e3` — 인터랙티브 요소에만 사용
-  - 다크 배경: `#000000` (hero), `#1c1c1e` (카드), `#2c2c2e` (elevated)
-  - 폰트: SF Pro Display (20px+) / SF Pro Text (19px-), 시스템 폰트 폴백
-  - Letter-spacing: 56px→-0.28px, 17px→-0.374px, 14px→-0.224px, 12px→-0.12px
-  - 그림자: `rgba(0,0,0,0.22) 3px 5px 30px` 단일 소프트 그림자만 사용
-  - 네비게이션: 반투명 글래스 (`rgba(0,0,0,0.8)` + `blur(20px)`)
-  - 버튼: 8px radius (기본), 980px radius (pill CTA)
-  - 카드: border 없음, 12px radius
-  - 추가 액센트 색상 금지 — 시맨틱(red/green/orange)만 데이터 표시용으로 허용
+- **Apple Dark Design System** (preview-dark.html 기준)
+- 참조: `C:\Users\coehd\Downloads\awesome-design-md-main\design-md\apple\DESIGN.md`
+- 폰트: Pretendard + Inter (SF Pro 폴백)
+- 배경: `#000000` (메인) → `#1c1c1e` (secondary) → `#272729` (카드) → `#28282a` (elevated)
+- 액센트: `#2997ff` (인터랙티브 전용)
+- 그림자: `rgba(0,0,0,0.5) 0px 3px 30px` (카드 hover)
+- 네비: `rgba(0,0,0,0.88)` + `backdrop-filter: blur(20px)`, 48px 높이
+- 버튼: pill `980px` radius
+- 카드: `12px` radius, border 없음
+
+## GitHub
+- 레포: https://github.com/CAIDUYUAN/ai_project
+- 브랜치: main
+- GitHub Pages: https://caiduyuan.github.io/ai_project/
 
 ## 협업 규칙
 - 모든 답변은 **한국어**로
 - 코드 수정 시 기존 구조(순수 JS, 프레임워크 없음) 유지
 - 불필요한 추상화/리팩토링 금지, 요청한 것만 수정
+- 모든 소스 파일은 이 프로젝트 폴더 안에 있어야 함
