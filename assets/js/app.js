@@ -319,7 +319,6 @@ function refreshDashboard() {
    () => updateRevDonut(data),
    () => updateDailyChart(data),
    () => updateMonthlyTrend(),
-   () => updatePlatformGrid(data),
    () => updateServiceTable(data),
    () => updateCalendar(data),
    () => updateMonthlySummary(),
@@ -457,66 +456,6 @@ function updateServiceTable(data) {
   </tr>`;
 }
 
-function updatePlatformGrid(data) {
-  const grid = document.getElementById('platformGrid');
-  const isDeliveryPf = pf => !['ts','nv','di'].includes(pf);
-  const totalAllRev = data.totalRev || 1;
-  const months = data.months || [];
-  const totalFixed = fixedCost() * months.length;
-
-  grid.innerHTML = PF_LIST.map(p => {
-    const ps = data.platformSummary[p];
-    if (!ps || (!ps.totalRev && !ps.orders)) return '';
-
-    // 플랫폼 마진 (입금예정)
-    const pfDeductions = ps.fee + ps.delivery + ps.coupon + ps.ad;
-    const deposit = ps.totalRev - pfDeductions;
-    // 원가
-    const matCost = ps.totalRev * (S.cogs/100);
-    // 고정비 배분 (매출 비중)
-    const revShare = totalAllRev > 0 ? ps.totalRev / totalAllRev : 0;
-    const fixedAlloc = totalFixed * revShare;
-    // 실제 순수익
-    const realNet = deposit - matCost - fixedAlloc;
-    const realMargin = ps.totalRev > 0 ? (realNet/ps.totalRev*100) : 0;
-    const perOrd = ps.orders > 0 ? realNet / ps.orders : 0;
-
-    const pctSpan = (val, total) => `<span style="font-size:11px;color:var(--text-tertiary);">${fmtPct(total>0?val/total*100:0)}</span>`;
-    const deliveryRow = isDeliveryPf(p)
-      ? `<div class="platform-stat"><span class="platform-stat-label">배달비</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.delivery)}원 ${pctSpan(ps.delivery, ps.totalRev)}</span></div>`
-      : '';
-
-    // 호버 툴팁 계산 카드
-    const tt = (label, val, color, pct) => `<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>${label}</span><span style="color:${color};font-weight:600;">${val}${pct?` <span style="font-size:12px;opacity:0.7;">${pct}</span>`:''}</span></div>`;
-    const sep = `<div style="border-top:1px solid rgba(255,255,255,0.1);margin:6px 0;"></div>`;
-    const pct = v => ps.totalRev>0 ? fmtPct(v/ps.totalRev*100) : '-';
-
-    const tooltipHtml = `
-      ${tt(PLATFORMS[p].name+' 매출', fmtW(ps.totalRev)+'원', '#fff', '')}
-      ${sep}
-      <div style="font-size:12px;color:rgba(255,255,255,0.4);padding:2px 0;">플랫폼 차감</div>
-      ${tt('  수수료', '-'+fmtW(ps.fee)+'원', 'var(--red)', pct(ps.fee))}
-      ${ps.delivery ? tt('  배달비', '-'+fmtW(ps.delivery)+'원', 'var(--red)', pct(ps.delivery)) : ''}
-      ${ps.ad ? tt('  광고', '-'+fmtW(ps.ad)+'원', 'var(--red)', pct(ps.ad)) : ''}
-      ${ps.coupon ? tt('  쿠폰', '-'+fmtW(ps.coupon)+'원', 'var(--red)', pct(ps.coupon)) : ''}
-      ${sep}
-      ${tt('입금예정 (플랫폼 마진)', fmtW(deposit)+'원', 'var(--accent)', pct(deposit))}
-      ${sep}
-      <div style="font-size:12px;color:rgba(255,255,255,0.4);padding:2px 0;">내 비용</div>
-      ${tt('  원가 ('+S.cogs+'%)', '-'+fmtW(matCost)+'원', 'var(--orange)', '')}
-      ${tt('  고정비 배분', '-'+fmtW(fixedAlloc)+'원', 'var(--orange)', '비중 '+fmtPct(revShare*100))}
-      ${sep}
-      ${tt('실제 순수익', fmtW(realNet)+'원', realNet>=0?'var(--green)':'var(--red)', fmtPct(realMargin))}
-    `;
-
-    const marginColor = realMargin>=15?'var(--green)':realMargin>=0?'var(--orange)':'var(--red)';
-
-    return `<div class="platform-card-v2 ${p}">
-      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(ps.orders)}건</span></div>
-      ${tooltipHtml}
-    </div>`;
-  }).join('') || '<div class="empty-state"><div class="empty-desc">데이터가 없습니다</div></div>';
-}
 
 function updateCalendar(data) {
   const grid = document.getElementById('calGrid');
