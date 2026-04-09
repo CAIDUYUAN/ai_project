@@ -461,39 +461,50 @@ function updatePlatformGrid(data) {
   const grid = document.getElementById('platformGrid');
   if (!grid) return;
   const isDeliveryPf = pf => !['ts','nv','di'].includes(pf);
+  const totalAllRev = data.totalRev || 1;
+  const months = data.months || [];
+  const totalFixed = fixedCost() * months.length;
 
   grid.innerHTML = PF_LIST.map(p => {
     const ps = data.platformSummary[p];
     if (!ps || (!ps.totalRev && !ps.orders)) return '';
 
-    // 수식 계산 (설정값 기반)
     const rev = ps.totalRev;
     const orders = ps.orders;
     const feeRate = getPfFeeRate(p);
-    const fee = Math.round(rev * feeRate);              // 매출 × 수수료율
-    const del = isDeliveryPf(p) ? orders * getPfDel(p) : 0; // 주문수 × 건당배달비
-    const ad = ps.ad || 0;                               // 광고 (데이터에서만)
-    const coupon = ps.coupon || 0;                       // 쿠폰 (데이터에서만)
-    const matCost = Math.round(rev * (S.cogs / 100));    // 매출 × 원가율
-    const netProfit = rev - fee - del - ad - coupon - matCost;
-    const perOrd = orders > 0 ? Math.round(netProfit / orders) : 0;
-    const margin = rev > 0 ? (netProfit / rev * 100) : 0;
+    const fee = Math.round(rev * feeRate);
+    const del = isDeliveryPf(p) ? orders * getPfDel(p) : 0;
+    const ad = ps.ad || 0;
+    const coupon = ps.coupon || 0;
+    const deposit = rev - fee - del - ad - coupon;
+    const matCost = Math.round(rev * (S.cogs / 100));
+    const revShare = totalAllRev > 0 ? rev / totalAllRev : 0;
+    const fixedAlloc = Math.round(totalFixed * revShare);
+    const realNet = deposit - matCost - fixedAlloc;
+    const realMargin = rev > 0 ? (realNet / rev * 100) : 0;
+    const marginColor = realMargin>=15?'var(--green)':realMargin>=0?'var(--orange)':'var(--red)';
 
-    const delRow = isDeliveryPf(p)
-      ? `<div class="platform-stat"><span class="platform-stat-label">배달비</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(del)}원</span></div>`
-      : '';
-    const marginColor = margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)';
+    const row = (label, val, color) => `<div class="platform-stat"><span class="platform-stat-label">${label}</span><span class="platform-stat-value" style="color:${color};">${val}</span></div>`;
+    const sep = `<div style="border-top:1px solid var(--border);margin:2px 0;"></div>`;
+    const secLabel = text => `<div style="font-size:11px;color:var(--text-quaternary);padding:4px 0 2px;">${text}</div>`;
+
+    const delRow = isDeliveryPf(p) ? row('배달비', '-'+fmtW(del)+'원', 'var(--red)') : '';
 
     return `<div class="platform-card ${p}">
       <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">매출</span><span class="platform-stat-value">${fmtW(rev)}원</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">주문수</span><span class="platform-stat-value">${fmt(orders)}건</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">수수료</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(fee)}원</span></div>
+      ${row(PLATFORMS[p].name+' 매출', fmtW(rev)+'원', 'var(--text-primary)')}
+      ${sep}${secLabel('플랫폼 차감')}
+      ${row('수수료', '-'+fmtW(fee)+'원', 'var(--red)')}
       ${delRow}
-      <div class="platform-stat"><span class="platform-stat-label">광고</span><span class="platform-stat-value" style="color:${ad?'var(--red)':'var(--text-tertiary)'};">${fmtW(ad)}원</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">쿠폰</span><span class="platform-stat-value" style="color:${coupon?'var(--red)':'var(--text-tertiary)'};">${fmtW(coupon)}원</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">건당 순수익</span><span class="platform-stat-value" style="color:${perOrd>=0?'var(--green)':'var(--red)'};">${fmt(perOrd)}원</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">마진율</span><span class="platform-stat-value" style="color:${marginColor};">${fmtPct(margin)}</span></div>
+      ${row('광고', ad ? '-'+fmtW(ad)+'원' : '0원', ad?'var(--red)':'var(--text-tertiary)')}
+      ${row('쿠폰', coupon ? '-'+fmtW(coupon)+'원' : '0원', coupon?'var(--red)':'var(--text-tertiary)')}
+      ${sep}
+      ${row('입금예정 (플랫폼 마진)', fmtW(deposit)+'원', 'var(--accent)')}
+      ${sep}${secLabel('내 비용')}
+      ${row('원가 ('+S.cogs+'%)', '-'+fmtW(matCost)+'원', 'var(--orange)')}
+      ${row('고정비 배분', '-'+fmtW(fixedAlloc)+'원', 'var(--orange)')}
+      ${sep}
+      ${row('실제 순수익', fmtW(realNet)+'원', marginColor)}
     </div>`;
   }).join('') || '<div class="empty-state"><div class="empty-desc">데이터가 없습니다</div></div>';
 }
