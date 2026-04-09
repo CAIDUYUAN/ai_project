@@ -109,8 +109,10 @@ function setFeeMode(pf, mode) {
   S['feeMode_'+pf] = mode;
 
   // 버튼 UI 전환
-  document.getElementById('fee-mode-'+pf+'-db').classList.toggle('active', mode === 'db');
-  document.getElementById('fee-mode-'+pf+'-manual').classList.toggle('active', mode === 'manual');
+  const dbBtn = document.getElementById('fee-mode-'+pf+'-db');
+  const manBtn = document.getElementById('fee-mode-'+pf+'-manual');
+  if (dbBtn) dbBtn.classList.toggle('active', mode === 'db');
+  if (manBtn) manBtn.classList.toggle('active', mode === 'manual');
 
   const inputs = ['comm','pg','vat','extra','del'].map(f => document.getElementById('s-'+pf+'-'+f));
 
