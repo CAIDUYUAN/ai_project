@@ -510,18 +510,9 @@ function updatePlatformGrid(data) {
 
     const marginColor = realMargin>=15?'var(--green)':realMargin>=0?'var(--orange)':'var(--red)';
 
-    return `<div class="platform-card ${p}">
-      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">매출</span><span class="platform-stat-value">${fmtW(ps.totalRev)}원</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">주문수</span><span class="platform-stat-value">${fmt(ps.orders)}건</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">수수료</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(ps.fee)}원 ${pctSpan(ps.fee, ps.totalRev)}</span></div>
-      ${deliveryRow}
-      <div class="platform-stat"><span class="platform-stat-label">광고</span><span class="platform-stat-value" style="color:${ps.ad?'var(--red)':'var(--text-tertiary)'};">${fmtW(ps.ad)}원${ps.ad ? ' '+pctSpan(ps.ad, ps.totalRev) : ''}</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">쿠폰</span><span class="platform-stat-value" style="color:${ps.coupon?'var(--red)':'var(--text-tertiary)'};">${fmtW(ps.coupon)}원${ps.coupon ? ' '+pctSpan(ps.coupon, ps.totalRev) : ''}</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">건당 순수익</span><span class="platform-stat-value" style="color:${perOrd>=0?'var(--green)':'var(--red)'};">${fmt(Math.round(perOrd))}원</span></div>
-      <div class="platform-stat margin-tooltip-wrap"><span class="platform-stat-label">실제 순수익률 <span style="cursor:help;color:var(--accent);">ⓘ</span></span><span class="platform-stat-value" style="color:${marginColor};">${fmtPct(realMargin)}</span>
-        <div class="margin-tooltip">${tooltipHtml}</div>
-      </div>
+    return `<div class="platform-card-v2 ${p}">
+      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(ps.orders)}건</span></div>
+      ${tooltipHtml}
     </div>`;
   }).join('') || '<div class="empty-state"><div class="empty-desc">데이터가 없습니다</div></div>';
 }
