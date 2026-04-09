@@ -431,6 +431,8 @@ function parseCP_xlsx(wb, filename) {
 
   const daily = {};
   let totalFee=0, totalDel=0, totalCoupon=0, totalOrders=0, totalAd=0;
+  // 개별 항목 합계
+  let tQ=0, tR=0, tV=0, tAG=0, tAI=0, tAJ=0, tN=0, tW=0, tX=0;
   const orderList = [];
 
   for (let i = dataStart; i < rows.length; i++) {
@@ -468,6 +470,9 @@ function parseCP_xlsx(wb, filename) {
     totalCoupon += coupon;
     totalAd += ad;
     totalOrders += sign;
+    tQ += c.Q*sign; tR += c.R*sign; tV += c.V*sign;
+    tAG += c.AG*sign; tAI += c.AI*sign; tAJ += c.AJ*sign;
+    tN += c.N*sign; tW += c.W*sign; tX += c.X*sign;
 
     if (!isCancel) {
       orderList.push({
@@ -502,6 +507,11 @@ function parseCP_xlsx(wb, filename) {
     period, ym, totalRev, orders:totalOrders, daily,
     fee: totalFee, feeRate: totalRev ? totalFee/totalRev : 0,
     delivery: totalDel, coupon: totalCoupon, ad: totalAd,
+    // 개별 항목 (카드 표시용)
+    broker: tQ, pgFee: tR, delFee: tV,
+    svcVat: tAG, adSupply: tAI, adVat: tAJ,
+    shopCoupon: tN, instantDel: tW, instantFood: tX,
+    vat: tAG + tAJ, instantDisc: tW + tX,
     _hasPurchaseData: true,
     orderDetails: orderList, services,
   };

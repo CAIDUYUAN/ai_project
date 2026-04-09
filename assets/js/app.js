@@ -269,7 +269,9 @@ function getFilteredData() {
   const platformSummary = {};
 
   platforms.forEach(p => {
-    platformSummary[p] = { totalRev:0, orders:0, fee:0, delivery:0, coupon:0, ad:0 };
+    platformSummary[p] = { totalRev:0, orders:0, fee:0, delivery:0, coupon:0, ad:0,
+      broker:0, pgFee:0, delFee:0, svcVat:0, adSupply:0, adVat:0,
+      shopCoupon:0, instantDel:0, instantFood:0, vat:0, instantDisc:0 };
     months.forEach(m => {
       const d = DB[p]?.[m]; if (!d) return;
       platformSummary[p].totalRev += d.totalRev||0;
@@ -278,6 +280,18 @@ function getFilteredData() {
       platformSummary[p].delivery += d.delivery||0;
       platformSummary[p].coupon += d.coupon||0;
       platformSummary[p].ad += d.ad||0;
+      // 개별 항목
+      platformSummary[p].broker += d.broker||0;
+      platformSummary[p].pgFee += d.pgFee||0;
+      platformSummary[p].delFee += d.delFee||0;
+      platformSummary[p].svcVat += d.svcVat||0;
+      platformSummary[p].adSupply += d.adSupply||0;
+      platformSummary[p].adVat += d.adVat||0;
+      platformSummary[p].shopCoupon += d.shopCoupon||0;
+      platformSummary[p].instantDel += d.instantDel||0;
+      platformSummary[p].instantFood += d.instantFood||0;
+      platformSummary[p].vat += d.vat||0;
+      platformSummary[p].instantDisc += d.instantDisc||0;
       tR += d.totalRev||0; tOrd += d.orders||0; tFee += d.fee||0; tDel += d.delivery||0; tCpn += d.coupon||0; tAd += d.ad||0;
       if (d.daily) Object.entries(d.daily).forEach(([day, dd]) => {
         if (!dailyAll[day]) dailyAll[day] = {};
@@ -471,35 +485,41 @@ function updatePlatformGrid(data) {
 
     const rev = ps.totalRev;
     const orders = ps.orders;
-    // DB 실제값만 사용 (설정값 계산 안 함)
-    const fee = ps.fee || 0;
-    const del = ps.delivery || 0;
-    const ad = ps.ad || 0;
-    const coupon = ps.coupon || 0;
-    const deposit = rev - fee - del - ad - coupon;
+    // 개별 항목 (DB 실제값)
+    const broker = ps.broker||0, pgFee = ps.pgFee||0;
+    const delFee = ps.delFee || ps.delivery || 0;
+    const adSupply = ps.adSupply || ps.ad || 0;
+    const vat = ps.vat || 0;
+    const shopCoupon = ps.shopCoupon || 0;
+    const instantDisc = ps.instantDisc || 0;
+    // 정산금액 = 매출 - 상점쿠폰 - 중개 - PG - 배달비 - 광고공급 - 부가세 - 즉시할인
+    const settle = rev - shopCoupon - broker - pgFee - delFee - adSupply - vat - instantDisc;
+    // 내 비용
     const matCost = Math.round(rev * (S.cogs / 100));
     const revShare = totalAllRev > 0 ? rev / totalAllRev : 0;
     const fixedAlloc = Math.round(totalFixed * revShare);
-    const realNet = deposit - matCost - fixedAlloc;
+    const realNet = settle - matCost - fixedAlloc;
     const realMargin = rev > 0 ? (realNet / rev * 100) : 0;
     const marginColor = realMargin>=15?'var(--green)':realMargin>=0?'var(--orange)':'var(--red)';
 
     const row = (label, val, color) => `<div class="platform-stat"><span class="platform-stat-label">${label}</span><span class="platform-stat-value" style="color:${color};">${val}</span></div>`;
     const sep = `<div style="border-top:1px solid var(--border);margin:2px 0;"></div>`;
     const secLabel = text => `<div style="font-size:11px;color:var(--text-quaternary);padding:4px 0 2px;">${text}</div>`;
-
-    const delRow = isDeliveryPf(p) ? row('배달비', '-'+fmtW(del)+'원', 'var(--red)') : '';
+    const neg = v => v ? '-'+fmtW(v)+'원' : '0원';
+    const negColor = v => v ? 'var(--red)' : 'var(--text-tertiary)';
 
     return `<div class="platform-card ${p}">
-      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span></div>
-      ${row(PLATFORMS[p].name+' 매출', fmtW(rev)+'원', 'var(--text-primary)')}
-      ${sep}${secLabel('플랫폼 차감')}
-      ${row('수수료', '-'+fmtW(fee)+'원', 'var(--red)')}
-      ${delRow}
-      ${row('광고', ad ? '-'+fmtW(ad)+'원' : '0원', ad?'var(--red)':'var(--text-tertiary)')}
-      ${row('쿠폰', coupon ? '-'+fmtW(coupon)+'원' : '0원', coupon?'var(--red)':'var(--text-tertiary)')}
+      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(orders)}건</span></div>
+      ${row('매출액', fmtW(rev)+'원', 'var(--text-primary)')}
+      ${row('상점부담 쿠폰', neg(shopCoupon), negColor(shopCoupon))}
+      ${row('중개 이용료', neg(broker), negColor(broker))}
+      ${row('결제대행사 수수료', neg(pgFee), negColor(pgFee))}
+      ${isDeliveryPf(p) ? row('배달비', neg(delFee), negColor(delFee)) : ''}
+      ${row('광고비', neg(adSupply), negColor(adSupply))}
+      ${row('부가세', neg(vat), negColor(vat))}
+      ${row('즉시할인금액', neg(instantDisc), negColor(instantDisc))}
       ${sep}
-      ${row('입금예정 (플랫폼 마진)', fmtW(deposit)+'원', 'var(--accent)')}
+      ${row('정산금액', fmtW(settle)+'원', 'var(--accent)')}
       ${sep}${secLabel('내 비용')}
       ${row('원가 ('+S.cogs+'%)', '-'+fmtW(matCost)+'원', 'var(--orange)')}
       ${row('고정비 배분', '-'+fmtW(fixedAlloc)+'원', 'var(--orange)')}
