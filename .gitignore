@@ -19,3 +19,7 @@ Thumbs.db
 *.tmp
 *.log
 index_backup.html
+node_modules/
+package*.json
+.claude/
+.claude/
