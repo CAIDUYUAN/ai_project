@@ -371,7 +371,7 @@ function updateServiceTable(data) {
       const pfInfo = PLATFORMS[pf] || {};
       Object.entries(d.services).forEach(([sn, sv]) => {
         const key = pfInfo.name + ' — ' + sn;
-        if (!merged[key]) merged[key] = { count:0, fee:0, delivery:0, ad:0, total:0, pfColor: pfInfo.color || '#888', pfIcon: pfInfo.icon || '' };
+        if (!merged[key]) merged[key] = { count:0, fee:0, delivery:0, ad:0, total:0, pfColor: pfInfo.color || '#888', pfIcon: pfInfo.icon || '', pfKey: pfInfo.name };
         merged[key].count += sv.count||0;
         merged[key].fee += sv.fee||0;
         merged[key].delivery += sv.delivery||0;
@@ -381,7 +381,17 @@ function updateServiceTable(data) {
     });
   });
 
-  const entries = Object.entries(merged).sort((a,b) => b[1].total - a[1].total);
+  // 플랫폼별 그룹 → 플랫폼 합계 내림차순 → 그룹 내 금액 내림차순
+  const pfOrder = {};
+  Object.entries(merged).forEach(([name, s]) => {
+    const pf = s.pfKey || name.split(' — ')[0];
+    if (!pfOrder[pf]) pfOrder[pf] = { total: 0, items: [] };
+    pfOrder[pf].total += s.total;
+    pfOrder[pf].items.push([name, s]);
+  });
+  const entries = Object.values(pfOrder)
+    .sort((a, b) => b.total - a.total)
+    .flatMap(g => g.items.sort((a, b) => b[1].total - a[1].total));
   if (!entries.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:20px;">서비스 데이터가 없습니다</td></tr>'; return; }
 
   let tCount=0, tFee=0, tDel=0, tAd=0, tTotal=0;
