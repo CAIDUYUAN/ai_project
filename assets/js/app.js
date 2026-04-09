@@ -291,6 +291,10 @@ function getFilteredData() {
       platformSummary[p].instantFood += d.instantFood||0;
       platformSummary[p].vat += d.vat||0;
       platformSummary[p].instantDisc += d.instantDisc||0;
+      platformSummary[p].settleAN = (platformSummary[p].settleAN||0) + (d.settleAN||0);
+      platformSummary[p].promo = (platformSummary[p].promo||0) + (d.promo||0);
+      platformSummary[p].refund = (platformSummary[p].refund||0) + (d.refund||0);
+      platformSummary[p].finalSettle = (platformSummary[p].settleAN||0) + (platformSummary[p].promo||0) + (platformSummary[p].refund||0);
       tR += d.totalRev||0; tOrd += d.orders||0; tFee += d.fee||0; tDel += d.delivery||0; tCpn += d.coupon||0; tAd += d.ad||0;
       if (d.daily) Object.entries(d.daily).forEach(([day, dd]) => {
         if (!dailyAll[day]) dailyAll[day] = {};
@@ -491,13 +495,15 @@ function updatePlatformGrid(data) {
     const vat = ps.vat || 0;
     const shopCoupon = ps.shopCoupon || 0;
     const instantDisc = ps.instantDisc || 0;
-    // 정산금액 = 매출 - 상점쿠폰 - 중개 - PG - 배달비 - 광고공급 - 부가세 - 즉시할인
-    const settle = rev - shopCoupon - broker - pgFee - delFee - adSupply - vat - instantDisc;
+    const promo = ps.promo || 0;
+    const refund = ps.refund || 0;
+    // 최종 입금예정 = AN + AP + AQ (DB에 있으면 사용, 없으면 수식 계산)
+    const finalSettle = ps.finalSettle || (rev - shopCoupon - broker - pgFee - delFee - adSupply - vat - instantDisc + promo + refund);
     // 내 비용
     const matCost = Math.round(rev * (S.cogs / 100));
     const revShare = totalAllRev > 0 ? rev / totalAllRev : 0;
     const fixedAlloc = Math.round(totalFixed * revShare);
-    const realNet = settle - matCost - fixedAlloc;
+    const realNet = finalSettle - matCost - fixedAlloc;
     const realMargin = rev > 0 ? (realNet / rev * 100) : 0;
     const marginColor = realMargin>=15?'var(--green)':realMargin>=0?'var(--orange)':'var(--red)';
 
@@ -519,8 +525,10 @@ function updatePlatformGrid(data) {
         <div class="vat-tooltip">부가세 = 광고비 VAT + 서비스이용료<br>(중개이용료 + 결제수수료 + 배달비) VAT</div>
       </div>
       ${row('즉시할인금액', neg(instantDisc), negColor(instantDisc))}
+      ${promo ? row('프로모션 혜택', '+'+fmtW(promo)+'원', 'var(--green)') : ''}
+      ${refund ? row('환급액', '+'+fmtW(refund)+'원', 'var(--green)') : ''}
       ${sep}
-      ${row('정산금액', fmtW(settle)+'원', 'var(--accent)')}
+      ${row('최종 입금예정금액', fmtW(finalSettle)+'원', 'var(--accent)')}
       ${sep}${secLabel('내 비용')}
       ${row('원가 ('+S.cogs+'%)', '-'+fmtW(matCost)+'원', 'var(--orange)')}
       ${row('고정비 배분', '-'+fmtW(fixedAlloc)+'원', 'var(--orange)')}

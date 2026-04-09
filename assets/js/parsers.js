@@ -300,6 +300,10 @@ function recalcMerged(entry) {
   entry.instantFood = src.instantFood || s.instantFood || 0;
   entry.vat = src.vat || s.vat || 0;
   entry.instantDisc = src.instantDisc || s.instantDisc || 0;
+  entry.settleAN = src.settleAN || s.settleAN || 0;
+  entry.promo = src.promo || s.promo || 0;
+  entry.refund = src.refund || s.refund || 0;
+  entry.finalSettle = (entry.settleAN || 0) + (entry.promo || 0) + (entry.refund || 0);
   entry._hasPurchaseData = entry._hasPurchase || (s._hasPurchaseData || false);
 }
 
@@ -413,6 +417,8 @@ function parseCP_xlsx(wb, filename) {
       AI: Math.abs(Number(r[34])||0),  // 광고 공급가액
       AJ: Math.abs(Number(r[35])||0),  // 광고 부가세
       AN: Number(r[39])||0,            // 정산금액
+      AP: Number(r[41])||0,            // 프로모션 혜택
+      AQ: Number(r[42])||0,            // 환급액
     });
   } else {
     ci = {date:0, orderId:4, type:2, txType:7, orderAmt:10, cpBurden:12, shopBurden:13};
@@ -425,13 +431,14 @@ function parseCP_xlsx(wb, filename) {
       AI: Math.abs(Number(r[30])||0),
       AJ: 0,
       AN: Number(r[31])||0,
+      AP: 0, AQ: 0,
     });
   }
 
   const daily = {};
   let totalFee=0, totalDel=0, totalCoupon=0, totalOrders=0, totalAd=0;
   // 개별 항목 합계
-  let tQ=0, tR=0, tV=0, tAG=0, tAI=0, tAJ=0, tN=0, tW=0, tX=0;
+  let tQ=0, tR=0, tV=0, tAG=0, tAI=0, tAJ=0, tN=0, tW=0, tX=0, tAN=0, tAP=0, tAQ=0;
   const orderList = [];
 
   for (let i = dataStart; i < rows.length; i++) {
@@ -472,6 +479,7 @@ function parseCP_xlsx(wb, filename) {
     tQ += c.Q*sign; tR += c.S*sign; tV += c.V*sign;
     tAG += vat*sign; tAI += c.AI*sign; tAJ += c.AJ*sign;
     tN += c.N*sign; tW += c.W*sign; tX += c.X*sign;
+    tAN += c.AN; tAP += (c.AP||0)*sign; tAQ += (c.AQ||0)*sign;
 
     if (!isCancel) {
       orderList.push({
@@ -511,6 +519,8 @@ function parseCP_xlsx(wb, filename) {
     adSupply: tAI, adVat: tAJ,
     shopCoupon: tN, instantDel: tW, instantFood: tX,
     vat: tAG, instantDisc: tW + tX,
+    settleAN: tAN, promo: tAP, refund: tAQ,
+    finalSettle: tAN + tAP + tAQ, // 최종 입금예정 = AN + AP + AQ
     _hasPurchaseData: true,
     orderDetails: orderList, services,
   };
