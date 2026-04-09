@@ -479,9 +479,8 @@ function updatePlatformGrid(data) {
     const perOrd = orders > 0 ? Math.round(netProfit / orders) : 0;
     const margin = rev > 0 ? (netProfit / rev * 100) : 0;
 
-    const pctSpan = (val) => `<span style="font-size:11px;color:var(--text-tertiary);">${fmtPct(rev>0?val/rev*100:0)}</span>`;
     const delRow = isDeliveryPf(p)
-      ? `<div class="platform-stat"><span class="platform-stat-label">배달비 <span style="font-size:10px;color:var(--text-quaternary);">${fmt(orders)}건×${fmt(getPfDel(p))}원</span></span><span class="platform-stat-value" style="color:var(--red);">${fmtW(del)}원 ${pctSpan(del)}</span></div>`
+      ? `<div class="platform-stat"><span class="platform-stat-label">배달비</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(del)}원</span></div>`
       : '';
     const marginColor = margin>=15?'var(--green)':margin>=0?'var(--orange)':'var(--red)';
 
@@ -489,11 +488,10 @@ function updatePlatformGrid(data) {
       <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span></div>
       <div class="platform-stat"><span class="platform-stat-label">매출</span><span class="platform-stat-value">${fmtW(rev)}원</span></div>
       <div class="platform-stat"><span class="platform-stat-label">주문수</span><span class="platform-stat-value">${fmt(orders)}건</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">수수료 <span style="font-size:10px;color:var(--text-quaternary);">매출×${(feeRate*100).toFixed(1)}%</span></span><span class="platform-stat-value" style="color:var(--red);">${fmtW(fee)}원 ${pctSpan(fee)}</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">수수료</span><span class="platform-stat-value" style="color:var(--red);">${fmtW(fee)}원</span></div>
       ${delRow}
-      <div class="platform-stat"><span class="platform-stat-label">광고</span><span class="platform-stat-value" style="color:${ad?'var(--red)':'var(--text-tertiary)'};">${fmtW(ad)}원${ad ? ' '+pctSpan(ad) : ''}</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">쿠폰</span><span class="platform-stat-value" style="color:${coupon?'var(--red)':'var(--text-tertiary)'};">${fmtW(coupon)}원${coupon ? ' '+pctSpan(coupon) : ''}</span></div>
-      <div class="platform-stat"><span class="platform-stat-label">원가 <span style="font-size:10px;color:var(--text-quaternary);">매출×${S.cogs}%</span></span><span class="platform-stat-value" style="color:var(--orange);">${fmtW(matCost)}원 ${pctSpan(matCost)}</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">광고</span><span class="platform-stat-value" style="color:${ad?'var(--red)':'var(--text-tertiary)'};">${fmtW(ad)}원</span></div>
+      <div class="platform-stat"><span class="platform-stat-label">쿠폰</span><span class="platform-stat-value" style="color:${coupon?'var(--red)':'var(--text-tertiary)'};">${fmtW(coupon)}원</span></div>
       <div class="platform-stat"><span class="platform-stat-label">건당 순수익</span><span class="platform-stat-value" style="color:${perOrd>=0?'var(--green)':'var(--red)'};">${fmt(perOrd)}원</span></div>
       <div class="platform-stat"><span class="platform-stat-label">마진율</span><span class="platform-stat-value" style="color:${marginColor};">${fmtPct(margin)}</span></div>
     </div>`;
