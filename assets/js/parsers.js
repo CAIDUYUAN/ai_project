@@ -281,23 +281,25 @@ function recalcMerged(entry) {
   entry.daily = s.daily || {};
   entry.coupon = s.coupon || 0;
   // 매입 데이터 (매입 있으면 매입 우선, 없으면 매출 파일의 값 사용)
-  if (entry._hasPurchase) {
-    entry.fee = p.fee || 0;
-    entry.delivery = p.delivery || 0;
-    entry.ad = p.ad || 0;
-    entry.feeRate = entry.totalRev ? entry.fee / entry.totalRev : 0;
-    entry.services = p.services || {};
-    entry.orderDetails = p.orderDetails || [];
-  } else if (entry._hasSales) {
-    // 매출만 있을 때 - 매출 파일에 fee가 있으면 사용 (쿠팡/땡겨요/요기요)
-    entry.fee = s.fee || 0;
-    entry.delivery = s.delivery || 0;
-    entry.ad = s.ad || 0;
-    entry.coupon = s.coupon || 0;
-    entry.feeRate = s.feeRate || 0;
-    entry.services = s.services || {};
-    entry.orderDetails = s.orderDetails || [];
-  }
+  const src = entry._hasPurchase ? p : (entry._hasSales ? s : {});
+  entry.fee = src.fee || 0;
+  entry.delivery = src.delivery || 0;
+  entry.ad = src.ad || 0;
+  entry.coupon = s.coupon || 0;
+  entry.feeRate = entry.totalRev ? entry.fee / entry.totalRev : 0;
+  entry.services = src.services || {};
+  entry.orderDetails = src.orderDetails || [];
+  // 개별 항목 (쿠팡 정산 카드용)
+  entry.broker = src.broker || s.broker || 0;
+  entry.pgFee = src.pgFee || s.pgFee || 0;
+  entry.delFee = src.delFee || s.delFee || 0;
+  entry.adSupply = src.adSupply || s.adSupply || 0;
+  entry.adVat = src.adVat || s.adVat || 0;
+  entry.shopCoupon = src.shopCoupon || s.shopCoupon || 0;
+  entry.instantDel = src.instantDel || s.instantDel || 0;
+  entry.instantFood = src.instantFood || s.instantFood || 0;
+  entry.vat = src.vat || s.vat || 0;
+  entry.instantDisc = src.instantDisc || s.instantDisc || 0;
   entry._hasPurchaseData = entry._hasPurchase || (s._hasPurchaseData || false);
 }
 
