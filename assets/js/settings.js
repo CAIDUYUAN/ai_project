@@ -57,12 +57,12 @@ function saveSettings() {
   localStorage.setItem('bbalgan_v2', JSON.stringify(S));
   // Supabase에 설정 저장
   saveToSupabase('settings', 'config', S, 'settings').catch(e => console.warn(e));
-  Object.values(DB.bm).forEach(d => recalcBM(d));
-  document.getElementById('hd-bm-del').textContent = S.bmDel.toLocaleString() + '원';
-  document.getElementById('hd-cp-del').textContent = S.cpDel.toLocaleString() + '원';
-  updateCouponPreview();
+  try { Object.values(DB.bm).forEach(d => recalcBM(d)); } catch(e) {}
+  const hdBm = document.getElementById('hd-bm-del'); if (hdBm) hdBm.textContent = S.bmDel.toLocaleString() + '원';
+  const hdCp = document.getElementById('hd-cp-del'); if (hdCp) hdCp.textContent = S.cpDel.toLocaleString() + '원';
+  try { updateCouponPreview(); } catch(e) {}
   renderAll();
-  calcBEPSummary();
+  try { calcBEPSummary(); } catch(e) {}
   if (typeof renderMenuCost === 'function') renderMenuCost();
   toast('⚙️ 설정 저장됐어요!');
 }
