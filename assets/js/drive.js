@@ -64,10 +64,17 @@ async function loadXlsx2(files, pf) {
   const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':pf==='ts'?'가게(토스)':'땡겨요';
   let loaded = 0, failed = 0;
   const total = fileArr.length;
-  showUploadProgress(`${label} 파일 준비 중...`, 0, 0, total);
+  showUploadProgress(`${label} ${total}개 파일 준비 중...`, 0, 0, total);
 
-  for (const file of fileArr) {
+  for (let fi = 0; fi < fileArr.length; fi++) {
+    const file = fileArr[fi];
+    const fileNum = fi + 1;
     try {
+      // 1단계: 파일 읽기 (전체의 30%)
+      const stepBase = (fi / total) * 100;
+      const stepSize = 100 / total;
+      showUploadProgress(`${label} 파일 읽는 중... (${fileNum}/${total})`, stepBase + stepSize * 0.1, fileNum, total);
+
       const buf = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = e => resolve(e.target.result);
@@ -75,7 +82,9 @@ async function loadXlsx2(files, pf) {
         reader.readAsArrayBuffer(file);
       });
 
-      // xlsx 경고 억제
+      // 2단계: 파싱 (전체의 50%)
+      showUploadProgress(`${label} 파싱 중... (${fileNum}/${total})`, stepBase + stepSize * 0.3, fileNum, total);
+
       const _ce = console.error;
       console.error = (...args) => { if (!(args[0]||'').toString().includes('uncompressed')) _ce.apply(console, args); };
       const wb = XLSX.read(buf, {type:'array', cellDates:true, WTF:false});
@@ -88,28 +97,26 @@ async function loadXlsx2(files, pf) {
       else if (pf === 'ts') data = parseTS_xlsx(wb, file.name);
       else                  data = parseTG_xlsx(wb, file.name);
 
-      showUploadProgress(`${label} 파싱 중...`, ((loaded + 0.5) / total) * 100, loaded, total);
+      // 3단계: DB 저장 (전체의 80%)
+      showUploadProgress(`${label} 저장 중... (${fileNum}/${total})`, stepBase + stepSize * 0.6, fileNum, total);
       await storeData(pf, data, file.name);
       loaded++;
-      showUploadProgress(`${label} 업로드 중...`, (loaded / total) * 100, loaded, total);
-      const first = Array.isArray(data) ? data[0] : data;
-      toast(`${label} ${first.period} 로드 완료! (${loaded}/${total})`);
+
+      // 4단계: 완료
+      showUploadProgress(`${label} 처리 중... (${loaded}/${total})`, stepBase + stepSize, loaded, total);
     } catch(err) {
       failed++;
       const msg = /password.protected/i.test(err.message)
         ? '암호가 걸린 파일입니다. 암호를 푸시고 다시 다운로드해주세요. (데이터 탭 가이드 참고)'
         : err.message;
       console.warn(`파일 오류(${file.name}):`, msg);
-      toast(`⚠️ ${file.name}: ${msg}`);
+      toastCenter(`⚠️ ${file.name}: ${msg}`);
     }
   }
 
   showUploadProgress(`완료! ${loaded}개 성공${failed ? `, ${failed}개 실패` : ''}`, 100, loaded, total);
   hideUploadProgress();
-
-  if (fileArr.length > 1) {
-    toast(`${label} ${loaded}개 로드 완료${failed ? ` (${failed}개 실패)` : ''}`);
-  }
+  toastCenter(`${label} ${loaded}개 파일 업로드 완료!${failed ? ` (${failed}개 실패)` : ''}`);
 }
 
 // ==============================================

@@ -45,6 +45,18 @@ function toast(msg) {
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+function toastCenter(msg) {
+  let el = document.getElementById('toastCenter');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toastCenter';
+    el.className = 'toast-center';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
 function goTab(id) {
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
