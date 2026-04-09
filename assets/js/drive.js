@@ -45,13 +45,12 @@ function onDrag(e, id)  { e.preventDefault(); document.getElementById(id).classL
 function offDrag(id)    { document.getElementById(id).classList.remove('drag'); }
 function onDrop(e, pf)  { e.preventDefault(); offDrag('box-'+pf); loadXlsx2(e.dataTransfer.files, pf); }
 function loadXlsx(inp, pf) { loadXlsx2(inp.files, pf); }
-function showUploadProgress(text, pct, loaded, total) {
+function showUploadProgress(text, pct, current, total) {
   const el = document.getElementById('uploadProgress');
   if (!el) return;
   el.classList.add('active');
   document.getElementById('uploadProgressText').textContent = text;
-  const countText = total ? `${loaded||0}/${total}개` : '';
-  document.getElementById('uploadProgressPct').textContent = countText + ' ' + Math.round(pct) + '%';
+  document.getElementById('uploadProgressPct').textContent = (total > 1 ? `${current}/${total}개 ` : '') + Math.round(pct) + '%';
   document.getElementById('uploadProgressFill').style.width = pct + '%';
 }
 function hideUploadProgress() {

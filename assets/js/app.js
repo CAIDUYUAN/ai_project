@@ -158,6 +158,8 @@ function toggleMobileNav() {
 
 /* ═══ FILE HANDLING ═══ */
 function handleFiles(files) {
+  // 플랫폼별로 그룹핑하여 한번에 전달
+  const groups = {};
   Array.from(files).forEach(file => {
     const fn = file.name;
     let pf = null;
@@ -166,8 +168,12 @@ function handleFiles(files) {
     else if (/coupang|쿠팡/.test(fn)) pf = 'cp';
     else if (/땡겨요|정산내역/.test(fn)) pf = 'tg';
     else if (/요기요/.test(fn)) pf = 'yg';
-    if (!pf) { alert(`"${fn}" — 플랫폼을 인식할 수 없습니다.`); return; }
-    loadXlsx2([file], pf);
+    if (!pf) { toastCenter(`"${fn}" — 플랫폼을 인식할 수 없습니다.`); return; }
+    if (!groups[pf]) groups[pf] = [];
+    groups[pf].push(file);
+  });
+  Object.entries(groups).forEach(([pf, fileList]) => {
+    loadXlsx2(fileList, pf);
   });
 }
 
