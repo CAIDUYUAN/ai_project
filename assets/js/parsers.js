@@ -204,7 +204,7 @@ function parseBM_purchase_xlsx(wb, filename) {
     if (!orderDetails[groupKey]) {
       orderDetails[groupKey] = {
         date:ds, service:serviceName, txId, orderAmt,
-        settleFee:0, brokerageFee:0, deliveryFee:0, adFee:0,
+        settleFee:0, brokerageFee:0, brokerageHomeFee:0, deliveryFee:0, adFee:0,
         supplyTotal:0, vatTotal:0, total:0,
         bmSettleFee:0, bmBrokerageFee:0, bmDeliveryFee:0, bmTotal:0,
         actualTotal:0,
@@ -222,6 +222,7 @@ function parseBM_purchase_xlsx(wb, filename) {
     } else {
       // 사장님 부담 — 공급가액(supply)만 저장, 부가세(vat)는 별도 합산
       if (/결제정산/.test(feeType)) { od.settleFee += supply; }
+      else if (/중개이용료\(가게배달\)/.test(feeType)) { od.brokerageHomeFee += supply; }
       else if (/중개이용료/.test(feeType)) { od.brokerageFee += supply; }
       else if (/배달비/.test(feeType)) { od.deliveryFee += supply; totalDelivery += supply; }
       else if (/광고이용료/.test(feeType)) { od.adFee += supply; totalAd += supply; } // 광고도 공급가액만
@@ -250,9 +251,10 @@ function parseBM_purchase_xlsx(wb, filename) {
   });
 
   // 카드용 개별 항목 합산
-  let aggBroker=0, aggPgFee=0, aggDelFee=0, aggVat=0;
+  let aggBroker=0, aggBrokerHome=0, aggPgFee=0, aggDelFee=0, aggVat=0;
   Object.values(orderDetails).forEach(od => {
     aggBroker += od.brokerageFee;
+    aggBrokerHome += od.brokerageHomeFee;
     aggPgFee += od.settleFee;
     aggDelFee += od.deliveryFee;
     aggVat += od.vatTotal;
@@ -263,6 +265,7 @@ function parseBM_purchase_xlsx(wb, filename) {
     fee: totalFee, delivery: totalDelivery, ad: totalAd,
     // 카드용 개별 항목 (배민 앱 정산 화면과 동일)
     broker: aggBroker,     // 중개이용료 (공급가액)
+    brokerHome: aggBrokerHome, // 중개이용료(가게배달) (공급가액)
     pgFee: aggPgFee,       // 결제정산수수료 (공급가액)
     delFee: aggDelFee,     // 배달비 (공급가액)
     vat: aggVat,           // 부가세 합계
@@ -305,6 +308,7 @@ function recalcMerged(entry) {
   entry.orderDetails = src.orderDetails || [];
   // 개별 항목 (쿠팡 정산 카드용)
   entry.broker = src.broker || s.broker || 0;
+  entry.brokerHome = src.brokerHome || s.brokerHome || 0;
   entry.pgFee = src.pgFee || s.pgFee || 0;
   entry.delFee = src.delFee || s.delFee || 0;
   entry.adSupply = src.adSupply || s.adSupply || 0;

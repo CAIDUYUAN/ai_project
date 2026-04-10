@@ -282,6 +282,7 @@ function getFilteredData() {
       platformSummary[p].ad += d.ad||0;
       // 개별 항목
       platformSummary[p].broker += d.broker||0;
+      platformSummary[p].brokerHome = (platformSummary[p].brokerHome||0) + (d.brokerHome||0);
       platformSummary[p].pgFee += d.pgFee||0;
       platformSummary[p].delFee += d.delFee||0;
       platformSummary[p].adSupply += d.adSupply||0;
@@ -489,8 +490,8 @@ function updatePlatformGrid(data) {
     const rev = ps.totalRev;
     const orders = ps.orders;
     // 개별 항목이 있으면(쿠팡) 상세 표시, 없으면 합산값으로 표시
-    const hasDetail = !!(ps.broker || ps.pgFee || ps.vat);
-    const broker = ps.broker||0, pgFee = ps.pgFee||0;
+    const hasDetail = !!(ps.broker || ps.pgFee || ps.vat || ps.brokerHome);
+    const broker = ps.broker||0, brokerHome = ps.brokerHome||0, pgFee = ps.pgFee||0;
     const fee = ps.fee||0;
     const delFee = ps.delFee || ps.delivery || 0;
     const adSupply = ps.adSupply || ps.ad || 0;
@@ -502,7 +503,7 @@ function updatePlatformGrid(data) {
     const refund = ps.refund || 0;
     // 최종 입금예정
     const totalDeduct = hasDetail
-      ? (shopCoupon + broker + pgFee + delFee + adSupply + vat + instantDisc - promo - refund)
+      ? (shopCoupon + broker + brokerHome + pgFee + delFee + adSupply + vat + instantDisc - promo - refund)
       : (fee + delFee + adSupply + coupon);
     const finalSettle = ps.finalSettle || (rev - totalDeduct);
     // 내 비용
@@ -528,6 +529,7 @@ function updatePlatformGrid(data) {
       detailRows = `
       ${!isBM && shopCoupon ? row('상점부담 쿠폰', neg(shopCoupon), negColor(shopCoupon)) : ''}
       ${row('중개 이용료', neg(broker), negColor(broker))}
+      ${brokerHome ? row('중개이용료(가게배달)', neg(brokerHome), negColor(brokerHome)) : ''}
       ${row(pgLabel, neg(pgFee), negColor(pgFee))}
       ${isDeliveryPf(p) ? row('배달비', neg(delFee), negColor(delFee)) : ''}
       ${row(adLabel, neg(adSupply), negColor(adSupply))}
