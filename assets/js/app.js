@@ -582,7 +582,7 @@ function updatePlatformGrid(data) {
       ${row('매출액', fmt(rev)+'원', 'var(--text-primary)')}
       ${detailRows}
       ${sep}
-      ${row('최종 입금예정금액', fmt(finalSettle)+'원', 'var(--accent)')}
+      ${row('입금예정금액(조정금액,환급액 포함)', fmt(finalSettle)+'원', 'var(--accent)')}
       ${sep}${secLabel('내 비용')}
       ${row('원가 ('+S.cogs+'%)', '-'+fmt(matCost)+'원', 'var(--orange)')}
       ${row('고정비 배분', '-'+fmt(fixedAlloc)+'원', 'var(--orange)')}
