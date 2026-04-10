@@ -512,7 +512,7 @@ function updatePlatformGrid(data) {
 
     if (isBM && (broker || brokerHome || pgFee || vat)) {
       // 배민 전용 카드
-      totalDeduct = broker + brokerHome + pgFee + delFee + adSupply + vat;
+      totalDeduct = broker + brokerHome + pgFee + delFee + adSupply + vat + instantDisc;
       detailRows = `
       ${row('중개이용료(배민부담 포함)', neg(broker), negColor(broker))}
       ${brokerHome ? row('중개이용료(가게배달)', neg(brokerHome), negColor(brokerHome)) : ''}
@@ -521,7 +521,8 @@ function updatePlatformGrid(data) {
       ${row('광고비(우리가게클릭)', neg(adSupply), negColor(adSupply))}
       <div class="platform-stat vat-tip-wrap"><span class="platform-stat-label">부가세 <span style="cursor:help;color:var(--accent);font-size:11px;">ⓘ</span></span><span class="platform-stat-value" style="color:${negColor(vat)};">${neg(vat)}</span>
         <div class="vat-tooltip">부가세 = (중개이용료 + 결제정산수수료 + 배달비 + 광고비) × 10%</div>
-      </div>`;
+      </div>
+      ${row('즉시할인금액', neg(instantDisc), negColor(instantDisc))}`;
     } else if (isCP && (broker || pgFee || vat)) {
       // 쿠팡 전용 카드
       totalDeduct = shopCoupon + broker + pgFee + delFee + adSupply + vat + instantDisc - promo - refund;
