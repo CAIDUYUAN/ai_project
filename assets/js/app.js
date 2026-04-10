@@ -570,6 +570,12 @@ function updatePlatformGrid(data) {
     }
 
     const finalSettle = ps.finalSettle || (rev - totalDeduct);
+    const matCost = Math.round(rev * (S.cogs / 100));
+    const revShare = totalAllRev > 0 ? rev / totalAllRev : 0;
+    const fixedAlloc = Math.round(totalFixed * revShare);
+    const realNet = finalSettle - matCost - fixedAlloc;
+    const realMargin = rev > 0 ? (realNet / rev * 100) : 0;
+    const marginColor = realMargin>=15?'var(--green)':realMargin>=0?'var(--orange)':'var(--red)';
 
     return `<div class="platform-card ${p}">
       <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(orders)}건</span></div>
