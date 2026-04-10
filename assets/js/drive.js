@@ -59,8 +59,18 @@ function hideUploadProgress() {
 }
 
 async function loadXlsx2(files, pf) {
-  const fileArr = Array.from(files);
+  let fileArr = Array.from(files);
   const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':pf==='ts'?'가게(토스)':'땡겨요';
+
+  // 중복 파일 체크
+  const existingNames = (FILES[pf]||[]).map(f => f.filename);
+  const dupes = fileArr.filter(f => existingNames.includes(f.name));
+  if (dupes.length) {
+    toastCenter(`중복 파일 ${dupes.length}개 제외:\n${dupes.map(f=>f.name).join('\n')}`);
+    fileArr = fileArr.filter(f => !existingNames.includes(f.name));
+    if (!fileArr.length) return;
+  }
+
   let loaded = 0, failed = 0;
   const total = fileArr.length;
   showUploadProgress(`${label} ${total}개 파일 준비 중...`, 0, 0, total);
