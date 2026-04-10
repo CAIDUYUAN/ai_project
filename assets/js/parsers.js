@@ -327,13 +327,7 @@ function mergePurchase(pf, purchaseData) {
   const key = purchaseData.ym[0] + '-' + String(purchaseData.ym[1]).padStart(2,'0');
   const existing = DB[pf][key];
   if (existing) {
-    existing.purchase = {
-      fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
-      ad: purchaseData.ad || 0, services: purchaseData.services || {},
-      orderDetails: purchaseData.orderDetails || [],
-      details: purchaseData.details || [],
-      summary: purchaseData.summary || null,
-    };
+    existing.purchase = { ...purchaseData };
     existing._hasPurchase = true;
     existing._files = (existing._hasSales ? 1 : 0) + 1;
     recalcMerged(existing);
@@ -342,13 +336,7 @@ function mergePurchase(pf, purchaseData) {
       period: purchaseData.period, ym: purchaseData.ym,
       _files: 1, _hasSales: false, _hasPurchase: true,
       sales: {},
-      purchase: {
-        fee: purchaseData.fee, delivery: purchaseData.delivery || 0,
-        ad: purchaseData.ad || 0, services: purchaseData.services || {},
-        orderDetails: purchaseData.orderDetails || [],
-        details: purchaseData.details || [],
-        summary: purchaseData.summary || null,
-      },
+      purchase: { ...purchaseData },
       totalRev:0, orders:0, daily:{}, fee:purchaseData.fee,
       delivery:purchaseData.delivery||0, ad:purchaseData.ad||0,
       feeRate:0, coupon:0, services:purchaseData.services||{},
