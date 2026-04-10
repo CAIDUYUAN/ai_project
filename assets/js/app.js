@@ -489,8 +489,8 @@ function updatePlatformGrid(data) {
 
     const rev = ps.totalRev;
     const orders = ps.orders;
-    // 개별 항목이 있으면(쿠팡) 상세 표시, 없으면 합산값으로 표시
-    const hasDetail = !!(ps.broker || ps.pgFee || ps.vat || ps.brokerHome);
+    const isBM = (p === 'bm');
+    const isCP = (p === 'cp');
     const broker = ps.broker||0, brokerHome = ps.brokerHome||0, pgFee = ps.pgFee||0;
     const fee = ps.fee||0;
     const delFee = ps.delFee || ps.delivery || 0;
@@ -501,18 +501,6 @@ function updatePlatformGrid(data) {
     const instantDisc = ps.instantDisc || 0;
     const promo = ps.promo || 0;
     const refund = ps.refund || 0;
-    // 최종 입금예정
-    const totalDeduct = hasDetail
-      ? (shopCoupon + broker + brokerHome + pgFee + delFee + adSupply + vat + instantDisc - promo - refund)
-      : (fee + delFee + adSupply + coupon);
-    const finalSettle = ps.finalSettle || (rev - totalDeduct);
-    // 내 비용
-    const matCost = Math.round(rev * (S.cogs / 100));
-    const revShare = totalAllRev > 0 ? rev / totalAllRev : 0;
-    const fixedAlloc = Math.round(totalFixed * revShare);
-    const realNet = finalSettle - matCost - fixedAlloc;
-    const realMargin = rev > 0 ? (realNet / rev * 100) : 0;
-    const marginColor = realMargin>=15?'var(--green)':realMargin>=0?'var(--orange)':'var(--red)';
 
     const row = (label, val, color) => `<div class="platform-stat"><span class="platform-stat-label">${label}</span><span class="platform-stat-value" style="color:${color};">${val}</span></div>`;
     const sep = `<div style="border-top:1px solid var(--border);margin:2px 0;"></div>`;
@@ -520,32 +508,46 @@ function updatePlatformGrid(data) {
     const neg = v => v ? '-'+fmt(v)+'원' : '0원';
     const negColor = v => v ? 'var(--red)' : 'var(--text-tertiary)';
 
-    // 상세(개별항목 있음) vs 합산(없음) 분기
-    let detailRows;
-    if (hasDetail) {
-      const isBM = (p === 'bm');
-      const pgLabel = isBM ? '결제정산수수료(배민부담 포함)' : '결제대행사 수수료';
-      const adLabel = isBM ? '광고비(우리가게클릭)' : '광고비';
+    let detailRows, totalDeduct;
+
+    if (isBM && (broker || brokerHome || pgFee || vat)) {
+      // 배민 전용 카드
+      totalDeduct = broker + brokerHome + pgFee + delFee + adSupply + vat;
       detailRows = `
-      ${!isBM && shopCoupon ? row('상점부담 쿠폰', neg(shopCoupon), negColor(shopCoupon)) : ''}
-      ${row(isBM ? '중개이용료(배민부담 포함)' : '중개 이용료', neg(broker), negColor(broker))}
+      ${row('중개이용료(배민부담 포함)', neg(broker), negColor(broker))}
       ${brokerHome ? row('중개이용료(가게배달)', neg(brokerHome), negColor(brokerHome)) : ''}
-      ${row(pgLabel, neg(pgFee), negColor(pgFee))}
-      ${isDeliveryPf(p) ? row('배달비', neg(delFee), negColor(delFee)) : ''}
-      ${row(adLabel, neg(adSupply), negColor(adSupply))}
+      ${row('결제정산수수료(배민부담 포함)', neg(pgFee), negColor(pgFee))}
+      ${row('배달비', neg(delFee), negColor(delFee))}
+      ${row('광고비(우리가게클릭)', neg(adSupply), negColor(adSupply))}
       <div class="platform-stat vat-tip-wrap"><span class="platform-stat-label">부가세 <span style="cursor:help;color:var(--accent);font-size:11px;">ⓘ</span></span><span class="platform-stat-value" style="color:${negColor(vat)};">${neg(vat)}</span>
-        <div class="vat-tooltip">부가세 = (중개이용료 + ${isBM?'결제정산수수료':'결제수수료'} + 배달비 + 광고비) × 10%</div>
+        <div class="vat-tooltip">부가세 = (중개이용료 + 결제정산수수료 + 배달비 + 광고비) × 10%</div>
+      </div>`;
+    } else if (isCP && (broker || pgFee || vat)) {
+      // 쿠팡 전용 카드
+      totalDeduct = shopCoupon + broker + pgFee + delFee + adSupply + vat + instantDisc - promo - refund;
+      detailRows = `
+      ${row('상점부담 쿠폰', neg(shopCoupon), negColor(shopCoupon))}
+      ${row('중개 이용료', neg(broker), negColor(broker))}
+      ${row('결제대행사 수수료', neg(pgFee), negColor(pgFee))}
+      ${row('배달비', neg(delFee), negColor(delFee))}
+      ${row('광고비', neg(adSupply), negColor(adSupply))}
+      <div class="platform-stat vat-tip-wrap"><span class="platform-stat-label">부가세 <span style="cursor:help;color:var(--accent);font-size:11px;">ⓘ</span></span><span class="platform-stat-value" style="color:${negColor(vat)};">${neg(vat)}</span>
+        <div class="vat-tooltip">부가세 = (중개이용료 + 결제수수료 + 배달비 + 광고비) × 10%</div>
       </div>
-      ${!isBM && instantDisc ? row('즉시할인금액', neg(instantDisc), negColor(instantDisc)) : ''}
+      ${instantDisc ? row('즉시할인금액', neg(instantDisc), negColor(instantDisc)) : ''}
       ${promo ? row('프로모션 혜택', '+'+fmt(promo)+'원', 'var(--green)') : ''}
       ${refund ? row('환급액', '+'+fmt(refund)+'원', 'var(--green)') : ''}`;
     } else {
+      // 기타 플랫폼 (땡겨요/요기요/가게 등) — 합산값
+      totalDeduct = fee + delFee + adSupply + coupon;
       detailRows = `
       ${row('수수료', neg(fee), negColor(fee))}
       ${isDeliveryPf(p) ? row('배달비', neg(delFee), negColor(delFee)) : ''}
       ${row('광고', neg(adSupply), negColor(adSupply))}
       ${row('쿠폰', neg(coupon), negColor(coupon))}`;
     }
+
+    const finalSettle = ps.finalSettle || (rev - totalDeduct);
 
     return `<div class="platform-card ${p}">
       <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(orders)}건</span></div>
