@@ -478,7 +478,19 @@ function mergeSales(pf, salesData) {
   const key = salesData.ym[0] + '-' + String(salesData.ym[1]).padStart(2,'0');
   const existing = DB[pf][key];
   if (existing) {
-    existing.sales = { ...salesData };
+    // 정산명세서 데이터는 누적 합산 (여러 파일에 같은 월 데이터가 분산)
+    if (salesData._isSettlement && existing.sales._isSettlement) {
+      const s = existing.sales;
+      const fields = ['totalRev','fee','delivery','ad','coupon','broker','brokerHome','pgFee','delFee','adSupply','vat','instantDisc','adjust','refund','etcFee','bOrder','finalSettle'];
+      fields.forEach(f => { s[f] = (s[f]||0) + (salesData[f]||0); });
+      // daily 합산
+      if (salesData.daily) Object.entries(salesData.daily).forEach(([day,dd]) => {
+        if (!s.daily[day]) s.daily[day] = {rev:0, orders:0};
+        s.daily[day].rev += dd.rev||0; s.daily[day].orders += dd.orders||0;
+      });
+    } else {
+      existing.sales = { ...salesData };
+    }
     existing._hasSales = true;
     existing._files = 1 + (existing._hasPurchase ? 1 : 0);
     existing.period = salesData.period;
