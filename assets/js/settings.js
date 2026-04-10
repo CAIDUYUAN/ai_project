@@ -62,7 +62,7 @@ function saveSettings() {
   const hdCp = document.getElementById('hd-cp-del'); if (hdCp) hdCp.textContent = S.cpDel.toLocaleString() + '원';
   try { updateCouponPreview(); } catch(e) {}
   renderAll();
-  try { calcBEPSummary(); } catch(e) {}
+  try { updateBEP(); } catch(e) {}
   if (typeof renderMenuCost === 'function') renderMenuCost();
   toast('⚙️ 설정 저장됐어요!');
 }
@@ -145,7 +145,7 @@ function setFeeMode(pf, mode) {
   localStorage.setItem('bbalgan_v2', JSON.stringify(S));
   renderAll();
   if (typeof renderMenuCost === 'function') renderMenuCost();
-  calcBEPSummary();
+  updateBEP();
 }
 
 // ── DB 평균 수수료 계산 ──
@@ -263,7 +263,7 @@ function applyFeeModes() {
   ['bm','cp','tg','yg'].forEach(p => updateServiceFeeUI(p));
   renderAll();
   if (typeof renderMenuCost === 'function') renderMenuCost();
-  calcBEPSummary();
+  updateBEP();
 }
 
 function updateCouponPreview() {

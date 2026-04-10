@@ -68,7 +68,7 @@ function goTab(id) {
   if (id === 'menucost') renderMenuCost();
   if (id === 'calendar') renderCalendar();
   if (id === 'diagnosis') renderDiagnosis();
-  if (id === 'settings') { applySettingsToUI(); calcBEPSummary(); }
+  if (id === 'settings') { applySettingsToUI(); updateBEP(); }
 }
 document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => goTab(btn.dataset.tab)));
 
@@ -424,13 +424,12 @@ function recalcMerged(entry) {
   entry.totalRev = s.totalRev || 0;
   entry.orders = s.orders || 0;
   entry.daily = s.daily || {};
-  entry.coupon = s.coupon || 0;
   // 매입 데이터 (매입 있으면 매입 우선, 없으면 매출 파일의 값 사용)
   const src = entry._hasPurchase ? p : (entry._hasSales ? s : {});
   entry.fee = src.fee || 0;
   entry.delivery = src.delivery || 0;
   entry.ad = src.ad || 0;
-  entry.coupon = s.coupon || 0;
+  entry.coupon = src.coupon || s.coupon || 0;
   entry.feeRate = entry.totalRev ? entry.fee / entry.totalRev : 0;
   entry.services = src.services || {};
   entry.orderDetails = src.orderDetails || [];
@@ -487,7 +486,7 @@ function mergeSales(pf, salesData) {
     // 정산명세서 데이터는 누적 합산 (여러 파일에 같은 월 데이터가 분산)
     if (salesData._isSettlement && existing.sales._isSettlement) {
       const s = existing.sales;
-      const fields = ['totalRev','fee','delivery','ad','coupon','broker','brokerHome','pgFee','delFee','adSupply','vat','instantDisc','adjust','refund','etcFee','bOrder','finalSettle'];
+      const fields = ['totalRev','orders','fee','delivery','ad','coupon','broker','brokerHome','pgFee','delFee','adSupply','adVat','vat','instantDisc','shopCoupon','instantDel','instantFood','adjust','refund','etcFee','bOrder','settleAN','promo','finalSettle'];
       fields.forEach(f => { s[f] = (s[f]||0) + (salesData[f]||0); });
       // daily 합산
       if (salesData.daily) Object.entries(salesData.daily).forEach(([day,dd]) => {
