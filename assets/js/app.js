@@ -524,7 +524,7 @@ function updatePlatformGrid(data) {
       ${tipRow('결제정산수수료(배민부담 포함)', neg(pgFee), negColor(pgFee), '기본수수료(정률) + 우대수수료')}
       ${tipRow('배달비', neg(delFee), negColor(delFee), '배민1 한집배달 배달비(S열) + 알뜰배달 배달비(T열)')}
       ${tipRow('광고비(우리가게클릭)', neg(adSupply), negColor(adSupply), '우리가게클릭 이용요금')}
-      ${tipRow('부가세', neg(vat), negColor(vat), '(중개이용료 + 배달비 + 결제정산수수료 + 광고비) × 10%')}
+      ${tipRow('부가세(광고비 부가세 미포함)', neg(vat), negColor(vat), '(중개이용료 + 배달비 + 결제정산수수료) × 10%')}
       ${tipRow('즉시할인금액(가게)', neg(instantDisc), negColor(instantDisc), '주문금액 즉시할인 + 파트너부담쿠폰 + 포장할인 + 가게주문금액할인 + 메뉴할인')}`;
     } else if (isCP && (broker || pgFee || vat)) {
       // 쿠팡 전용 카드

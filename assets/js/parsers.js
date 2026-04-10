@@ -190,9 +190,9 @@ function parseBM_settlement(wb, filename) {
   const results = Object.entries(monthData).map(([moKey, md]) => {
     const [y, m] = moKey.split('-').map(Number);
     const finalSettle = md.settle;
-    // ⑦ 부가세 = (중개이용료 + 배달비 + 결제정산수수료 + 광고비) × 10%
+    // ⑦ 부가세 = (중개이용료 + 배달비 + 결제정산수수료) × 10% — 광고비 부가세 미포함
     const brokerAbs = Math.abs(md.broker) + Math.abs(md.brokerHome);
-    const feeBase = brokerAbs + Math.abs(md.delFee) + Math.abs(md.pgFee) + Math.abs(md.adSupply);
+    const feeBase = brokerAbs + Math.abs(md.delFee) + Math.abs(md.pgFee);
     const vatCalc = Math.round(feeBase * 0.1);
     return {
       period: y+'년 '+m+'월', ym: [y, m],
