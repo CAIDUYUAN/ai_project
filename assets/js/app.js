@@ -524,11 +524,11 @@ function updatePlatformGrid(data) {
     let detailRows;
     if (hasDetail) {
       const isBM = (p === 'bm');
-      const pgLabel = isBM ? '결제정산수수료' : '결제대행사 수수료';
+      const pgLabel = isBM ? '결제정산수수료(배민부담 포함)' : '결제대행사 수수료';
       const adLabel = isBM ? '광고비(우리가게클릭)' : '광고비';
       detailRows = `
       ${!isBM && shopCoupon ? row('상점부담 쿠폰', neg(shopCoupon), negColor(shopCoupon)) : ''}
-      ${row('중개 이용료', neg(broker), negColor(broker))}
+      ${row(isBM ? '중개이용료(배민부담 포함)' : '중개 이용료', neg(broker), negColor(broker))}
       ${brokerHome ? row('중개이용료(가게배달)', neg(brokerHome), negColor(brokerHome)) : ''}
       ${row(pgLabel, neg(pgFee), negColor(pgFee))}
       ${isDeliveryPf(p) ? row('배달비', neg(delFee), negColor(delFee)) : ''}

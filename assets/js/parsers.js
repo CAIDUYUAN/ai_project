@@ -213,24 +213,17 @@ function parseBM_purchase_xlsx(wb, filename) {
     const od = orderDetails[groupKey];
     if (orderAmt > 0) od.orderAmt = orderAmt;
 
-    if (isBmBurden) {
-      // 배민부담금액
-      if (/결제정산/.test(feeType)) od.bmSettleFee += total;
-      else if (/중개이용료/.test(feeType)) od.bmBrokerageFee += total;
-      else if (/배달비/.test(feeType)) od.bmDeliveryFee += total;
-      od.bmTotal += total;
-    } else {
-      // 사장님 부담 — 공급가액(supply)만 저장, 부가세(vat)는 별도 합산
-      if (/결제정산/.test(feeType)) { od.settleFee += supply; }
-      else if (/중개이용료\(가게배달\)/.test(feeType)) { od.brokerageHomeFee += supply; }
-      else if (/중개이용료/.test(feeType)) { od.brokerageFee += supply; }
-      else if (/배달비/.test(feeType)) { od.deliveryFee += supply; totalDelivery += supply; }
-      else if (/광고이용료/.test(feeType)) { od.adFee += supply; totalAd += supply; } // 광고도 공급가액만
-      od.supplyTotal += supply;
-      od.vatTotal += vat;
-      od.total += total;
-      if (!/광고/.test(feeType)) totalFee += supply; // 수수료는 공급가액만
-    }
+    // 배민부담금액도 사장님 부담과 합산 (공급가액 기준)
+    if (/결제정산/.test(feeType)) { od.settleFee += supply; }
+    else if (/중개이용료\(가게배달\)/.test(feeType)) { od.brokerageHomeFee += supply; }
+    else if (/중개이용료/.test(feeType)) { od.brokerageFee += supply; }
+    else if (/배달비/.test(feeType)) { od.deliveryFee += supply; totalDelivery += supply; }
+    else if (/광고이용료/.test(feeType)) { od.adFee += supply; totalAd += supply; }
+    if (isBmBurden) { od.bmTotal += total; }
+    od.supplyTotal += supply;
+    od.vatTotal += vat;
+    od.total += total;
+    if (!/광고/.test(feeType)) totalFee += supply;
   }
 
   // 주문별 실부담합계 계산
