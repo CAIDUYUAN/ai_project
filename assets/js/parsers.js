@@ -89,6 +89,135 @@ function recalcBM(d) {
 // [E] 배민 매출 파싱
 // 파일명: 매출상세내역_YYYY년MM월DD일(요일)_YYYY년MM월DD일(요일)_사업자번호_날짜.xlsx
 // ==============================================
+// ==============================================
+// [BM-S] 배민 정산명세서 파싱 (이름 기반 컬럼 매핑)
+// 파일명: [배달의민족] ... YYYY년 M월 정산명세서.xlsx
+// 시트: '상세' — Row4가 소분류 헤더, Row5부터 데이터
+// 주문일(col1 정산대상기간) 기준으로 월 분류
+// ==============================================
+function parseBM_settlement(wb, filename) {
+  const sn = wb.SheetNames.find(s => s.includes('상세')) || wb.SheetNames[wb.SheetNames.length-1];
+  const ws = wb.Sheets[sn];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+  // Row4 소분류 헤더에서 이름으로 컬럼 인덱스 매핑
+  const h = (rows[4]||[]).map(v => v ? String(v).trim() : '');
+  const col = name => h.findIndex(v => v === name);
+  const colLike = name => h.findIndex(v => v.includes(name));
+
+  // 컬럼 인덱스 매핑 (이름 기반 — 파일마다 위치 달라도 OK)
+  const C = {
+    입금일: 0, 정산대상기간: 1, 입금금액: 2, 주문유형: col('주문유형/기타'),
+    // 매출
+    바로결제: col('바로결제주문금액'), 만나서결제: col('만나서결제주문금액'),
+    // 중개이용료
+    배민1중개: col('배민1중개이용료'), 알뜰중개: col('알뜰배달 중개이용료'),
+    가게배달중개: col('가게배달중개이용료'), 픽업중개: col('픽업중개이용료'),
+    // 즉시할인 (가게부담)
+    즉시할인: col('주문금액 즉시할인'), 파트너쿠폰: col('파트너부담쿠폰'),
+    포장할인: col('포장할인'), 가게주문할인: col('가게주문금액할인'), 메뉴할인: col('메뉴할인'),
+    // 배달비
+    한집배달비: col('배민1 한집배달 배달비'), 알뜰배달비: col('알뜰배달 배달비'),
+    바로결제배달팁: col('바로결제배달팁'), 만나서결제배달팁: col('만나서결제배달팁'),
+    // 결제정산수수료
+    기본수수료: col('기본수수료(정률)'), 우대수수료: col('우대수수료'),
+    // 부가세
+    부가세: col('(E) 부가세'),
+    // 광고
+    광고요금: col('우리가게클릭 이용요금'), 광고부가세: col('부가세'),
+    // 기타
+    보정금액: col('보정금액'), 부분환불: col('부분환불금액'),
+    기타: col('(D) 기타'), 배민오더: col('(G) 배민오더'),
+    입금금액H: col('(H) 입금금액'),
+  };
+  // 광고부가세 = '부가세' 컬럼인데 (E)부가세와 다른 위치
+  if (C.광고부가세 === C.부가세 || C.광고부가세 < 0) {
+    // '부가세'가 여러 개일 수 있으므로 광고요금 바로 뒤 찾기
+    if (C.광고요금 >= 0) C.광고부가세 = h.indexOf('부가세', C.광고요금);
+  }
+
+  // 주문일(정산대상기간) 기준 월별 데이터 수집
+  const monthData = {};
+  const v = (r, idx) => idx >= 0 ? (Number(r[idx])||0) : 0;
+
+  for (let i = 5; i < rows.length; i++) {
+    const r = rows[i]; if (!r) continue;
+    const type = String(r[C.주문유형]||'').trim();
+    if (!type) continue;
+
+    // 주문일 파싱 (col1: '2026-01-05' 또는 '2026-01-02 ~ 2026-01-04')
+    const periodStr = String(r[C.정산대상기간]||'');
+    const dateMatch = periodStr.match(/(\d{4})-(\d{2})/);
+    if (!dateMatch) continue;
+    const moKey = dateMatch[1] + '-' + dateMatch[2];
+
+    if (!monthData[moKey]) monthData[moKey] = {
+      rev:0, broker:0, brokerHome:0, pgFee:0, delFee:0,
+      adSupply:0, adVat:0, vat:0, instantDisc:0,
+      adjust:0, refund:0, etc:0, bOrder:0, settle:0,
+    };
+    const md = monthData[moKey];
+
+    // 매출
+    md.rev += v(r, C.바로결제) + v(r, C.만나서결제);
+    // 중개이용료 (배민부담 포함 — 이미 합산되어 있음)
+    md.broker += v(r, C.배민1중개) + v(r, C.알뜰중개) + v(r, C.픽업중개);
+    md.brokerHome += v(r, C.가게배달중개);
+    // 결제정산수수료
+    md.pgFee += v(r, C.기본수수료) + v(r, C.우대수수료);
+    // 배달비
+    md.delFee += v(r, C.한집배달비) + v(r, C.알뜰배달비) + v(r, C.바로결제배달팁) + v(r, C.만나서결제배달팁);
+    // 광고
+    md.adSupply += v(r, C.광고요금);
+    md.adVat += v(r, C.광고부가세);
+    // 부가세
+    md.vat += v(r, C.부가세) + v(r, C.광고부가세);
+    // 즉시할인 (가게부담)
+    md.instantDisc += v(r, C.즉시할인) + v(r, C.파트너쿠폰) + v(r, C.포장할인) + v(r, C.가게주문할인) + v(r, C.메뉴할인);
+    // 기타 (입금예정에 합산)
+    md.adjust += v(r, C.보정금액);
+    md.refund += v(r, C.부분환불);
+    md.etc += v(r, C.기타);
+    md.bOrder += v(r, C.배민오더);
+    // 입금금액
+    md.settle += v(r, C.입금금액H);
+  }
+
+  // 월별 결과 배열 반환
+  const results = Object.entries(monthData).map(([moKey, md]) => {
+    const [y, m] = moKey.split('-').map(Number);
+    // finalSettle = 입금금액 + 보정 + 환불 + 기타 + 배민오더
+    const finalSettle = md.settle;
+    return {
+      period: y+'년 '+m+'월', ym: [y, m],
+      totalRev: md.rev,
+      orders: 0, // 정산명세서에 주문건수 없음 — 매출파일에서 보충
+      daily: {},
+      fee: Math.abs(md.broker) + Math.abs(md.brokerHome) + Math.abs(md.pgFee),
+      delivery: Math.abs(md.delFee),
+      ad: Math.abs(md.adSupply),
+      coupon: Math.abs(md.instantDisc),
+      // 개별 항목 (카드 표시용)
+      broker: Math.abs(md.broker),
+      brokerHome: Math.abs(md.brokerHome),
+      pgFee: Math.abs(md.pgFee),
+      delFee: Math.abs(md.delFee),
+      adSupply: Math.abs(md.adSupply),
+      vat: Math.abs(md.vat),
+      instantDisc: Math.abs(md.instantDisc),
+      // 입금 관련
+      adjust: md.adjust, refund: md.refund, etcFee: md.etc, bOrder: md.bOrder,
+      finalSettle,
+      _hasPurchaseData: true,
+      _isSettlement: true,
+      services: {},
+    };
+  });
+
+  if (!results.length) throw new Error('배민 정산명세서에서 데이터를 찾을 수 없습니다.');
+  return results;
+}
+
 function parseBM_xlsx(wb, filename) {
   const ws   = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
@@ -314,7 +443,10 @@ function recalcMerged(entry) {
   entry.settleAN = src.settleAN || s.settleAN || 0;
   entry.promo = src.promo || s.promo || 0;
   entry.refund = src.refund || s.refund || 0;
-  entry.finalSettle = (entry.settleAN || 0) + (entry.promo || 0) + (entry.refund || 0);
+  entry.adjust = src.adjust || s.adjust || 0;
+  entry.etcFee = src.etcFee || s.etcFee || 0;
+  entry.bOrder = src.bOrder || s.bOrder || 0;
+  entry.finalSettle = src.finalSettle || s.finalSettle || ((entry.settleAN||0) + (entry.promo||0) + (entry.refund||0));
   entry._hasPurchaseData = entry._hasPurchase || (s._hasPurchaseData || false);
 }
 

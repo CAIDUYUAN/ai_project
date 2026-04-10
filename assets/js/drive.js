@@ -90,7 +90,7 @@ async function loadXlsx2(files, pf) {
       console.error = _ce;
 
       let data;
-      if      (pf === 'bm') data = /매입상세내역/.test(file.name) ? parseBM_purchase_xlsx(wb, file.name) : parseBM_xlsx(wb, file.name);
+      if      (pf === 'bm') data = /정산명세서/.test(file.name) ? parseBM_settlement(wb, file.name) : /매입상세내역/.test(file.name) ? parseBM_purchase_xlsx(wb, file.name) : parseBM_xlsx(wb, file.name);
       else if (pf === 'cp') data = parseCP_xlsx(wb, file.name);
       else if (pf === 'yg') data = parseYG_xlsx(wb, file.name);
       else if (pf === 'ts') data = parseTS_xlsx(wb, file.name);

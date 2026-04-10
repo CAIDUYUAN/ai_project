@@ -164,7 +164,7 @@ function handleFiles(files) {
     const fn = file.name;
     let pf = null;
     if (/매출리포트/.test(fn)) pf = 'ts';
-    else if (/매출상세내역|매입상세내역|배민/.test(fn)) pf = 'bm';
+    else if (/매출상세내역|매입상세내역|배민|배달의민족|정산명세서/.test(fn)) pf = 'bm';
     else if (/coupang|쿠팡/.test(fn)) pf = 'cp';
     else if (/땡겨요|정산내역/.test(fn)) pf = 'tg';
     else if (/요기요/.test(fn)) pf = 'yg';
@@ -295,7 +295,10 @@ function getFilteredData() {
       platformSummary[p].settleAN = (platformSummary[p].settleAN||0) + (d.settleAN||0);
       platformSummary[p].promo = (platformSummary[p].promo||0) + (d.promo||0);
       platformSummary[p].refund = (platformSummary[p].refund||0) + (d.refund||0);
-      platformSummary[p].finalSettle = (platformSummary[p].settleAN||0) + (platformSummary[p].promo||0) + (platformSummary[p].refund||0);
+      platformSummary[p].adjust = (platformSummary[p].adjust||0) + (d.adjust||0);
+      platformSummary[p].etcFee = (platformSummary[p].etcFee||0) + (d.etcFee||0);
+      platformSummary[p].bOrder = (platformSummary[p].bOrder||0) + (d.bOrder||0);
+      platformSummary[p].finalSettle = (platformSummary[p].finalSettle||0) + (d.finalSettle||0);
       tR += d.totalRev||0; tOrd += d.orders||0; tFee += d.fee||0; tDel += d.delivery||0; tCpn += d.coupon||0; tAd += d.ad||0;
       if (d.daily) Object.entries(d.daily).forEach(([day, dd]) => {
         if (!dailyAll[day]) dailyAll[day] = {};
@@ -508,21 +511,21 @@ function updatePlatformGrid(data) {
     const neg = v => v ? '-'+fmt(v)+'원' : '0원';
     const negColor = v => v ? 'var(--red)' : 'var(--text-tertiary)';
 
+    const tipRow = (label, val, color, tip) => `<div class="platform-stat vat-tip-wrap"><span class="platform-stat-label">${label} <span style="cursor:help;color:var(--accent);font-size:11px;">ⓘ</span></span><span class="platform-stat-value" style="color:${color};">${val}</span><div class="vat-tooltip">${tip}</div></div>`;
+
     let detailRows, totalDeduct;
 
     if (isBM && (broker || brokerHome || pgFee || vat)) {
       // 배민 전용 카드
       totalDeduct = broker + brokerHome + pgFee + delFee + adSupply + vat + instantDisc;
       detailRows = `
-      ${row('중개이용료(배민부담 포함)', neg(broker), negColor(broker))}
-      ${brokerHome ? row('중개이용료(가게배달)', neg(brokerHome), negColor(brokerHome)) : ''}
-      ${row('결제정산수수료(배민부담 포함)', neg(pgFee), negColor(pgFee))}
-      ${row('배달비', neg(delFee), negColor(delFee))}
-      ${row('광고비(우리가게클릭)', neg(adSupply), negColor(adSupply))}
-      <div class="platform-stat vat-tip-wrap"><span class="platform-stat-label">부가세 <span style="cursor:help;color:var(--accent);font-size:11px;">ⓘ</span></span><span class="platform-stat-value" style="color:${negColor(vat)};">${neg(vat)}</span>
-        <div class="vat-tooltip">부가세 = (중개이용료 + 결제정산수수료 + 배달비 + 광고비) × 10%</div>
-      </div>
-      ${row('즉시할인금액', neg(instantDisc), negColor(instantDisc))}`;
+      ${tipRow('중개이용료(배민부담 포함)', neg(broker), negColor(broker), '배민1중개이용료 + 알뜰배달 중개이용료 + 픽업중개이용료')}
+      ${brokerHome ? tipRow('중개이용료(가게배달)', neg(brokerHome), negColor(brokerHome), '가게배달중개이용료') : ''}
+      ${tipRow('결제정산수수료(배민부담 포함)', neg(pgFee), negColor(pgFee), '기본수수료(정률) + 우대수수료')}
+      ${tipRow('배달비', neg(delFee), negColor(delFee), '배민1 한집배달 배달비 + 알뜰배달 배달비 + 바로결제배달팁 + 만나서결제배달팁')}
+      ${tipRow('광고비(우리가게클릭)', neg(adSupply), negColor(adSupply), '우리가게클릭 이용요금')}
+      ${tipRow('부가세', neg(vat), negColor(vat), '(E)부가세 + 광고부가세')}
+      ${tipRow('즉시할인금액(가게)', neg(instantDisc), negColor(instantDisc), '주문금액 즉시할인 + 파트너부담쿠폰 + 포장할인 + 가게주문금액할인 + 메뉴할인')}`;
     } else if (isCP && (broker || pgFee || vat)) {
       // 쿠팡 전용 카드
       totalDeduct = shopCoupon + broker + pgFee + delFee + adSupply + vat + instantDisc - promo - refund;
@@ -583,7 +586,7 @@ function updatePlatformGrid(data) {
       ${row('매출액', fmt(rev)+'원', 'var(--text-primary)')}
       ${detailRows}
       ${sep}
-      ${row('입금예정금액(조정금액,환급액 미포함)', fmt(finalSettle)+'원', 'var(--accent)')}
+      ${isBM ? tipRow('입금예정금액', fmt(finalSettle)+'원', 'var(--accent)', '입금금액 + 보정금액 + 부분환불 + (D)기타 + 배민오더') : row('입금예정금액(조정금액,환급액 미포함)', fmt(finalSettle)+'원', 'var(--accent)')}
       ${sep}${secLabel('내 비용')}
       ${row('원가 ('+S.cogs+'%)', '-'+fmt(matCost)+'원', 'var(--orange)')}
       ${row('고정비 배분', '-'+fmt(fixedAlloc)+'원', 'var(--orange)')}
