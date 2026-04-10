@@ -537,8 +537,30 @@ function updatePlatformGrid(data) {
       ${instantDisc ? row('즉시할인금액', neg(instantDisc), negColor(instantDisc)) : ''}
       ${promo ? row('프로모션 혜택', '+'+fmt(promo)+'원', 'var(--green)') : ''}
       ${refund ? row('환급액', '+'+fmt(refund)+'원', 'var(--green)') : ''}`;
+    } else if (p === 'tg' && (broker || pgFee)) {
+      // 땡겨요 전용
+      totalDeduct = broker + pgFee + delFee + coupon;
+      detailRows = `
+      ${row('주문중개이용료', neg(broker), negColor(broker))}
+      ${row('결제정산이용료', neg(pgFee), negColor(pgFee))}
+      ${row('땡배달이용료', neg(delFee), negColor(delFee))}
+      ${row('사장님쿠폰', neg(shopCoupon), negColor(shopCoupon))}`;
+    } else if (p === 'yg' && (broker || pgFee)) {
+      // 요기요 전용
+      totalDeduct = broker + pgFee + delFee + adSupply + coupon;
+      detailRows = `
+      ${row('주문중개이용료', neg(broker), negColor(broker))}
+      ${row('외부결제이용료', neg(pgFee), negColor(pgFee))}
+      ${row('배달대행이용료', neg(delFee), negColor(delFee))}
+      ${row('추천광고이용료', neg(adSupply), negColor(adSupply))}
+      ${row('쿠폰(가게부담)', neg(shopCoupon), negColor(shopCoupon))}`;
+    } else if (p === 'ts') {
+      // 가게(토스포스) 전용 — 배달비/광고 없음
+      totalDeduct = fee;
+      detailRows = `
+      ${row('카드수수료', neg(fee), negColor(fee))}`;
     } else {
-      // 기타 플랫폼 (땡겨요/요기요/가게 등) — 합산값
+      // 기타 플랫폼 — 합산값
       totalDeduct = fee + delFee + adSupply + coupon;
       detailRows = `
       ${row('수수료', neg(fee), negColor(fee))}

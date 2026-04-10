@@ -634,6 +634,15 @@ function parseTG_xlsx(wb, filename) {
       services[sn].delivery += o.ddDelFee;
       services[sn].total += o.brokerFee + o.settleFee + o.ddDelFee;
     });
+    // 개별 항목 합산
+    let aggBroker=0, aggSettle=0, aggDel=0, aggCoupon=0, aggPromo=0;
+    md.orderList.forEach(o => {
+      aggBroker += o.brokerFee||0;
+      aggSettle += o.settleFee||0;
+      aggDel += o.ddDelFee||0;
+      aggCoupon += o.shopCoupon||0;
+      aggPromo += o.promoFee||0;
+    });
     return {
       period: md.yr+'년 '+md.mo+'월',
       ym: [md.yr, md.mo],
@@ -644,6 +653,13 @@ function parseTG_xlsx(wb, filename) {
       feeRate: md.totalRev ? md.totalFee / md.totalRev : 0,
       delivery: md.totalDel,
       coupon: md.totalCoupon,
+      // 땡겨요 개별 항목
+      broker: aggBroker,       // 주문중개이용료
+      pgFee: aggSettle,        // 결제정산이용료
+      delFee: aggDel,          // 땡배달이용료
+      shopCoupon: aggCoupon,   // 사장님쿠폰
+      adSupply: 0,
+      vat: 0,
       _hasPurchaseData: true,
       orderDetails: md.orderList, services,
     };
@@ -809,6 +825,13 @@ function parseYG_xlsx(wb, filename) {
     period, ym:[yr,mn], totalRev, orders:estOrders, daily,
     fee, feeRate: totalRev ? fee/totalRev : 0,
     delivery, coupon, ad,
+    // 요기요 개별 항목
+    broker: summary.brokerFee||0,      // 주문중개이용료
+    pgFee: summary.pgFee||0,           // 외부결제이용료
+    delFee: summary.deliveryFee||0,    // 배달대행이용료
+    adSupply: summary.adFee||0,        // 추천광고이용료
+    shopCoupon: summary.shopCoupon||0, // 쿠폰(가게부담)
+    vat: 0,
     _hasPurchaseData: true,
     purchaseSummary: summary, services,
   };
