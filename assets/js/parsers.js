@@ -153,47 +153,53 @@ function parseBM_settlement(wb, filename) {
 
     if (!monthData[moKey]) monthData[moKey] = {
       rev:0, broker:0, brokerHome:0, pgFee:0, delFee:0,
-      adSupply:0, adVat:0, vat:0, instantDisc:0,
+      adSupply:0, vat:0, instantDisc:0,
       adjust:0, refund:0, etc:0, bOrder:0, settle:0,
     };
     const md = monthData[moKey];
+    const isAd = /우리가게클릭/.test(type);
 
-    // 매출
-    md.rev += v(r, C.바로결제) + v(r, C.만나서결제);
-    // 중개이용료 (배민부담 포함 — 이미 합산되어 있음)
-    md.broker += v(r, C.배민1중개) + v(r, C.알뜰중개) + v(r, C.픽업중개);
-    md.brokerHome += v(r, C.가게배달중개);
-    // 결제정산수수료
-    md.pgFee += v(r, C.기본수수료) + v(r, C.우대수수료);
-    // 배달비
-    md.delFee += v(r, C.한집배달비) + v(r, C.알뜰배달비) + v(r, C.바로결제배달팁) + v(r, C.만나서결제배달팁);
-    // 광고
-    md.adSupply += v(r, C.광고요금);
-    md.adVat += v(r, C.광고부가세);
-    // 부가세
-    md.vat += v(r, C.부가세) + v(r, C.광고부가세);
-    // 즉시할인 (가게부담)
-    md.instantDisc += v(r, C.즉시할인) + v(r, C.파트너쿠폰) + v(r, C.포장할인) + v(r, C.가게주문할인) + v(r, C.메뉴할인);
-    // 기타 (입금예정에 합산)
-    md.adjust += v(r, C.보정금액);
-    md.refund += v(r, C.부분환불);
-    md.etc += v(r, C.기타);
-    md.bOrder += v(r, C.배민오더);
-    // 입금금액
+    if (isAd) {
+      // 광고(우리가게클릭): E열 유형이 우리가게클릭인 행 → C열(입금금액)이 광고비(음수)
+      md.adSupply += v(r, C.입금금액H); // C열 입금금액 (음수 = 차감)
+    } else {
+      // 일반 주문 행
+      // ① 매출액 = F열(바로결제주문금액)
+      md.rev += v(r, C.바로결제) + v(r, C.만나서결제);
+      // ② 중개이용료(배민부담 포함) = G+H+I열 (가게배달 제외)
+      md.broker += v(r, C.배민1중개) + v(r, C.알뜰중개) + v(r, C.픽업중개);
+      // ③ 중개이용료(가게배달)
+      md.brokerHome += v(r, C.가게배달중개);
+      // ④ 결제정산수수료(배민부담 포함) = U+V열
+      md.pgFee += v(r, C.기본수수료) + v(r, C.우대수수료);
+      // ⑤ 배달비 = S+T열 (한집+알뜰 배달비만, 배달팁 제외)
+      md.delFee += v(r, C.한집배달비) + v(r, C.알뜰배달비);
+      // ⑧ 즉시할인금액(가게) = K열
+      md.instantDisc += v(r, C.즉시할인) + v(r, C.파트너쿠폰) + v(r, C.포장할인) + v(r, C.가게주문할인) + v(r, C.메뉴할인);
+      // 기타
+      md.adjust += v(r, C.보정금액);
+      md.refund += v(r, C.부분환불);
+      md.etc += v(r, C.기타);
+      md.bOrder += v(r, C.배민오더);
+    }
+    // ⑨ 입금예정금액 = C열 합산 (광고 포함 전체)
     md.settle += v(r, C.입금금액H);
   }
 
   // 월별 결과 배열 반환
   const results = Object.entries(monthData).map(([moKey, md]) => {
     const [y, m] = moKey.split('-').map(Number);
-    // finalSettle = 입금금액 + 보정 + 환불 + 기타 + 배민오더
     const finalSettle = md.settle;
+    // ⑦ 부가세 = (중개이용료 + 배달비 + 결제정산수수료 + 광고비) × 10%
+    const brokerAbs = Math.abs(md.broker) + Math.abs(md.brokerHome);
+    const feeBase = brokerAbs + Math.abs(md.delFee) + Math.abs(md.pgFee) + Math.abs(md.adSupply);
+    const vatCalc = Math.round(feeBase * 0.1);
     return {
       period: y+'년 '+m+'월', ym: [y, m],
       totalRev: md.rev,
-      orders: 0, // 정산명세서에 주문건수 없음 — 매출파일에서 보충
+      orders: 0,
       daily: {},
-      fee: Math.abs(md.broker) + Math.abs(md.brokerHome) + Math.abs(md.pgFee),
+      fee: brokerAbs + Math.abs(md.pgFee),
       delivery: Math.abs(md.delFee),
       ad: Math.abs(md.adSupply),
       coupon: Math.abs(md.instantDisc),
@@ -203,7 +209,7 @@ function parseBM_settlement(wb, filename) {
       pgFee: Math.abs(md.pgFee),
       delFee: Math.abs(md.delFee),
       adSupply: Math.abs(md.adSupply),
-      vat: Math.abs(md.vat),
+      vat: vatCalc,
       instantDisc: Math.abs(md.instantDisc),
       // 입금 관련
       adjust: md.adjust, refund: md.refund, etcFee: md.etc, bOrder: md.bOrder,
