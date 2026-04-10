@@ -62,13 +62,11 @@ async function loadXlsx2(files, pf) {
   let fileArr = Array.from(files);
   const label = pf==='bm'?'배민':pf==='cp'?'쿠팡이츠':pf==='yg'?'요기요':pf==='ts'?'가게(토스)':'땡겨요';
 
-  // 중복 파일 체크
+  // 중복 파일 체크 — 같은 이름이면 알림 후 덮어쓰기 (내용이 다를 수 있음)
   const existingNames = (FILES[pf]||[]).map(f => f.filename);
   const dupes = fileArr.filter(f => existingNames.includes(f.name));
   if (dupes.length) {
-    toastCenter(`중복 파일 ${dupes.length}개 제외:\n${dupes.map(f=>f.name).join('\n')}`);
-    fileArr = fileArr.filter(f => !existingNames.includes(f.name));
-    if (!fileArr.length) return;
+    toastCenter(`중복 파일 ${dupes.length}개 덮어쓰기:\n${dupes.map(f=>f.name).join('\n')}`);
   }
 
   let loaded = 0, failed = 0;
