@@ -516,7 +516,7 @@ function updatePlatformGrid(data) {
     const row = (label, val, color) => `<div class="platform-stat"><span class="platform-stat-label">${label}</span><span class="platform-stat-value" style="color:${color};">${val}</span></div>`;
     const sep = `<div style="border-top:1px solid var(--border);margin:2px 0;"></div>`;
     const secLabel = text => `<div style="font-size:11px;color:var(--text-quaternary);padding:4px 0 2px;">${text}</div>`;
-    const neg = v => v ? '-'+fmtW(v)+'원' : '0원';
+    const neg = v => v ? '-'+fmt(v)+'원' : '0원';
     const negColor = v => v ? 'var(--red)' : 'var(--text-tertiary)';
 
     // 상세(개별항목 있음) vs 합산(없음) 분기
@@ -535,8 +535,8 @@ function updatePlatformGrid(data) {
         <div class="vat-tooltip">부가세 = (중개이용료 + ${isBM?'결제정산수수료':'결제수수료'} + 배달비 + 광고비) × 10%</div>
       </div>
       ${!isBM && instantDisc ? row('즉시할인금액', neg(instantDisc), negColor(instantDisc)) : ''}
-      ${promo ? row('프로모션 혜택', '+'+fmtW(promo)+'원', 'var(--green)') : ''}
-      ${refund ? row('환급액', '+'+fmtW(refund)+'원', 'var(--green)') : ''}`;
+      ${promo ? row('프로모션 혜택', '+'+fmt(promo)+'원', 'var(--green)') : ''}
+      ${refund ? row('환급액', '+'+fmt(refund)+'원', 'var(--green)') : ''}`;
     } else {
       detailRows = `
       ${row('수수료', neg(fee), negColor(fee))}
@@ -547,15 +547,15 @@ function updatePlatformGrid(data) {
 
     return `<div class="platform-card ${p}">
       <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(orders)}건</span></div>
-      ${row('매출액', fmtW(rev)+'원', 'var(--text-primary)')}
+      ${row('매출액', fmt(rev)+'원', 'var(--text-primary)')}
       ${detailRows}
       ${sep}
-      ${row('최종 입금예정금액', fmtW(finalSettle)+'원', 'var(--accent)')}
+      ${row('최종 입금예정금액', fmt(finalSettle)+'원', 'var(--accent)')}
       ${sep}${secLabel('내 비용')}
-      ${row('원가 ('+S.cogs+'%)', '-'+fmtW(matCost)+'원', 'var(--orange)')}
-      ${row('고정비 배분', '-'+fmtW(fixedAlloc)+'원', 'var(--orange)')}
+      ${row('원가 ('+S.cogs+'%)', '-'+fmt(matCost)+'원', 'var(--orange)')}
+      ${row('고정비 배분', '-'+fmt(fixedAlloc)+'원', 'var(--orange)')}
       ${sep}
-      ${row('실제 순수익', fmtW(realNet)+'원', marginColor)}
+      ${row('실제 순수익', fmt(realNet)+'원', marginColor)}
     </div>`;
   }).join('') || '<div class="empty-state"><div class="empty-desc">데이터가 없습니다</div></div>';
 }

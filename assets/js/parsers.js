@@ -114,7 +114,6 @@ function parseBM_xlsx(wb, filename) {
   for (let i = 12; i < rows.length; i++) {
     const r = rows[i];
     if (!r || !r[0] || r[0] === '계') break;
-    if ((r[2]||'').includes('배민부담금액')) continue;
     const ds = fmtDate(r[0]), on = r[1], amt = Number(r[6])||0;
     if (!ds || !on) continue;
     if (!orderMap[on]) orderMap[on] = {date:ds, total:0};
