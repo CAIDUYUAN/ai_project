@@ -609,7 +609,9 @@ function updatePlatformGrid(data) {
         <span class="platform-stat-value" style="color:var(--orange);">-${fmt(fixedAlloc)}원 ${fmtPct(rev>0?fixedAlloc/rev*100:0)}</span>
       </div>
       ${sep}
-      <div class="platform-stat"><span class="platform-stat-label" style="font-weight:600;">실제 순수익</span><span class="platform-stat-value" id="pfnet-${p}" data-base="${finalSettle}" data-mat="${matCost}" data-fixed="${fixedAlloc}" style="color:${marginColor};font-weight:700;">${fmt(realNet)}원 ${fmtPct(realMargin)}</span></div>
+      <div class="platform-stat"><span class="platform-stat-label" style="font-weight:600;">실제 순수익</span><span class="platform-stat-value" id="pfnet-${p}" data-base="${finalSettle}" data-rev="${rev}" data-mat="${matCost}" data-fixed="${fixedAlloc}" style="color:${marginColor};font-weight:700;">${fmt(realNet)}원 ${fmtPct(realMargin)}</span></div>
+      ${sep}
+      <div class="platform-stat"><span class="platform-stat-label" style="font-size:11px;color:var(--text-quaternary);">입금확인 (매출-차감)</span><span class="platform-stat-value" style="font-size:11px;color:var(--text-quaternary);">${fmt(rev - totalDeduct)}원 ${(rev - totalDeduct) === finalSettle ? '✅' : '⚠️ 차이 '+fmt(finalSettle - (rev - totalDeduct))+'원'}</span></div>
     </div>`;
   }).join('') || '<div class="empty-state"><div class="empty-desc">데이터가 없습니다</div></div>';
 }
@@ -619,12 +621,14 @@ function recalcPfNet(checkbox) {
   const target = card.querySelector('[id^="pfnet-"]');
   if (!target) return;
   const base = Number(target.dataset.base)||0;
+  const rev = Number(target.dataset.rev)||1;
   let deduct = 0;
-  card.querySelectorAll('.pf-detail-body input[type="checkbox"]').forEach(cb => {
+  card.querySelectorAll('input[type="checkbox"][data-val]').forEach(cb => {
     if (cb.checked) deduct += Number(cb.dataset.val)||0;
   });
   const net = base - deduct;
-  target.textContent = fmt(net) + '원';
+  const pct = rev > 0 ? (net / rev * 100) : 0;
+  target.textContent = fmt(net) + '원 ' + fmtPct(pct);
   target.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
 }
 
