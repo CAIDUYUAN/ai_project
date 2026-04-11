@@ -336,6 +336,23 @@ h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.374px; }
 .platform-stat:last-child { border-bottom: none; }
 .platform-stat-label { color: var(--text-tertiary); }
 .platform-stat-value { font-weight: 600; }
+/* ─── PLATFORM DETAIL TOGGLE ─── */
+.pf-detail-toggle {
+  text-align: center; padding: 8px; margin-top: 4px;
+  font-size: 12px; color: var(--accent); cursor: pointer;
+  border: 1px dashed var(--border); border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+.pf-detail-toggle:hover { background: var(--accent-hover); border-color: var(--accent); }
+.pf-detail-toggle.open { border-style: solid; }
+.pf-detail-body {
+  display: none; padding-top: 8px;
+}
+.pf-detail-body.open { display: block; }
+.pf-detail-body input[type="checkbox"] {
+  width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer;
+}
+
 .vat-tip-wrap { position: relative; }
 .vat-tooltip {
   display: none; position: absolute; bottom: 100%; left: 0;

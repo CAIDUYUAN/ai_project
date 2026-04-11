@@ -581,19 +581,51 @@ function updatePlatformGrid(data) {
     const realMargin = rev > 0 ? (realNet / rev * 100) : 0;
     const marginColor = realMargin>=15?'var(--green)':realMargin>=0?'var(--orange)':'var(--red)';
 
+    const deductPct = rev > 0 ? (totalDeduct / rev * 100) : 0;
+    const uid = p + '_' + Date.now();
+
     return `<div class="platform-card ${p}">
-      <div class="platform-header"><div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div><span class="platform-name">${PLATFORMS[p].name}</span><span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(orders)}건</span></div>
+      <div class="platform-header">
+        <div class="platform-icon" style="background:${PLATFORMS[p].color}22;">${PLATFORMS[p].icon}</div>
+        <span class="platform-name">${PLATFORMS[p].name}</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary);">${fmt(orders)}건</span>
+      </div>
       ${row('매출액', fmt(rev)+'원', 'var(--text-primary)')}
-      ${detailRows}
-      ${sep}
-      ${isBM ? tipRow('입금예정금액', fmt(finalSettle)+'원', 'var(--accent)', '입금금액 + 보정금액 + 부분환불 + (D)기타 + 배민오더') : row('입금예정금액(조정금액,환급액 미포함)', fmt(finalSettle)+'원', 'var(--accent)')}
-      ${sep}${secLabel('내 비용')}
-      ${row('원가 ('+S.cogs+'%)', '-'+fmt(matCost)+'원', 'var(--orange)')}
-      ${row('고정비 배분', '-'+fmt(fixedAlloc)+'원', 'var(--orange)')}
-      ${sep}
-      ${row('실제 순수익', fmt(realNet)+'원', marginColor)}
+      ${row('총차감액', neg(totalDeduct)+' '+fmtPct(deductPct), 'var(--red)')}
+      ${row('입금예정금액', fmt(finalSettle)+'원', 'var(--accent)')}
+      <div class="pf-detail-toggle" onclick="this.parentElement.querySelector('.pf-detail-body').classList.toggle('open');this.classList.toggle('open');">▼ 상세내역</div>
+      <div class="pf-detail-body">
+        ${secLabel('차감 상세')}
+        ${detailRows}
+        ${sep}
+        ${secLabel('내 비용')}
+        <div class="platform-stat">
+          <span class="platform-stat-label"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked onchange="recalcPfNet(this)" data-val="${matCost}" data-target="pfnet-${p}"> 원가 (${S.cogs}%)</label></span>
+          <span class="platform-stat-value" style="color:var(--orange);">-${fmt(matCost)}원</span>
+        </div>
+        <div class="platform-stat">
+          <span class="platform-stat-label"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked onchange="recalcPfNet(this)" data-val="${fixedAlloc}" data-target="pfnet-${p}"> 고정비 배분</label></span>
+          <span class="platform-stat-value" style="color:var(--orange);">-${fmt(fixedAlloc)}원</span>
+        </div>
+        ${sep}
+        <div class="platform-stat"><span class="platform-stat-label" style="font-weight:600;">실제 순수익</span><span class="platform-stat-value" id="pfnet-${p}" data-base="${finalSettle}" data-mat="${matCost}" data-fixed="${fixedAlloc}" style="color:${marginColor};font-weight:700;">${fmt(realNet)}원</span></div>
+      </div>
     </div>`;
   }).join('') || '<div class="empty-state"><div class="empty-desc">데이터가 없습니다</div></div>';
+}
+
+function recalcPfNet(checkbox) {
+  const card = checkbox.closest('.platform-card');
+  const target = card.querySelector('[id^="pfnet-"]');
+  if (!target) return;
+  const base = Number(target.dataset.base)||0;
+  let deduct = 0;
+  card.querySelectorAll('.pf-detail-body input[type="checkbox"]').forEach(cb => {
+    if (cb.checked) deduct += Number(cb.dataset.val)||0;
+  });
+  const net = base - deduct;
+  target.textContent = fmt(net) + '원';
+  target.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
 }
 
 function updateCalendar(data) {
