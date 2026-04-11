@@ -602,7 +602,7 @@ function updatePlatformGrid(data) {
         ${secLabel('내 비용')}
         <div class="platform-stat">
           <span class="platform-stat-label"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked onchange="recalcPfNet(this)" data-val="${matCost}" data-target="pfnet-${p}"> 원가 (${S.cogs}%)</label></span>
-          <span class="platform-stat-value" style="color:var(--orange);">-${fmt(matCost)}원 ${fmtPct(rev>0?matCost/rev*100:0)}</span>
+          <span class="platform-stat-value" style="color:var(--orange);">-${fmt(matCost)}원 ${fmtPct(rev>0?matCost/rev*100:0)} <span style="font-size:10px;color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="switchTab('settings');document.getElementById('s-cogs')?.focus();">수정</span></span>
         </div>
         <div class="platform-stat">
           <span class="platform-stat-label"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked onchange="recalcPfNet(this)" data-val="${fixedAlloc}" data-target="pfnet-${p}"> 고정비 배분</label></span>
