@@ -592,23 +592,24 @@ function updatePlatformGrid(data) {
       </div>
       ${row('매출액', fmt(rev)+'원', 'var(--text-primary)')}
       ${row('총차감액', neg(totalDeduct)+' '+fmtPct(deductPct), 'var(--red)')}
-      ${row('입금예정금액', fmt(finalSettle)+'원', 'var(--accent)')}
       <div class="pf-detail-toggle" onclick="this.parentElement.querySelector('.pf-detail-body').classList.toggle('open');this.classList.toggle('open');">▼ 상세내역</div>
       <div class="pf-detail-body">
         ${secLabel('차감 상세')}
         ${detailRows}
         ${sep}
+        ${row('입금예정금액', fmt(finalSettle)+'원 '+fmtPct(rev>0?finalSettle/rev*100:0), 'var(--accent)')}
+        ${sep}
         ${secLabel('내 비용')}
         <div class="platform-stat">
           <span class="platform-stat-label"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked onchange="recalcPfNet(this)" data-val="${matCost}" data-target="pfnet-${p}"> 원가 (${S.cogs}%)</label></span>
-          <span class="platform-stat-value" style="color:var(--orange);">-${fmt(matCost)}원</span>
+          <span class="platform-stat-value" style="color:var(--orange);">-${fmt(matCost)}원 ${fmtPct(rev>0?matCost/rev*100:0)}</span>
         </div>
         <div class="platform-stat">
           <span class="platform-stat-label"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked onchange="recalcPfNet(this)" data-val="${fixedAlloc}" data-target="pfnet-${p}"> 고정비 배분</label></span>
-          <span class="platform-stat-value" style="color:var(--orange);">-${fmt(fixedAlloc)}원</span>
+          <span class="platform-stat-value" style="color:var(--orange);">-${fmt(fixedAlloc)}원 ${fmtPct(rev>0?fixedAlloc/rev*100:0)}</span>
         </div>
         ${sep}
-        <div class="platform-stat"><span class="platform-stat-label" style="font-weight:600;">실제 순수익</span><span class="platform-stat-value" id="pfnet-${p}" data-base="${finalSettle}" data-mat="${matCost}" data-fixed="${fixedAlloc}" style="color:${marginColor};font-weight:700;">${fmt(realNet)}원</span></div>
+        <div class="platform-stat"><span class="platform-stat-label" style="font-weight:600;">실제 순수익</span><span class="platform-stat-value" id="pfnet-${p}" data-base="${finalSettle}" data-mat="${matCost}" data-fixed="${fixedAlloc}" style="color:${marginColor};font-weight:700;">${fmt(realNet)}원 ${fmtPct(realMargin)}</span></div>
       </div>
     </div>`;
   }).join('') || '<div class="empty-state"><div class="empty-desc">데이터가 없습니다</div></div>';
